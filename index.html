@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | AIS Officers Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(160deg, #0f0c29 0%, #1e1b4b 35%, #312e81 70%, #3730a3 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- Top Header ---- */
+    .top-header {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(6px);
+      padding: 18px 24px;
+      text-align: center;
+      border-bottom: 1px solid rgba(165,180,252,0.2);
+    }
+    .state-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .ap-seal {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      border: 2px solid rgba(165,180,252,0.5);
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .header-text-group { text-align: left; }
+    .gov-label {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #a5b4fc; margin-bottom: 2px;
+    }
+    .cmo-title {
+      font-size: clamp(18px, 2.5vw, 28px);
+      font-weight: 800; color: #ffffff; letter-spacing: -0.3px;
+    }
+    .cmo-subtitle {
+      font-size: clamp(13px, 1.5vw, 17px);
+      font-weight: 400; color: #c7d2fe; margin-top: 4px;
+    }
+
+    /* ---- Main Content ---- */
+    main {
+      flex: 1; display: flex;
+      align-items: center; justify-content: center;
+      padding: 40px 20px; width: 100%;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 20px; width: 100%; max-width: 460px;
+      padding: 40px 44px 36px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(165,180,252,0.2);
+    }
+    .card-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #1e1b4b, #4338ca);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 28px;
+      box-shadow: 0 8px 20px rgba(67,56,202,0.4);
+    }
+    .card-title {
+      text-align: center; font-size: 26px; font-weight: 800;
+      color: #1e1b4b; margin-bottom: 4px;
+    }
+    .card-desc {
+      text-align: center; font-size: 14px;
+      color: #64748b; margin-bottom: 28px;
+    }
+
+    /* ---- Form ---- */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: #374151; margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #d1d5db; border-radius: 10px;
+      font-size: 14.5px; font-family: 'Inter', sans-serif;
+      color: #111; background: #f9fafb;
+      transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    }
+    .form-group input:focus {
+      border-color: #4338ca; background: #fff;
+      box-shadow: 0 0 0 3px rgba(67,56,202,0.12);
+    }
+
+    .btn-login {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #1e1b4b, #4338ca);
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(67,56,202,0.45); margin-top: 6px;
+    }
+    .btn-login:hover  { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(67,56,202,0.5); }
+    .btn-login:active { transform: translateY(0); }
+
+    .btn-logout {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #7c3aed, #4c1d95);
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s; margin-top: 12px;
+    }
+    .btn-logout:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-dashboard {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #059669, #065f46);
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 14px rgba(5,150,105,0.35);
+    }
+    .btn-dashboard:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    #error-msg {
+      color: #dc2626; font-size: 13px; font-weight: 500;
+      margin-top: 12px; text-align: center; min-height: 18px;
+    }
+    .logged-in-email {
+      text-align: center; font-size: 18px; font-weight: 700;
+      color: #1e1b4b; margin: 10px 0 18px; word-break: break-all;
+    }
+    .welcome-text {
+      text-align: center; font-size: 14px;
+      color: #64748b; margin-bottom: 6px;
+    }
+    .divider { height: 1px; background: #e5e7eb; margin: 24px 0 20px; }
+    .admin-link { text-align: center; margin-top: 18px; font-size: 13px; color: #64748b; }
+    .admin-link a { color: #4338ca; text-decoration: none; font-weight: 600; }
+    .admin-link a:hover { text-decoration: underline; }
+    .hidden { display: none !important; }
+
+    footer {
+      width: 100%; text-align: center; font-size: 13px;
+      padding: 18px; color: rgba(165,180,252,0.5);
+      border-top: 1px solid rgba(165,180,252,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-header">
+  <div class="state-tag">
+    <div class="ap-seal">&#127961;</div>
+    <div class="header-text-group">
+      <div class="gov-label">Government of Andhra Pradesh</div>
+      <div class="cmo-title">Chief Minister's Office, Andhra Pradesh</div>
+    </div>
+  </div>
+  <div class="cmo-subtitle">Integrated Dashboard of AIS Officers' Career Details</div>
+</div>
+
+<main>
+  <!-- LOGIN FORM -->
+  <div class="card" id="loginDiv">
+    <div class="card-icon">&#128274;</div>
+    <div class="card-title">AIS Officers Dashboard</div>
+    <div class="card-desc">Sign in with your authorised credentials</div>
+    <div class="form-group">
+      <label for="email">User ID (Email)</label>
+      <input type="email" id="email" placeholder="you@example.gov.in" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="login()">Sign In</button>
+    <div id="error-msg"></div>
+    <div class="divider"></div>
+    <div class="admin-link">Admin? &nbsp;<a href="admin.html">Go to Admin Panel</a></div>
+  </div>
+
+  <!-- LOGGED-IN STATE -->
+  <div class="card hidden" id="homeDiv">
+    <div class="card-icon">&#10003;</div>
+    <div class="card-title">Welcome Back</div>
+    <div class="welcome-text">You are signed in as</div>
+    <div class="logged-in-email" id="userEmail"></div>
+    <button class="btn-dashboard" onclick="window.location.href='table.html?service=IAS'">Go to Dashboard</button>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+    <div class="divider"></div>
+    <div class="admin-link">Admin? &nbsp;<a href="admin.html">Go to Admin Panel</a></div>
+  </div>
+</main>
+
+<footer>&copy; 2025 Chief Minister's Office, Andhra Pradesh. All rights reserved.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase_config.js"></script>
+<script>
+  async function login() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errorEl  = document.getElementById('error-msg');
+    errorEl.textContent = '';
+    if (!email || !password) { errorEl.textContent = 'Please enter both email and password.'; return; }
+
+    const loginBtn = document.querySelector('.btn-login');
+    loginBtn.textContent = 'Signing in…';
+    loginBtn.disabled = true;
+
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    loginBtn.textContent = 'Sign In';
+    loginBtn.disabled = false;
+
+    if (error) {
+      errorEl.textContent = 'Login failed: ' + error.message;
+    } else {
+      window.location.href = 'table.html?service=IAS';
+    }
+  }
+
+  async function logout() {
+    await _supabase.auth.signOut();
+    document.getElementById('loginDiv').classList.remove('hidden');
+    document.getElementById('homeDiv').classList.add('hidden');
+    document.getElementById('email').value    = '';
+    document.getElementById('password').value = '';
+    document.getElementById('error-msg').textContent = '';
+  }
+
+  _supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+      document.getElementById('loginDiv').classList.add('hidden');
+      document.getElementById('homeDiv').classList.remove('hidden');
+      document.getElementById('userEmail').textContent = session.user.email;
+    }
+  });
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>

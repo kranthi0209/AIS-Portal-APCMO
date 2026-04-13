@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIS Officer Service Summary</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header id="page-header">AIS Officer Service Summary Report</header>
+
+<div class="nav-bar">
+  <div class="nav-bar-inner" id="nav-inner"></div>
+</div>
+
+<!-- Cadre legend (IAS only) -->
+<div class="legend" id="cadre-legend" style="display:none;">
+  <span style="background-color:#bbf7d0;">Chief Secretary</span>
+  <span style="background-color:#fecdd3;">Special Chief Secretary</span>
+  <span style="background-color:#dbeafe;">Principal Secretary</span>
+  <span style="background-color:#fae8ff;">Secretary</span>
+  <span style="background-color:#ecfdf5;">Others</span>
+</div>
+
+<div class="table-wrapper">
+  <table id="officer-table">
+    <thead id="table-header"></thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<!-- Popup A: Officer Details -->
+<div id="officer-popupa" class="popupa">
+  <span class="popupa-close" onclick="$('#officer-popupa').hide()">&#10006;</span>
+  <div id="officer-details"></div>
+</div>
+
+<!-- Popup B: Service Detail -->
+<div id="service-popupb" class="popupb">
+  <span class="popupb-close" onclick="$('#service-popupb').hide()">&#10006;</span>
+  <div id="service-details"></div>
+</div>
+
+<!-- Popup C: Full Service History -->
+<div id="service-popupc" class="popupc">
+  <span class="popupc-close" onclick="$('#service-popupc').hide()">&#10006;</span>
+  <div id="service-details-c"></div>
+</div>
+
+<!-- Set header/title and build nav immediately (before deferred script) -->
+<script>
+(function () {
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var labels = {
+    IAS: 'IAS Officer Service Summary Report',
+    IPS: 'IPS Officer Service Summary Report',
+    IFS: 'IFS Officer Service Summary Report'
+  };
+  var label = labels[svc] || labels.IAS;
+  document.getElementById('page-header').textContent = label;
+  document.title = label;
+
+  if (svc === 'IAS') {
+    document.getElementById('cadre-legend').style.display = '';
+  }
+
+  document.getElementById('nav-inner').innerHTML =
+    '<button onclick="location.href=\'graph.html?service=' + svc + '\'" class="animated-button blue">' +
+      '<i data-lucide="bar-chart-3"></i>Graphical View</button>' +
+    '<button onclick="location.href=\'table.html?service=IAS\'" class="animated-button mustard">' +
+      '<i data-lucide="circle-user-round"></i>IAS Data</button>' +
+    '<button onclick="location.href=\'table.html?service=IPS\'" class="animated-button red">' +
+      '<i data-lucide="shield-user"></i>IPS Data</button>' +
+    '<button onclick="location.href=\'table.html?service=IFS\'" class="animated-button green">' +
+      '<i data-lucide="tree-deciduous"></i>IFS Data</button>' +
+    '<div style="position:relative;">' +
+      '<button id="hcmFilterBtn" class="animated-button purple">' +
+        '<i data-lucide="user-check"></i>Select Chief Minister &#11015;</button>' +
+      '<div id="hcmDropdown" class="hcm-dropdown"></div>' +
+    '</div>' +
+    '<button onclick="location.href=\'admin.html\'" class="animated-button teal">' +
+      '<i data-lucide="settings"></i>Admin</button>' +
+    '<button onclick="signOut()" class="animated-button darkred">' +
+      '<i data-lucide="log-out"></i>Logout</button>';
+})();
+</script>
+
+<script src="script_table.js" defer></script>
+</body>
+</html>

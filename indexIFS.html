@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IFS Officer Service Summary</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+  window.AIS_CONFIG = {
+    serviceType: 'IFS',
+    categoryOrder: [
+      "TRADITIONAL FOREST SERVICE",
+      "FOREST & PLANTS DEVELOPMENT SERVICE",
+      "ANIMAL PROTECTION AND CARE SERVICES",
+      "RESEARCH & TECHNICAL",
+      "ELITE INSTITUTIONS",
+      "NON FOREST DEPTS"
+    ],
+    customDepartmentOrder: {
+      "TRADITIONAL FOREST SERVICE": [
+        "TERRITORIAL", "PLANNING", "VIGILLANCE", "OTHER ADMINISTRATIVE ROLES"
+      ],
+      "FOREST & PLANTS DEVELOPMENT SERVICE": [
+        "FOREST DEVELOPMENT CORPORATION", "SILVICULTURE", "SOCIAL FORESTRY",
+        "PRODUCTION", "RED SANDERS"
+      ],
+      "ANIMAL PROTECTION AND CARE SERVICES": [
+        "PROJECT TIGER", "WILD LIFE", "ZOO PARKS"
+      ],
+      "RESEARCH & TECHNICAL": [
+        "GIS & OTHER TECHNICAL", "RESEARCH"
+      ],
+      "ELITE INSTITUTIONS": [
+        "FOREST SURVEY OF INDIA", "ICFRE"
+      ],
+      "NON FOREST DEPTS": [
+        "AGRICULTURE DEPT", "EDUCATION", "ENERGY", "FINANCE", "GSWS",
+        "HEALTH", "HOUSING", "INDUSTRIES", "IT & ELECTRONICS", "MAUD",
+        "PLANNING DEPT", "PR & RD", "SOCIAL WELFARE", "TOURISM", "TTD"
+      ]
+    }
+  };
+  </script>
+  <script src="script_table.js" defer></script>
+</head>
+<body>
+
+<header>IFS Officer Service Summary Report</header>
+
+<div class="nav-bar">
+  <div class="nav-bar-inner">
+
+    <button onclick="location.href='graphIFS.html'" class="animated-button blue">
+      <i data-lucide="bar-chart-3"></i>Graphical View
+    </button>
+
+    <button onclick="location.href='indexIAS.html'" class="animated-button mustard">
+      <i data-lucide="circle-user-round"></i>IAS Data
+    </button>
+
+    <button onclick="location.href='indexIPS.html'" class="animated-button red">
+      <i data-lucide="shield-user"></i>IPS Data
+    </button>
+
+    <button onclick="location.href='indexIFS.html'" class="animated-button green">
+      <i data-lucide="tree-deciduous"></i>IFS Data
+    </button>
+
+    <div style="position:relative;">
+      <button id="hcmFilterBtn" class="animated-button purple">
+        <i data-lucide="user-check"></i>Select Chief Minister &#11015;
+      </button>
+      <div id="hcmDropdown" class="hcm-dropdown"></div>
+    </div>
+
+    <button onclick="signOut()" class="animated-button darkred">
+      <i data-lucide="log-out"></i>Logout
+    </button>
+
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <table id="officer-table">
+    <thead id="table-header"></thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<!-- Popup A: Officer Details -->
+<div id="officer-popupa" class="popupa">
+  <span class="popupa-close" onclick="$('#officer-popupa').hide()">&#10006;</span>
+  <div id="officer-details"></div>
+</div>
+
+<!-- Popup B: Service Detail -->
+<div id="service-popupb" class="popupb">
+  <span class="popupb-close" onclick="$('#service-popupb').hide()">&#10006;</span>
+  <div id="service-details"></div>
+</div>
+
+<!-- Popup C: Full Service History -->
+<div id="service-popupc" class="popupc">
+  <span class="popupc-close" onclick="$('#service-popupc').hide()">&#10006;</span>
+  <div id="service-details-c"></div>
+</div>
+
+</body>
+</html>

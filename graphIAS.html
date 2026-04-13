@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IAS Graphical View</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+  window.AIS_CONFIG = { serviceType: 'IAS' };
+  </script>
+</head>
+<body>
+
+<header>IAS Officer Service Graphical Report</header>
+
+<div class="nav-bar">
+  <div class="nav-bar-inner">
+
+    <button onclick="location.href='indexIAS.html'" class="animated-button black">
+      <i data-lucide="table"></i>Tabular View
+    </button>
+
+    <button onclick="location.href='graphIAS.html'" class="animated-button mustard">
+      <i data-lucide="circle-user-round"></i>IAS Data
+    </button>
+
+    <button onclick="location.href='graphIPS.html'" class="animated-button red">
+      <i data-lucide="shield-user"></i>IPS Data
+    </button>
+
+    <button onclick="location.href='graphIFS.html'" class="animated-button green">
+      <i data-lucide="tree-deciduous"></i>IFS Data
+    </button>
+
+    <div style="position:relative;">
+      <button id="hcmFilterBtn" class="animated-button purple">
+        <i data-lucide="user-check"></i>Select Chief Minister &#11015;
+      </button>
+      <div id="hcmDropdown" class="hcm-dropdown"></div>
+    </div>
+
+    <button onclick="signOut()" class="animated-button darkred">
+      <i data-lucide="log-out"></i>Logout
+    </button>
+
+  </div>
+</div>
+
+<div class="graph-wrapper">
+
+  <!-- Legend -->
+  <div id="legend" class="legend-container"></div>
+
+  <!-- Chart Grid -->
+  <div id="chartGrid" class="chart-grid"></div>
+
+</div>
+
+<!-- Popup A: Officer Details -->
+<div id="officer-popupa" class="popupa">
+  <span class="popupa-close" onclick="$('#officer-popupa').hide()">&#10006;</span>
+  <div id="officer-details"></div>
+</div>
+
+<script src="script_graph.js"></script>
+</body>
+</html>

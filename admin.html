@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | AIS Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef0fb; min-height: 100vh; }
+
+    /* ---- Top Nav ---- */
+    .top-nav {
+      background: linear-gradient(135deg, #1e1b4b, #3730a3);
+      color: white; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; box-shadow: 0 2px 10px rgba(30,27,75,0.4);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-nav .brand { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .top-nav .brand span { color: #a5b4fc; font-weight: 400; font-size: 14px; margin-left: 10px; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .nav-user { font-size: 13px; color: #a5b4fc; }
+    .btn-nav { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: background 0.2s; }
+    .btn-nav:hover { background: rgba(255,255,255,0.22); }
+
+    /* ---- Tab Bar ---- */
+    .tab-bar {
+      background: white; border-bottom: 2px solid #e5e7eb;
+      padding: 0 24px; display: flex;
+    }
+    .tab-btn {
+      padding: 14px 22px; border: none; background: none;
+      cursor: pointer; font-size: 14px; font-weight: 600; color: #6b7280;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: #4338ca; }
+    .tab-btn.active { color: #4338ca; border-bottom-color: #4338ca; }
+
+    /* ---- Content ---- */
+    .content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ---- Stat Cards ---- */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 6px rgba(67,56,202,0.1); border: 1px solid #e0e7ff;
+    }
+    .stat-card .label { font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 6px; }
+    .stat-card .value { font-size: 32px; font-weight: 800; color: #1e1b4b; }
+
+    /* ---- Section Card ---- */
+    .section-card {
+      background: white; border-radius: 12px; margin-bottom: 24px;
+      box-shadow: 0 1px 6px rgba(67,56,202,0.1); border: 1px solid #e0e7ff;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #eef0fb, #e0e7ff);
+      border-bottom: 1px solid #c7d2fe;
+    }
+    .section-header h3 { font-size: 16px; font-weight: 700; color: #1e1b4b; white-space: nowrap; }
+    .section-body { padding: 16px; }
+
+    /* ---- Toolbar ---- */
+    .toolbar {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    .toolbar select, .toolbar input[type="text"] {
+      padding: 7px 11px; border: 1.5px solid #c7d2fe; border-radius: 8px;
+      font-size: 14px; background: white; color: #1e1b4b; outline: none;
+    }
+    .toolbar select:focus, .toolbar input:focus { border-color: #4338ca; }
+
+    /* ---- Buttons ---- */
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.15s; white-space: nowrap; }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary  { background: linear-gradient(135deg, #4f46e5, #3730a3); color: white; }
+    .btn-success  { background: linear-gradient(135deg, #059669, #065f46); color: white; }
+    .btn-danger   { background: linear-gradient(135deg, #dc2626, #991b1b); color: white; }
+    .btn-amber    { background: linear-gradient(135deg, #d97706, #92400e); color: white; }
+    .btn-teal     { background: linear-gradient(135deg, #0d9488, #065f46); color: white; }
+    .btn-ghost    { background: #e5e7eb; color: #374151; }
+    .btn-sm { padding: 4px 11px; font-size: 12px; }
+
+    /* ---- Data Table ---- */
+    .data-table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+    .data-table th {
+      background: linear-gradient(135deg, #1e1b4b, #3730a3); color: #e0e7ff;
+      padding: 10px 12px; text-align: left; font-size: 12px;
+      font-weight: 600; white-space: nowrap;
+    }
+    .data-table td { padding: 8px 12px; border-bottom: 1px solid #e0e7ff; color: #1e293b; vertical-align: middle; }
+    .data-table tr:hover td { background: #eef0fb; }
+    .data-table tr.selected td { background: #dde4ff !important; }
+
+    /* ---- Photo thumb ---- */
+    .photo-thumb { width: 34px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid #a5b4fc; display: block; }
+
+    /* ---- Pagination ---- */
+    .pagination { display: flex; gap: 8px; align-items: center; padding: 12px 16px; flex-wrap: wrap; border-top: 1px solid #e0e7ff; }
+    .pagination button { padding: 4px 11px; border: 1.5px solid #c7d2fe; border-radius: 6px;
+      background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #4338ca; }
+    .pagination button:hover { background: #eef0fb; }
+    .pagination button.active { background: #4338ca; color: white; border-color: #4338ca; }
+    .pagination .info { font-size: 13px; color: #64748b; }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(30,27,75,0.5); z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 16px; padding: 28px 32px 24px;
+      width: 92%; max-width: 780px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(30,27,75,0.35);
+    }
+    .modal h2 { font-size: 19px; font-weight: 800; color: #1e1b4b; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #e0e7ff; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 11.5px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 9px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+      font-size: 13.5px; color: #111; background: #f9fafb; outline: none; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: #4338ca; background: white;
+      box-shadow: 0 0 0 3px rgba(67,56,202,0.1);
+    }
+    .form-group input[readonly] { background: #f1f5f9; color: #64748b; }
+    .form-group.full { grid-column: 1 / -1; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e0e7ff; }
+
+    /* ---- Officer context banner in posting modal ---- */
+    .officer-banner {
+      background: #eef0fb; border: 1px solid #c7d2fe; border-radius: 8px;
+      padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #1e1b4b;
+    }
+    .officer-banner strong { color: #4338ca; }
+
+    /* ---- Users Tab ---- */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge.admin { background: #ede9fe; color: #4c1d95; }
+    .badge.user  { background: #ecfdf5; color: #065f46; }
+
+    /* ---- Toast ---- */
+    /* ---- Dual-range retirement date slider ---- */
+    #retire-filter-bar {
+      padding: 12px 20px; border-bottom: 1px solid #e0e7ff;
+      background: linear-gradient(135deg, #f5f3ff, #eef0fb);
+      display: none;
+    }
+    .retire-slider-row {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .retire-slider-label {
+      font-size: 12.5px; font-weight: 700; color: #374151;
+      white-space: nowrap; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .retire-year-pill {
+      font-size: 13px; font-weight: 800; color: white;
+      background: #4338ca; padding: 3px 10px; border-radius: 20px;
+      min-width: 80px; text-align: center; white-space: nowrap;
+    }
+    .dual-range-outer {
+      flex: 1; min-width: 220px; position: relative; height: 36px;
+    }
+    .dual-range-track {
+      position: absolute; left: 0; right: 0; top: 50%;
+      transform: translateY(-50%);
+      height: 6px; background: #c7d2fe; border-radius: 3px;
+    }
+    #retire-track-fill {
+      position: absolute; height: 100%; background: #4338ca; border-radius: 3px;
+    }
+    .dual-range-outer input[type=range] {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 100%; height: 36px; margin: 0; padding: 0;
+      background: transparent; pointer-events: none;
+      -webkit-appearance: none; appearance: none; outline: none;
+    }
+    .dual-range-outer input[type=range]::-webkit-slider-runnable-track {
+      background: transparent; height: 6px;
+    }
+    .dual-range-outer input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #4338ca; border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(67,56,202,0.45);
+      cursor: pointer; pointer-events: all; margin-top: -8px;
+    }
+    .dual-range-outer input[type=range]::-moz-range-thumb {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #4338ca; border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(67,56,202,0.45);
+      cursor: pointer; pointer-events: all;
+    }
+    .dual-range-outer input[type=range]:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 4px rgba(67,56,202,0.2), 0 2px 8px rgba(67,56,202,0.45);
+    }
+
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1e1b4b; color: white; padding: 12px 20px;
+      border-radius: 10px; font-size: 14px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      opacity: 0; transition: opacity 0.3s; z-index: 9999; pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { background: #991b1b; }
+  </style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div class="brand">AIS Dashboard <span>Admin Panel</span></div>
+  <div class="nav-actions">
+    <span class="nav-user" id="nav-user-email"></span>
+    <button class="btn-nav" onclick="location.href='table.html?service=IAS'">&#8592; Dashboard</button>
+    <button class="btn-nav" onclick="doSignOut()">Logout</button>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('dashboard',this)">&#128202; Dashboard</button>
+  <button class="tab-btn" onclick="showTab('data',this)">&#128196; Data Management</button>
+  <button class="tab-btn" onclick="showTab('users',this)">&#128101; Users</button>
+</div>
+
+<div class="content">
+
+  <!-- ============================================================
+       TAB 1: Dashboard
+       ============================================================ -->
+  <div class="tab-panel active" id="tab-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Active IAS Officers</div><div class="value" id="stat-ias">…</div></div>
+      <div class="stat-card"><div class="label">Active IPS Officers</div><div class="value" id="stat-ips">…</div></div>
+      <div class="stat-card"><div class="label">Active IFS Officers</div><div class="value" id="stat-ifs">…</div></div>
+      <div class="stat-card"><div class="label">Total Active Officers</div><div class="value" id="stat-total">…</div></div>
+      <div class="stat-card"><div class="label">Total Postings</div><div class="value" id="stat-postings">…</div></div>
+      <div class="stat-card"><div class="label">Admin Users</div><div class="value" id="stat-admins">…</div></div>
+    </div>
+    <p style="color:#64748b;font-size:14px;">Select a tab above to manage officers, postings, or users.</p>
+  </div>
+
+  <!-- ============================================================
+       TAB 2: Data Management — Officers + Postings
+       ============================================================ -->
+  <div class="tab-panel" id="tab-data">
+
+    <!-- Officers Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128100; Officers</h3>
+        <div class="toolbar">
+          <select id="svcFilter" onchange="loadOfficers()">
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+          <select id="retiredFilter" onchange="renderOfficers(1)" title="Filter by status">
+            <option value="active">Active Only</option>
+            <option value="retired">Retired Only</option>
+            <option value="transferred">Transferred from AP Only</option>
+            <option value="all">All Officers</option>
+          </select>
+          <input type="text" id="officerSearch" placeholder="Search name…" oninput="renderOfficers(1)" style="width:180px;">
+          <button class="btn btn-primary" onclick="openAddOfficerModal()">+ Add New Officer</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Seniority</th><th>Photo</th>
+              <th>Name of Officer</th><th>Cadre</th><th>Status</th><th>Current Posting</th>
+              <th style="width:280px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="officers-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="officers-pagination"></div>
+    </div>
+
+    <!-- Postings Section (hidden until officer is selected) -->
+    <div class="section-card" id="postings-section" style="display:none;">
+      <div class="section-header">
+        <h3>&#128203; Postings &mdash; <span id="selected-officer-name" style="color:#4338ca;"></span></h3>
+        <div class="toolbar">
+          <button class="btn btn-teal" onclick="openAddPostingModal()">+ Add Posting</button>
+          <button class="btn btn-ghost" onclick="closePostingsSection()">&#10006; Close</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Post Name</th><th>Department</th><th>Category</th>
+              <th>From</th><th>To</th><th>Duration</th><th>HCM</th>
+              <th style="width:110px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="postings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- #tab-data -->
+
+  <!-- ============================================================
+       TAB 3: Users
+       ============================================================ -->
+  <div class="tab-panel" id="tab-users">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128101; User Roles</h3>
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openUserModal()">+ Add User Role</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Email</th><th>Role</th><th style="width:120px;">Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .content -->
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- 1. Officer Modal (Add / Edit Officer) -->
+<div class="modal-overlay" id="officer-modal">
+  <div class="modal">
+    <h2 id="officer-modal-title">Add New Officer</h2>
+    <input type="hidden" id="ofr-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Service Type</label>
+        <select id="ofr-service_type">
+          <option>IAS</option><option>IPS</option><option>IFS</option>
+        </select>
+      </div>
+      <div class="form-group"><label>SLNO</label>
+        <input id="ofr-slno" type="number" min="1">
+      </div>
+      <div class="form-group"><label>Seniority No</label>
+        <input id="ofr-seniority_no" type="number" min="1">
+      </div>
+      <div class="form-group"><label>Identity No</label>
+        <input id="ofr-identity_no">
+      </div>
+      <div class="form-group full"><label>Name of Officer</label>
+        <input id="ofr-name_of_officer" placeholder="Full name">
+      </div>
+      <div class="form-group full"><label>Current Posting</label>
+        <input id="ofr-current_posting" placeholder="Present designation / office">
+      </div>
+      <div class="form-group"><label>Cadre</label>
+        <input id="ofr-cadre" placeholder="e.g. Chief Secretary">
+      </div>
+      <div class="form-group"><label>Allotment Year</label>
+        <input id="ofr-allotment_year" placeholder="e.g. 1995">
+      </div>
+      <div class="form-group"><label>Date of Appointment</label>
+        <input id="ofr-date_of_appointment" placeholder="DD-MM-YYYY">
+      </div>
+      <div class="form-group"><label>Date of Birth</label>
+        <input id="ofr-date_of_birth" placeholder="DD-MM-YYYY">
+      </div>
+      <div class="form-group"><label>Source of Recruitment</label>
+        <input id="ofr-source_of_recruitment" placeholder="e.g. Direct Recruit">
+      </div>
+      <div class="form-group"><label>Domicile</label>
+        <input id="ofr-domicile" placeholder="State / Region">
+      </div>
+      <div class="form-group full"><label>Educational Qualification</label>
+        <input id="ofr-educational_qualification" placeholder="Highest degree / institution">
+      </div>
+      <div class="form-group"><label>Email ID</label>
+        <input id="ofr-email_id" type="email" placeholder="officer@gov.in">
+      </div>
+      <div class="form-group"><label>Phone No</label>
+        <input id="ofr-phone_no" placeholder="+91 …">
+      </div>
+      <div class="form-group full"><label>Photo URL</label>
+        <input id="ofr-photo_url" type="url" placeholder="https://example.com/photo.jpg">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('officer-modal')">Cancel</button>
+      <button class="btn btn-success" onclick="saveOfficer()">&#10003; Save Officer</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Posting Modal (Add / Edit Posting) -->
+<div class="modal-overlay" id="posting-modal">
+  <div class="modal" style="max-width:620px;">
+    <h2 id="posting-modal-title">Add Posting</h2>
+    <input type="hidden" id="pst-id">
+    <input type="hidden" id="pst-officer-id">
+    <div class="officer-banner">
+      Officer: <strong id="pst-officer-display"></strong>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Post Name</label>
+        <input id="pst-post_name" placeholder="Designation / post title">
+      </div>
+      <div class="form-group"><label>Department</label>
+        <input id="pst-department" placeholder="e.g. FINANCE">
+      </div>
+      <div class="form-group"><label>Category</label>
+        <input id="pst-category" placeholder="e.g. FINANCE">
+      </div>
+      <div class="form-group"><label>From Date</label>
+        <input id="pst-from_date" placeholder="DD-MM-YYYY or YYYY-MM-DD" oninput="updatePostingDuration()">
+      </div>
+      <div class="form-group"><label>To Date <span style="font-weight:400;color:#64748b;">(blank = Present)</span></label>
+        <input id="pst-to_date" placeholder="blank = still serving" oninput="updatePostingDuration()">
+      </div>
+      <div class="form-group full" id="pst-duration-display" style="display:none;">
+        <label>Calculated Duration</label>
+        <div id="pst-duration-text" style="padding:9px 12px;background:#eef0fb;border-radius:8px;font-size:14px;font-weight:600;color:#1e1b4b;border:1.5px solid #c7d2fe;"></div>
+      </div>
+      <div class="form-group full"><label>HCM (Head Chief Minister during posting)</label>
+        <input id="pst-hcm" placeholder="e.g. Nara Chandrababu Naidu-4.0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('posting-modal')">Cancel</button>
+      <button class="btn btn-success" onclick="savePosting()">&#10003; Save Posting</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Transfer (Internal Posting Change) Modal -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal" style="max-width:620px;">
+    <h2>&#8646; Transfer Officer</h2>
+    <input type="hidden" id="tr-officer-id">
+    <input type="hidden" id="tr-service-type">
+    <div class="officer-banner">
+      Officer: <strong id="tr-officer-display"></strong>
+    </div>
+    <p style="font-size:12.5px;color:#64748b;margin-bottom:14px;">
+      The current posting with a blank To Date will have its To Date set to the From Date entered below.
+      A new posting will be created with the details below.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full"><label>New Post Name</label>
+        <input id="tr-post_name" placeholder="Designation / post title">
+      </div>
+      <div class="form-group"><label>Category</label>
+        <select id="tr-category" onchange="loadTransferDepts()">
+          <option value="">— Select Category —</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Department</label>
+        <select id="tr-department">
+          <option value="">— Select Department —</option>
+        </select>
+      </div>
+      <div class="form-group"><label>From Date</label>
+        <input id="tr-from_date" placeholder="DD-MM-YYYY or YYYY-MM-DD">
+      </div>
+      <div class="form-group"><label>HCM (optional)</label>
+        <input id="tr-hcm" placeholder="e.g. Nara Chandrababu Naidu-4.0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('transfer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTransfer()">&#8646; Save Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. User Role Modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:420px;">
+    <h2>Add / Update User Role</h2>
+    <div class="form-grid">
+      <div class="form-group full"><label>Email</label>
+        <input id="usr-email" type="email" placeholder="user@gov.in">
+      </div>
+      <div class="form-group full"><label>Role</label>
+        <select id="usr-role">
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-success" onclick="saveUserRole()">&#10003; Save Role</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ================================================================
+// Admin Panel — AIS Dashboard
+// ================================================================
+
+const PAGE_SIZE = 50;
+
+// ---- State ----
+let allOfficers      = [];   // officers for current service (cached)
+let currentPostings  = [];   // postings for selected officer
+let selectedOfficer  = null; // { id, name }
+let lastSvc          = '';
+
+// ================================================================
+// Auth Guard
+// ================================================================
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+
+  document.getElementById('nav-user-email').textContent = session.user.email;
+
+  const admin = await isAdmin();
+  if (!admin) {
+    document.querySelector('.tab-bar').style.display = 'none';
+    document.querySelector('.content').innerHTML = `
+      <div style="max-width:640px;margin:60px auto;background:white;border-radius:16px;
+                  padding:36px;box-shadow:0 4px 24px rgba(67,56,202,0.15);border:2px solid #c7d2fe;">
+        <h2 style="color:#1e1b4b;margin-bottom:12px;">&#128274; Admin Access Required</h2>
+        <p style="color:#374151;margin-bottom:16px;">
+          Your account (<strong>${esc(session.user.email)}</strong>) does not have admin privileges.
+        </p>
+        <h3 style="color:#1e1b4b;margin-bottom:10px;">Setup Steps</h3>
+        <ol style="color:#374151;line-height:2;padding-left:20px;">
+          <li>Go to your <strong>Supabase project → SQL Editor</strong></li>
+          <li>Run <code>supabase_schema.sql</code> (if not done already)</li>
+          <li>Grant yourself admin access:</li>
+        </ol>
+        <pre style="background:#1e1b4b;color:#e0e7ff;padding:16px;border-radius:10px;
+                    font-size:13px;margin:12px 0;overflow-x:auto;"><code>INSERT INTO public.user_roles (email, role)
+VALUES ('${esc(session.user.email)}', 'admin')
+ON CONFLICT (email) DO UPDATE SET role = 'admin';</code></pre>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button onclick="location.reload()" class="btn btn-primary">&#8635; Refresh Page</button>
+          <button onclick="window.location.href='index.html'" class="btn btn-ghost">Back to Login</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  loadDashboard();
+})();
+
+async function doSignOut() { await signOut(); }
+
+// ================================================================
+// Tab Switching
+// ================================================================
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'data')  loadOfficers();
+  if (name === 'users') loadUsers();
+}
+
+// ================================================================
+// Dashboard Stats
+// ================================================================
+async function loadDashboard() {
+  const svcs = { IAS: 'stat-ias', IPS: 'stat-ips', IFS: 'stat-ifs' };
+  let total = 0;
+  for (const [svc, elId] of Object.entries(svcs)) {
+    const { count } = await _supabase.from('officers')
+      .select('*', { count: 'exact', head: true })
+      .eq('service_type', svc)
+      .eq('is_retired', false)
+      .eq('is_transferred_from_ap', false);
+    document.getElementById(elId).textContent = (count || 0).toLocaleString();
+    total += count || 0;
+  }
+  document.getElementById('stat-total').textContent = total.toLocaleString();
+
+  const { count: postCount } = await _supabase.from('officer_postings')
+    .select('*', { count: 'exact', head: true });
+  document.getElementById('stat-postings').textContent = (postCount || 0).toLocaleString();
+
+  const { count: adminCount } = await _supabase.from('user_roles')
+    .select('*', { count: 'exact', head: true }).eq('role', 'admin');
+  document.getElementById('stat-admins').textContent = (adminCount || 0).toLocaleString();
+}
+
+// ================================================================
+// Officers — Load & Render
+// ================================================================
+async function loadOfficers() {
+  const svc = document.getElementById('svcFilter').value;
+  if (svc === lastSvc && allOfficers.length) { renderOfficers(1); return; }
+  lastSvc = svc;
+
+  const tbody = document.getElementById('officers-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading officers…</td></tr>';
+  closePostingsSection();
+
+  try {
+    const { data, error } = await _supabase
+      .from('officers')
+      .select('*')
+      .eq('service_type', svc)
+      .order('seniority_no', { ascending: true });
+    if (error) throw error;
+    allOfficers = data || [];
+    renderOfficers(1);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
+    showToast('Error loading officers: ' + err.message, true);
+  }
+}
+
+function renderOfficers(page) {
+  const search        = document.getElementById('officerSearch').value.trim().toLowerCase();
+  const retiredFilter = document.getElementById('retiredFilter').value; // 'all'|'active'|'retired'
+
+  let filtered = allOfficers;
+  if (retiredFilter === 'active')      filtered = filtered.filter(o => !o.is_retired && !o.is_transferred_from_ap);
+  if (retiredFilter === 'retired')     filtered = filtered.filter(o => !!o.is_retired);
+  if (retiredFilter === 'transferred') filtered = filtered.filter(o => !!o.is_transferred_from_ap);
+  if (search) filtered = filtered.filter(o => (o.name_of_officer || '').toLowerCase().includes(search));
+
+  const total    = filtered.length;
+  const pageData = filtered.slice(((page || 1) - 1) * PAGE_SIZE, (page || 1) * PAGE_SIZE);
+
+  document.getElementById('officers-tbody').innerHTML = pageData.map(o => {
+    const isSelected      = selectedOfficer && selectedOfficer.id === o.id;
+    const isRetired       = !!o.is_retired;
+    const isTransferredAP = !!o.is_transferred_from_ap;
+    const photoHtml = o.photo_url
+      ? `<img src="${esc(o.photo_url)}" class="photo-thumb" onerror="this.style.display='none'" alt="Photo">`
+      : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+
+    let statusBadge;
+    if (isRetired) {
+      statusBadge = '<span style="background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">&#9632; RETIRED</span>';
+    } else if (isTransferredAP) {
+      statusBadge = '<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">&#8646; TRANS. FROM AP</span>';
+    } else {
+      statusBadge = '<span style="background:#dcfce7;color:#166534;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;">&#9654; ACTIVE</span>';
+    }
+
+    const retireBtn = isRetired
+      ? `<button class="btn btn-success btn-sm" onclick="markRetired(${o.id},false)" title="Restore to Active">&#8635; Restore</button>`
+      : `<button class="btn btn-danger btn-sm" onclick="markRetired(${o.id},true)" title="Mark as Retired">&#9632; Retire</button>`;
+
+    const transferAPBtn = isTransferredAP
+      ? `<button class="btn btn-success btn-sm" onclick="markTransferredFromAP(${o.id},false)" title="Restore to Active">&#8635; Restore</button>`
+      : `<button class="btn btn-amber btn-sm" onclick="markTransferredFromAP(${o.id},true)" title="Mark as Transferred from AP">&#8646; Trans.AP</button>`;
+
+    const rowOpacity = (isRetired || isTransferredAP) ? 'opacity:0.55;' : '';
+
+    return `<tr id="ofr-row-${o.id}" class="${isSelected ? 'selected' : ''}" style="${rowOpacity}">
+      <td style="font-weight:700;color:#4338ca;">${esc(o.seniority_no ?? '')}</td>
+      <td>${photoHtml}</td>
+      <td style="font-weight:600;">${esc(o.name_of_officer ?? '')}</td>
+      <td style="font-size:12px;">${esc(o.cadre ?? '')}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px;word-break:break-word;">${esc(o.current_posting ?? '')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-amber btn-sm" onclick='openEditOfficerModal(${JSON.stringify(o)})' title="Edit Officer">&#9998; Edit</button>
+        <button class="btn btn-primary btn-sm" onclick='openTransferModal(${o.id},"${esc(o.name_of_officer ?? '')}","${esc(o.service_type ?? '')}")' title="Transfer (Internal Posting Change)">&#8646; Transfer</button>
+        ${retireBtn}
+        ${transferAPBtn}
+        <button class="btn btn-teal btn-sm" onclick='selectOfficer(${o.id},"${esc(o.name_of_officer ?? '')}")' title="Manage Postings">&#128203;</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderOfficersPagination(total, page || 1);
+}
+
+async function markRetired(officerId, retire) {
+  const label = retire ? 'retire' : 'restore';
+  if (!confirm(`Are you sure you want to ${label} this officer?`)) return;
+  const { error } = await _supabase.from('officers')
+    .update({ is_retired: retire })
+    .eq('id', officerId);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast(retire ? 'Officer marked as Retired.' : 'Officer restored to Active.');
+  // Update local cache without full reload
+  const idx = allOfficers.findIndex(o => o.id === officerId);
+  if (idx >= 0) allOfficers[idx].is_retired = retire;
+  renderOfficers(1);
+  // Close postings panel if this was the selected officer
+  if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+}
+
+function renderOfficersPagination(total, page) {
+  const pages = Math.ceil(total / PAGE_SIZE) || 1;
+  const el    = document.getElementById('officers-pagination');
+  let html    = `<span class="info">Total: ${total.toLocaleString()} officers | Page ${page} of ${pages}</span>`;
+  if (page > 1) html += `<button onclick="renderOfficers(${page - 1})">&#8592; Prev</button>`;
+  const start = Math.max(1, page - 2);
+  const end   = Math.min(pages, page + 2);
+  for (let i = start; i <= end; i++)
+    html += `<button class="${i === page ? 'active' : ''}" onclick="renderOfficers(${i})">${i}</button>`;
+  if (page < pages) html += `<button onclick="renderOfficers(${page + 1})">Next &#8594;</button>`;
+  el.innerHTML = html;
+}
+
+// ================================================================
+// Officer Modal — Add
+// ================================================================
+function openAddOfficerModal() {
+  document.getElementById('officer-modal-title').textContent = 'Add New Officer';
+  document.getElementById('ofr-id').value = '';
+  const svc = document.getElementById('svcFilter').value;
+  document.getElementById('ofr-service_type').value = svc;
+  ['slno','seniority_no','identity_no','name_of_officer','current_posting','cadre',
+   'allotment_year','date_of_appointment','date_of_birth','source_of_recruitment',
+   'domicile','educational_qualification','email_id','phone_no','photo_url'].forEach(f => {
+    const el = document.getElementById('ofr-' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('officer-modal').classList.add('open');
+}
+
+// ================================================================
+// Officer Modal — Edit
+// ================================================================
+function openEditOfficerModal(o) {
+  document.getElementById('officer-modal-title').textContent = 'Edit Officer — ' + esc(o.name_of_officer ?? '');
+  document.getElementById('ofr-id').value                    = o.id ?? '';
+  document.getElementById('ofr-service_type').value          = o.service_type ?? 'IAS';
+  document.getElementById('ofr-slno').value                  = o.slno ?? '';
+  document.getElementById('ofr-seniority_no').value          = o.seniority_no ?? '';
+  document.getElementById('ofr-identity_no').value           = o.identity_no ?? '';
+  document.getElementById('ofr-name_of_officer').value       = o.name_of_officer ?? '';
+  document.getElementById('ofr-current_posting').value       = o.current_posting ?? '';
+  document.getElementById('ofr-cadre').value                 = o.cadre ?? '';
+  document.getElementById('ofr-allotment_year').value        = o.allotment_year ?? '';
+  document.getElementById('ofr-date_of_appointment').value   = o.date_of_appointment ?? '';
+  document.getElementById('ofr-date_of_birth').value         = o.date_of_birth ?? '';
+  document.getElementById('ofr-source_of_recruitment').value = o.source_of_recruitment ?? '';
+  document.getElementById('ofr-domicile').value              = o.domicile ?? '';
+  document.getElementById('ofr-educational_qualification').value = o.educational_qualification ?? '';
+  document.getElementById('ofr-email_id').value              = o.email_id ?? '';
+  document.getElementById('ofr-phone_no').value              = o.phone_no ?? '';
+  document.getElementById('ofr-photo_url').value             = o.photo_url ?? '';
+  document.getElementById('officer-modal').classList.add('open');
+}
+
+// ================================================================
+// Officer Modal — Save (Insert or Update)
+// ================================================================
+async function saveOfficer() {
+  const officerId = document.getElementById('ofr-id').value;
+
+  const payload = {
+    service_type:              document.getElementById('ofr-service_type').value,
+    slno:                      numVal('ofr-slno'),
+    seniority_no:              numVal('ofr-seniority_no'),
+    identity_no:               strVal('ofr-identity_no'),
+    name_of_officer:           strVal('ofr-name_of_officer'),
+    current_posting:           strVal('ofr-current_posting'),
+    cadre:                     strVal('ofr-cadre'),
+    allotment_year:            strVal('ofr-allotment_year'),
+    date_of_appointment:       strVal('ofr-date_of_appointment'),
+    date_of_birth:             strVal('ofr-date_of_birth'),
+    source_of_recruitment:     strVal('ofr-source_of_recruitment'),
+    domicile:                  strVal('ofr-domicile'),
+    educational_qualification: strVal('ofr-educational_qualification'),
+    email_id:                  strVal('ofr-email_id'),
+    phone_no:                  strVal('ofr-phone_no'),
+    photo_url:                 strVal('ofr-photo_url') || null
+  };
+
+  if (!payload.name_of_officer) { showToast('Name of Officer is required.', true); return; }
+  if (!payload.seniority_no)    { showToast('Seniority No is required.', true); return; }
+
+  if (officerId) {
+    // Update existing officer
+    const { error } = await _supabase.from('officers').update(payload).eq('id', officerId);
+    if (error) { showToast('Error: ' + error.message, true); return; }
+    showToast('Officer updated successfully.');
+  } else {
+    // Insert new officer
+    const { error } = await _supabase.from('officers')
+      .upsert(payload, { onConflict: 'service_type,seniority_no' });
+    if (error) { showToast('Error: ' + error.message, true); return; }
+    showToast('Officer added successfully.');
+  }
+
+  closeModal('officer-modal');
+  lastSvc = '';         // force reload
+  await loadOfficers();
+
+  // If the edited officer is the currently selected one, refresh postings panel header
+  if (selectedOfficer && officerId && selectedOfficer.id == officerId) {
+    selectedOfficer.name = payload.name_of_officer;
+    document.getElementById('selected-officer-name').textContent = payload.name_of_officer;
+  }
+}
+
+// ================================================================
+// Postings — Select Officer → Load Postings
+// ================================================================
+async function selectOfficer(officerId, officerName) {
+  selectedOfficer = { id: officerId, name: officerName };
+
+  // Highlight selected row
+  document.querySelectorAll('#officers-tbody tr').forEach(r => r.classList.remove('selected'));
+  const row = document.getElementById('ofr-row-' + officerId);
+  if (row) {
+    row.classList.add('selected');
+    row.scrollIntoView({ block: 'nearest' });
+  }
+
+  document.getElementById('selected-officer-name').textContent = officerName;
+  document.getElementById('postings-section').style.display = 'block';
+
+  const tbody = document.getElementById('postings-tbody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#6366f1;">&#8987; Loading postings…</td></tr>';
+
+  try {
+    const { data, error } = await _supabase
+      .from('officer_postings')
+      .select('*')
+      .eq('officer_id', officerId)
+      .order('from_date', { ascending: false });
+    if (error) throw error;
+    currentPostings = data || [];
+    renderPostings();
+
+    // Scroll to postings section
+    document.getElementById('postings-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="9" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
+    showToast('Error loading postings: ' + err.message, true);
+  }
+}
+
+function renderPostings() {
+  if (!currentPostings.length) {
+    document.getElementById('postings-tbody').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;padding:20px;color:#64748b;">No postings found. Click <strong>+ Add Posting</strong> to add one.</td></tr>';
+    return;
+  }
+
+  document.getElementById('postings-tbody').innerHTML = currentPostings.map((p, i) => `
+    <tr>
+      <td style="color:#94a3b8;font-size:12px;">${i + 1}</td>
+      <td style="font-weight:600;">${esc(p.post_name ?? '')}</td>
+      <td>${esc(p.department ?? '')}</td>
+      <td>${esc(p.category ?? '')}</td>
+      <td>${esc(p.from_date ?? '')}</td>
+      <td>${p.to_date ? esc(p.to_date) : '<em style="color:#64748b;">Present</em>'}</td>
+      <td style="font-size:12px;color:#1e1b4b;">${fmtDuration(p.from_date, p.to_date)}</td>
+      <td style="font-size:12px;">${esc(p.hcm ?? '')}</td>
+      <td>
+        <button class="btn btn-amber btn-sm" onclick='openEditPostingModal(${JSON.stringify(p)})' title="Edit Posting">&#9998; Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePosting(${p.id})" title="Delete Posting">&#128465;</button>
+      </td>
+    </tr>`).join('');
+}
+
+function closePostingsSection() {
+  selectedOfficer = null;
+  currentPostings = [];
+  document.getElementById('postings-section').style.display = 'none';
+  document.querySelectorAll('#officers-tbody tr').forEach(r => r.classList.remove('selected'));
+}
+
+// ================================================================
+// Posting Modal — Add
+// ================================================================
+function openAddPostingModal() {
+  if (!selectedOfficer) { showToast('Please select an officer first.', true); return; }
+  document.getElementById('posting-modal-title').textContent  = 'Add Posting';
+  document.getElementById('pst-id').value                     = '';
+  document.getElementById('pst-officer-id').value             = selectedOfficer.id;
+  document.getElementById('pst-officer-display').textContent  = selectedOfficer.name;
+  ['post_name','department','category','from_date','to_date','hcm'].forEach(f => {
+    const el = document.getElementById('pst-' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('posting-modal').classList.add('open');
+}
+
+// ================================================================
+// Posting Modal — Edit
+// ================================================================
+function openEditPostingModal(p) {
+  document.getElementById('posting-modal-title').textContent  = 'Edit Posting';
+  document.getElementById('pst-id').value                     = p.id ?? '';
+  document.getElementById('pst-officer-id').value             = p.officer_id ?? '';
+  document.getElementById('pst-officer-display').textContent  = selectedOfficer ? selectedOfficer.name : '';
+  document.getElementById('pst-post_name').value              = p.post_name   ?? '';
+  document.getElementById('pst-department').value             = p.department  ?? '';
+  document.getElementById('pst-category').value               = p.category    ?? '';
+  document.getElementById('pst-from_date').value              = p.from_date   ?? '';
+  document.getElementById('pst-to_date').value                = p.to_date     ?? '';
+  document.getElementById('pst-hcm').value                    = p.hcm         ?? '';
+  updatePostingDuration();
+  document.getElementById('posting-modal').classList.add('open');
+}
+
+// ================================================================
+// Posting Modal — Save (Insert or Update)
+// ================================================================
+async function savePosting() {
+  const postingId  = document.getElementById('pst-id').value;
+  const officerId  = document.getElementById('pst-officer-id').value;
+  const svc        = document.getElementById('svcFilter').value;
+
+  if (!officerId) { showToast('No officer selected.', true); return; }
+
+  const fromDate = strVal('pst-from_date') || null;
+  const toDate   = strVal('pst-to_date')   || null;
+
+  const payload = {
+    officer_id:   parseInt(officerId),
+    service_type: svc,
+    post_name:    strVal('pst-post_name'),
+    department:   strVal('pst-department'),
+    category:     strVal('pst-category'),
+    from_date:    fromDate,
+    to_date:      toDate,
+    hcm:          strVal('pst-hcm')
+  };
+
+  if (!payload.post_name) { showToast('Post Name is required.', true); return; }
+
+  if (postingId) {
+    // Update existing posting
+    const { error } = await _supabase.from('officer_postings').update(payload).eq('id', postingId);
+    if (error) { showToast('Error: ' + error.message, true); return; }
+    showToast('Posting updated successfully.');
+  } else {
+    // Insert new posting
+    const { error } = await _supabase.from('officer_postings').insert(payload);
+    if (error) { showToast('Error: ' + error.message, true); return; }
+    showToast('Posting added successfully.');
+  }
+
+  closeModal('posting-modal');
+  // Reload postings for current officer
+  if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+}
+
+// ================================================================
+// Posting — Delete
+// ================================================================
+async function deletePosting(id) {
+  if (!confirm('Delete this posting record? This cannot be undone.')) return;
+  const { error } = await _supabase.from('officer_postings').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('Posting deleted.');
+  if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+}
+
+// ================================================================
+// Users
+// ================================================================
+async function loadUsers() {
+  const { data, error } = await _supabase.from('user_roles').select('*').order('email');
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  document.getElementById('users-tbody').innerHTML = (data || []).map(u => `
+    <tr>
+      <td>${esc(u.email)}</td>
+      <td><span class="badge ${u.role}">${u.role}</span></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteUserRole(${u.id})">Remove</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openUserModal() {
+  document.getElementById('usr-email').value = '';
+  document.getElementById('usr-role').value  = 'user';
+  document.getElementById('user-modal').classList.add('open');
+}
+
+async function saveUserRole() {
+  const email = document.getElementById('usr-email').value.trim().toLowerCase();
+  const role  = document.getElementById('usr-role').value;
+  if (!email) { showToast('Email is required.', true); return; }
+  const { error } = await _supabase.from('user_roles')
+    .upsert({ email, role }, { onConflict: 'email' });
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('User role saved.');
+  closeModal('user-modal');
+  loadUsers();
+}
+
+async function deleteUserRole(id) {
+  if (!confirm('Remove this user role?')) return;
+  const { error } = await _supabase.from('user_roles').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('User role removed.');
+  loadUsers();
+}
+
+// ================================================================
+// Mark Transferred from AP
+// ================================================================
+async function markTransferredFromAP(officerId, transferred) {
+  const label = transferred ? 'mark as Transferred from AP' : 'restore to Active';
+  if (!confirm(`Are you sure you want to ${label} this officer?`)) return;
+  const { error } = await _supabase.from('officers')
+    .update({ is_transferred_from_ap: transferred })
+    .eq('id', officerId);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast(transferred ? 'Officer marked as Transferred from AP.' : 'Officer restored to Active.');
+  const idx = allOfficers.findIndex(o => o.id === officerId);
+  if (idx >= 0) allOfficers[idx].is_transferred_from_ap = transferred;
+  renderOfficers(1);
+  if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+}
+
+// ================================================================
+// Transfer Modal — Internal Posting Change
+// ================================================================
+
+// Embedded department config (mirrors script_table.js ALL_CONFIGS)
+const ALL_DEPT_CONFIG = {
+  IAS: {
+    categoryOrder: [
+      "AGRICULTURE & ALLIED","ENERGY, INFRA & INDUSTRIES","FINANCE",
+      "IT & OTHER TECH","LOCAL BODIES ADMINISTRATION","REGULATORY",
+      "WELFARE & DEVELOPMENT","PERSONAL OFFICE","DISTRICT ADMINISTRATION",
+      "PROBATION, TRAINING , LEAVE, COMPULSORY WAIT ETC"
+    ],
+    departments: {
+      "AGRICULTURE & ALLIED": ["AGRICULTURE","AH,FISHERIES ETC","HORTICULTURE"],
+      "ENERGY, INFRA & INDUSTRIES": ["ENERGY","INDUSTRIES & INFRASTRUCTURE","HANDLOOM & TEXTILES","WATER RESOURCE","ROADS & BUILDINGS","TOURISM"],
+      "FINANCE": ["FINANCE","COMMERCIAL TAX"],
+      "IT & OTHER TECH": ["APSFL","APTS","E-SEVA","IT & ELECTRONICS","RTGS"],
+      "LOCAL BODIES ADMINISTRATION": ["MAUD","CRDA & AMRDA","MUNICIPAL COMMISSIONER","PR & RD","GSWS"],
+      "REGULATORY": ["PLANNING","GAD","REVENUE (LANDS)","ENDOWMENT","TTD","PROHIBITION & EXCISE","STAMPS & REGISTRATION","DISASTER MANAGEMENT","MINES & GEOLOGY","COE & APVC","EFST","ELECTION COMMISION","LABOUR","TRANSPORT"],
+      "WELFARE & DEVELOPMENT": ["WELFARE","EDUCATION","HEALTH","SKILL DEVELOPMENT","FOOD & CIVIL SUPPLIES","HOUSING","YOUTH, SPORTS & CULTURE"],
+      "PERSONAL OFFICE": ["GOVERNORS OFFICE","PRIME MINISTERS OFFICE","CHIEF MINISTERS OFFICE"],
+      "DISTRICT ADMINISTRATION": ["DISTRICT COLLECTOR","JOINT COLLECTOR","SUB COLLECTOR","PO ITDA","ASSISTANT COLLECTOR (TRAINEE)","OTHER DIST POSTS"],
+      "PROBATION, TRAINING , LEAVE, COMPULSORY WAIT ETC": ["PROBATION & TRAINING","COMPULSORY WAIT","LEAVE"]
+    }
+  },
+  IPS: {
+    categoryOrder: [
+      "TRADITIONAL POLICE AGENCIES","INVESTIGATING AGENCIES","KEY COUNTER AGENCIES",
+      "POLICE PERSONNEL MANAGEMENT","ELITE AGENCIES","OTHERS AGENCIES","PERSONAL OFFICES"
+    ],
+    departments: {
+      "TRADITIONAL POLICE AGENCIES": ["LAW AND ORDER","RAILWAYS","ROAD SAFETY & TRANSPORT DEPT","TRAFFIC"],
+      "INVESTIGATING AGENCIES": ["ANTI CORRUPTION BUREAU","CRIMES & CRIME INVESTIGATION DEPARTMENT","CYBER CRIMES & TECHNICAL","VIGILANCE & ENFORCEMENT"],
+      "KEY COUNTER AGENCIES": ["COASTAL SECURITY","GREYHOUNDS","INTELLIGENCE","OCTOPUS & OPERATIONS","PROHIBITION & EXCISE AND SEB"],
+      "POLICE PERSONNEL MANAGEMENT": ["ADMINISTRATION WING","POLICE RECRUITMENT & TRAINING WINGS"],
+      "ELITE AGENCIES": ["CENTRAL BUREAU OF INVESTIGATION","INTELLIGENCE BUREAU","NATIONAL INVESTIGATION AGENCY","UNITED NATIONS ORGANISATION"],
+      "OTHERS AGENCIES": ["OTHER NON UNIFORM POSTS","OTHER UNIFORM POSTS","PROBATION & TRAINING","SPECIAL POLICE","TTD"],
+      "PERSONAL OFFICES": ["CHIEF MINISTERS OFFICE","GOVERNORS OFFICER","PRIME MINISTERS OFFICE"]
+    }
+  },
+  IFS: {
+    categoryOrder: [
+      "TRADITIONAL FOREST SERVICE","FOREST & PLANTS DEVELOPMENT SERVICE",
+      "ANIMAL PROTECTION AND CARE SERVICES","RESEARCH & TECHNICAL",
+      "ELITE INSTITUTIONS","NON FOREST DEPTS"
+    ],
+    departments: {
+      "TRADITIONAL FOREST SERVICE": ["TERRITORIAL","PLANNING","VIGILLANCE","OTHER ADMINISTRATIVE ROLES"],
+      "FOREST & PLANTS DEVELOPMENT SERVICE": ["FOREST DEVELOPMENT CORPORATION","SILVICULTURE","SOCIAL FORESTRY","PRODUCTION","RED SANDERS"],
+      "ANIMAL PROTECTION AND CARE SERVICES": ["PROJECT TIGER","WILD LIFE","ZOO PARKS"],
+      "RESEARCH & TECHNICAL": ["GIS & OTHER TECHNICAL","RESEARCH"],
+      "ELITE INSTITUTIONS": ["FOREST SURVEY OF INDIA","ICFRE"],
+      "NON FOREST DEPTS": ["AGRICULTURE DEPT","EDUCATION","ENERGY","FINANCE","GSWS","HEALTH","HOUSING","INDUSTRIES","IT & ELECTRONICS","MAUD","PLANNING DEPT","PR & RD","SOCIAL WELFARE","TOURISM","TTD"]
+    }
+  }
+};
+
+function openTransferModal(officerId, officerName, serviceType) {
+  document.getElementById('tr-officer-id').value       = officerId;
+  document.getElementById('tr-service-type').value     = serviceType;
+  document.getElementById('tr-officer-display').textContent = officerName;
+  document.getElementById('tr-post_name').value        = '';
+  document.getElementById('tr-from_date').value        = '';
+  document.getElementById('tr-hcm').value              = '';
+
+  // Populate category dropdown
+  const cfg = ALL_DEPT_CONFIG[serviceType] || ALL_DEPT_CONFIG.IAS;
+  const catSel = document.getElementById('tr-category');
+  catSel.innerHTML = '<option value="">— Select Category —</option>' +
+    cfg.categoryOrder.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+  // Reset department dropdown
+  document.getElementById('tr-department').innerHTML = '<option value="">— Select Department —</option>';
+
+  document.getElementById('transfer-modal').classList.add('open');
+}
+
+function loadTransferDepts() {
+  const svc = document.getElementById('tr-service-type').value;
+  const cat = document.getElementById('tr-category').value;
+  const cfg = ALL_DEPT_CONFIG[svc] || ALL_DEPT_CONFIG.IAS;
+  const depts = (cat && cfg.departments[cat]) || [];
+  document.getElementById('tr-department').innerHTML =
+    '<option value="">— Select Department —</option>' +
+    depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+}
+
+async function saveTransfer() {
+  const officerId   = document.getElementById('tr-officer-id').value;
+  const svc         = document.getElementById('tr-service-type').value;
+  const postName    = (document.getElementById('tr-post_name').value || '').trim();
+  const category    = document.getElementById('tr-category').value;
+  const department  = document.getElementById('tr-department').value;
+  const fromDate    = (document.getElementById('tr-from_date').value || '').trim() || null;
+  const hcm         = (document.getElementById('tr-hcm').value || '').trim() || null;
+
+  if (!postName)   { showToast('Post Name is required.', true); return; }
+  if (!fromDate)   { showToast('From Date is required.', true); return; }
+
+  // Step 1 — close any open posting (blank to_date) by setting its to_date = fromDate
+  const { data: openPostings, error: fetchErr } = await _supabase
+    .from('officer_postings')
+    .select('id')
+    .eq('officer_id', officerId)
+    .is('to_date', null);
+
+  if (fetchErr) { showToast('Error fetching postings: ' + fetchErr.message, true); return; }
+
+  if (openPostings && openPostings.length > 0) {
+    for (const p of openPostings) {
+      const { error: upErr } = await _supabase
+        .from('officer_postings')
+        .update({ to_date: fromDate })
+        .eq('id', p.id);
+      if (upErr) { showToast('Error updating existing posting: ' + upErr.message, true); return; }
+    }
+  }
+
+  // Step 2 — insert new posting
+  const { error: insErr } = await _supabase.from('officer_postings').insert({
+    officer_id:   parseInt(officerId),
+    service_type: svc,
+    post_name:    postName,
+    category:     category || null,
+    department:   department || null,
+    from_date:    fromDate,
+    to_date:      null,
+    hcm:          hcm
+  });
+  if (insErr) { showToast('Error creating new posting: ' + insErr.message, true); return; }
+
+  // Step 3 — update officer's current_posting field
+  await _supabase.from('officers').update({ current_posting: postName }).eq('id', officerId);
+
+  // Update local cache
+  const idx = allOfficers.findIndex(o => o.id == officerId);
+  if (idx >= 0) allOfficers[idx].current_posting = postName;
+
+  showToast('Transfer saved — new posting created.');
+  closeModal('transfer-modal');
+  if (selectedOfficer && selectedOfficer.id == officerId) {
+    await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+  }
+  renderOfficers(1);
+}
+
+// ================================================================
+// Duration Helpers
+// ================================================================
+function parseServiceDate(s) {
+  if (!s || !s.trim()) return new Date();
+  s = s.trim();
+  let m;
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  const d = new Date(s);
+  return isNaN(d) ? new Date() : d;
+}
+
+function fmtDuration(fromStr, toStr) {
+  if (!fromStr || !String(fromStr).trim()) return '';
+  const from = parseServiceDate(fromStr);
+  const to   = (toStr && String(toStr).trim()) ? parseServiceDate(toStr) : new Date();
+  let yy = to.getFullYear() - from.getFullYear();
+  let mm = to.getMonth()    - from.getMonth();
+  let dd = to.getDate()     - from.getDate();
+  if (dd < 0) { mm--; dd += new Date(to.getFullYear(), to.getMonth(), 0).getDate(); }
+  if (mm < 0) { yy--; mm += 12; }
+  if (yy < 0) return '';
+  return `${yy} Yr${yy !== 1 ? 's' : ''} ${mm} Mo ${dd} Day${dd !== 1 ? 's' : ''}`;
+}
+
+function calcDecimalYears(fromStr, toStr) {
+  if (!fromStr || !String(fromStr).trim()) return null;
+  const from = parseServiceDate(fromStr);
+  const to   = (toStr && String(toStr).trim()) ? parseServiceDate(toStr) : new Date();
+  const diffMs = to - from;
+  if (diffMs <= 0) return 0;
+  return parseFloat((diffMs / (365.25 * 24 * 3600 * 1000)).toFixed(4));
+}
+
+function updatePostingDuration() {
+  const from = document.getElementById('pst-from_date')?.value;
+  const to   = document.getElementById('pst-to_date')?.value;
+  const dur  = fmtDuration(from, to);
+  const el   = document.getElementById('pst-duration-display');
+  const txt  = document.getElementById('pst-duration-text');
+  if (dur && el && txt) {
+    txt.textContent = dur;
+    el.style.display = '';
+  } else if (el) {
+    el.style.display = 'none';
+  }
+}
+
+// ================================================================
+// Helpers
+// ================================================================
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function esc(t) {
+  return String(t ?? '').replace(/[&<>"']/g, m =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+}
+function strVal(id) {
+  const v = (document.getElementById(id)?.value ?? '').trim();
+  return v || null;
+}
+function numVal(id) {
+  const v = parseInt(document.getElementById(id)?.value);
+  return isNaN(v) ? null : v;
+}
+function floatVal(id) {
+  const v = parseFloat(document.getElementById(id)?.value);
+  return isNaN(v) ? null : v;
+}
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', isError);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

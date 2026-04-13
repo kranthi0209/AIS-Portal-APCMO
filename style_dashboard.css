@@ -1,0 +1,605 @@
+/* ================================================================
+   style_dashboard.css — AIS Dashboard  |  "Indigo & Amber" theme
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+/* ----------------------------------------------------------------
+   Reset & Base
+   ---------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background-color: #eef0fb;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* ----------------------------------------------------------------
+   Header
+   ---------------------------------------------------------------- */
+header {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+  color: #ede9fe;
+  padding: 8px 24px;
+  text-align: center;
+  font-size: clamp(20px, 2.8vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  box-shadow: 0 4px 16px rgba(30, 27, 75, 0.45);
+  line-height: 1.25;
+}
+
+/* ----------------------------------------------------------------
+   Navigation Button Bar
+   ---------------------------------------------------------------- */
+.nav-bar {
+  text-align: center;
+  margin: 0 0 6px;
+  padding: 6px 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(30, 27, 75, 0.12);
+  border-bottom: 2px solid #c7d2fe;
+}
+.nav-bar-inner {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2px 0;
+}
+
+/* ----------------------------------------------------------------
+   Animated Buttons  (float-up instead of heartbeat)
+   ---------------------------------------------------------------- */
+@keyframes float-up {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-4px); }
+}
+
+.animated-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  padding: 0 18px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  height: 36px;
+  color: white;
+  cursor: pointer;
+  animation: float-up 2.8s infinite ease-in-out;
+  transition: box-shadow 0.2s, transform 0.15s, filter 0.2s;
+  margin: 3px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  letter-spacing: 0.2px;
+}
+.animated-button:hover {
+  transform: translateY(-3px) scale(1.04) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+  filter: brightness(1.1);
+  animation-play-state: paused;
+}
+.animated-button i { margin-right: 7px; flex-shrink: 0; }
+
+/* Button colour palette — completely new */
+.animated-button.blue    { background: linear-gradient(135deg, #4f46e5, #3730a3); }   /* indigo   */
+.animated-button.black   { background: linear-gradient(135deg, #334155, #0f172a); }   /* slate    */
+.animated-button.mustard { background: linear-gradient(135deg, #d97706, #92400e); }   /* amber    */
+.animated-button.red     { background: linear-gradient(135deg, #dc2626, #991b1b); }   /* red      */
+.animated-button.green   { background: linear-gradient(135deg, #059669, #065f46); }   /* emerald  */
+.animated-button.purple  { background: linear-gradient(135deg, #7c3aed, #4c1d95); }   /* violet   */
+.animated-button.darkred { background: linear-gradient(135deg, #b91c1c, #450a0a); }   /* crimson  */
+.animated-button.teal    { background: linear-gradient(135deg, #0891b2, #0e7490); }   /* cyan     */
+.animated-button.yellow  { background: linear-gradient(135deg, #ca8a04, #713f12); }
+
+/* ----------------------------------------------------------------
+   Cadre Legend (table view)
+   ---------------------------------------------------------------- */
+.legend {
+  margin: 0 0 4px;
+  padding: 5px 14px;
+  background: #ffffff;
+  z-index: 9;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid #c7d2fe;
+}
+.legend span {
+  padding: 3px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* ----------------------------------------------------------------
+   Cadre Row Colours
+   ---------------------------------------------------------------- */
+.cadre-CHIEF-SECRETARY         { background-color: #bbf7d0; }
+.cadre-SPECIAL-CHIEF-SECRETARY { background-color: #fecdd3; }
+.cadre-PRINCIPAL-SECRETARY     { background-color: #dbeafe; }
+.cadre-SECRETARY               { background-color: #fae8ff; }
+.cadre-OTHERS                  { background-color: #ecfdf5; }
+
+/* ----------------------------------------------------------------
+   Table Wrapper & Table
+   ---------------------------------------------------------------- */
+.table-wrapper {
+  position: relative;
+  width: 99.5%;
+  height: calc(100vh - 195px);
+  overflow: auto;
+  border: 2px solid #4338ca;
+  border-radius: 6px;
+  box-shadow: 0 2px 16px rgba(67, 56, 202, 0.12);
+}
+
+table {
+  border-collapse: collapse;
+  table-layout: auto;        /* columns size to their content */
+  width: max-content;
+  min-width: 100%;
+}
+
+th, td {
+  border: 1px solid #a5b4fc;
+  padding: 8px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+th {
+  background: linear-gradient(180deg, #e0e7ff, #c7d2fe);
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e1b4b;
+  height: 48px;              /* consistent row-1 header height */
+  white-space: nowrap;       /* headers don't wrap by default */
+}
+th:hover { background: linear-gradient(180deg, #c7d2fe, #a5b4fc); }
+
+/* Rotated department-level headers (row 2) */
+th[data-department-category] {
+  writing-mode: sideways-lr;
+  white-space: normal;
+  vertical-align: bottom;
+  padding: 8px 4px 12px;
+  height: 150px;
+  width: 32px;               /* column takes just the line-height of text */
+  min-width: 32px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Row 2 of header sticks just below row 1 */
+table thead tr:nth-child(2) th {
+  top: 48px;                 /* matches th height above */
+  z-index: 5;
+  background: linear-gradient(180deg, #ede9fe, #ddd6fe);
+  border: 1px solid #a5b4fc;
+  height: auto;              /* row 2 height driven by rotated text (150px) */
+  white-space: normal;
+}
+
+/* Total columns in row 2 */
+th.category-total-header {
+  min-width: 52px;
+  white-space: nowrap;
+  vertical-align: bottom;
+  padding: 4px 8px 12px;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------------
+   Category Header (first-row span cells)
+   ---------------------------------------------------------------- */
+th.category-header {
+  background: linear-gradient(135deg, #1e1b4b, #3730a3) !important;
+  color: #e0e7ff !important;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+/* ----------------------------------------------------------------
+   Sticky Columns
+   ---------------------------------------------------------------- */
+.sticky-col {
+  position: sticky;
+  border: 1px solid #a5b4fc;
+  left: 0;
+  z-index: 7;
+  background: #ddd6fe;
+  text-align: center;
+  font-weight: 600;
+  width: 55px;
+  min-width: 55px;
+}
+.sticky-col-2 {
+  position: sticky;
+  border: 1px solid #a5b4fc;
+  left: 55px;               /* must match sticky-col width */
+  z-index: 7;
+  background: #ede9fe;
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  white-space: normal;      /* allow text to wrap */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+th.sticky-col, th.sticky-col-2 {
+  z-index: 8;
+  background: linear-gradient(135deg, #c4b5fd, #a5b4fc);
+  border: 1px solid #818cf8;
+}
+
+/* ----------------------------------------------------------------
+   Category Total Cell
+   ---------------------------------------------------------------- */
+td.category-total {
+  font-weight: 700;
+  color: #1e1b4b;
+  text-align: center;
+  cursor: pointer;
+  background: #ddd6fe;
+}
+td.category-total:hover { background: #c4b5fd; }
+
+/* ----------------------------------------------------------------
+   Table Links
+   ---------------------------------------------------------------- */
+td a, .officer-link {
+  color: #4338ca;
+  text-decoration: none;
+  font-weight: 500;
+}
+td a:hover, .officer-link:hover {
+  text-decoration: underline;
+  color: #1e1b4b;
+}
+
+/* ----------------------------------------------------------------
+   HCM Dropdown
+   ---------------------------------------------------------------- */
+.hcm-dropdown {
+  display: none;
+  position: absolute;
+  top: 46px;
+  right: 0;
+  background: #f5f3ff;
+  border: 1px solid #a78bfa;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 12px 32px rgba(109, 40, 217, 0.22);
+  z-index: 10000;
+  max-height: 520px;
+  overflow-y: auto;
+  width: 450px !important;
+  min-width: 450px !important;
+  text-align: left;
+}
+
+.hcm-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  width: 410px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.hcm-item:hover { background: #ede9fe; }
+
+.hcm-item img {
+  width: var(--hcm-img-size, 34px);
+  height: var(--hcm-img-size, 34px);
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  object-fit: cover;
+}
+.hcm-item input {
+  transform: scale(1.3);
+  margin-right: 6px;
+  cursor: pointer;
+}
+.hcm-item label {
+  font-size: 13px;
+  cursor: pointer;
+  flex: 1;
+}
+
+/* ----------------------------------------------------------------
+   Popup A — Officer Details  (white + indigo accent)
+   ---------------------------------------------------------------- */
+.popupa {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 1500px;
+  background: #ffffff;
+  border: 3px solid #4338ca;
+  padding: 0;
+  z-index: 1000;
+  transform: translate(-50%, -50%) scale(0.8);
+  border-radius: 16px;
+  overflow-y: auto;
+  max-height: 85vh;
+  animation: popup-zoom 0.3s ease forwards;
+  box-shadow: 0 24px 70px rgba(67, 56, 202, 0.35);
+}
+@keyframes popup-zoom {
+  from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+.popupa-close {
+  position: sticky;
+  top: 8px;
+  float: right;
+  margin: 8px 12px 0 0;
+  cursor: pointer;
+  font-size: 22px;
+  color: #dc2626;
+  font-weight: bold;
+  z-index: 10;
+  line-height: 1;
+}
+.popupa-close:hover { color: #ef4444; }
+.popupa-table { width: 100%; table-layout: auto; background: #fafafa; }
+.popupa-table th {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #1e1b4b;
+  text-align: left;
+  padding: 7px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  position: static;
+  font-weight: 600;
+}
+.popupa-table td { padding: 6px 10px; font-size: 13px; color: #1e293b; }
+.popupa-table tr:nth-child(even) td { background: #eef0fb; }
+
+/* ----------------------------------------------------------------
+   Popup B — Service Detail  (amber accent)
+   ---------------------------------------------------------------- */
+.popupb {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 1000px;
+  background: #fffbeb;
+  border: 3px solid #d97706;
+  padding: 20px;
+  z-index: 1000;
+  transform: translate(-50%, -50%) scale(0.8);
+  border-radius: 16px;
+  overflow-y: auto;
+  max-height: 80vh;
+  animation: popup-zoom 0.3s ease forwards;
+  box-shadow: 0 24px 70px rgba(217, 119, 6, 0.28);
+}
+.popupb-close {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+  color: #dc2626;
+  font-weight: bold;
+}
+.popupb-close:hover { color: #ef4444; }
+.popupb-table { width: 100%; table-layout: auto; }
+.popupb-table th {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #78350f;
+  font-weight: 600;
+  font-size: 13px;
+  position: static;
+}
+.popupb-table td { font-size: 13px; }
+.popupb-table th:nth-child(2), .popupb-table td:nth-child(2) { min-width: 80px; }
+.popupb-table th:nth-child(3), .popupb-table td:nth-child(3) { min-width: 80px; }
+.popupb-table th:nth-child(4), .popupb-table td:nth-child(4) { min-width: 60px; }
+.popupb-table th:nth-child(5), .popupb-table td:nth-child(5) { min-width: 120px; }
+
+/* ----------------------------------------------------------------
+   Popup C — Full Service History  (indigo accent)
+   ---------------------------------------------------------------- */
+.popupc {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 1500px;
+  background: #f5f3ff;
+  border: 3px solid #6366f1;
+  padding: 0;
+  z-index: 1000;
+  transform: translate(-50%, -50%) scale(0.8);
+  border-radius: 16px;
+  overflow-y: auto;
+  max-height: 85vh;
+  animation: popup-zoom 0.3s ease forwards;
+  box-shadow: 0 24px 70px rgba(99, 102, 241, 0.32);
+}
+.popupc-close {
+  position: sticky;
+  top: 8px;
+  float: right;
+  margin: 8px 12px 0 0;
+  cursor: pointer;
+  font-size: 22px;
+  color: #dc2626;
+  font-weight: bold;
+  z-index: 10;
+}
+.popupc-close:hover { color: #ef4444; }
+.popupc-table { width: 100%; table-layout: auto; }
+.popupc-table th,
+.popupc-table td {
+  border: 1px solid #a5b4fc;
+  text-align: center;
+  background-color: #eef0fb;
+  font-size: 13px;
+  position: static;
+}
+.popupc-table th {
+  background: linear-gradient(135deg, #312e81, #4338ca);
+  color: #e0e7ff;
+  height: 44px;
+  padding: 6px 8px;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.popupc-table tr:nth-child(even) td { background-color: #e0e7ff; }
+.popupc-table th:nth-child(1), .popupc-table td:nth-child(1) { min-width: 120px; }
+.popupc-table th:nth-child(4), .popupc-table td:nth-child(4) { min-width: 80px; }
+.popupc-table th:nth-child(5), .popupc-table td:nth-child(5) { min-width: 80px; }
+.popupc-table th:nth-child(7), .popupc-table td:nth-child(7) { min-width: 120px; }
+
+/* ----------------------------------------------------------------
+   Graph View — Legend Container
+   ---------------------------------------------------------------- */
+.legend-container {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  padding: 12px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid #4338ca;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e0e7ff;
+}
+.legend-box {
+  width: 16px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------
+   Graph View — Chart Grid
+   ---------------------------------------------------------------- */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 16px;
+  box-sizing: border-box;
+  max-width: 3200px;
+  margin: 0 auto;
+}
+@media (max-width: 1400px) { .chart-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px)  { .chart-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px)  { .chart-grid { grid-template-columns: 1fr; } }
+
+.chart-container {
+  background: #ffffff;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 1px 6px rgba(67, 56, 202, 0.08);
+}
+.chart-container:hover {
+  box-shadow: 0 8px 24px rgba(67, 56, 202, 0.2);
+  transform: translateY(-2px);
+}
+.chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  color: #ede9fe;
+  background: linear-gradient(135deg, #312e81, #4338ca);
+  margin-bottom: 8px;
+  padding: 5px 8px;
+}
+canvas {
+  width: 100% !important;
+  height: 220px !important;
+}
+
+/* ----------------------------------------------------------------
+   Bar Colour Classes (chart.js reads background-color via JS)
+   ---------------------------------------------------------------- */
+.bar-color-0 { background-color: #098b4e; }
+.bar-color-1 { background-color: #486bdb; }
+.bar-color-2 { background-color: #e15759; }
+.bar-color-3 { background-color: #d162d1; }
+.bar-color-4 { background-color: #28c9d0; }
+.bar-color-5 { background-color: #9b6fdd; }
+.bar-color-6 { background-color: #b07aa1; }
+.bar-color-7 { background-color: #ff9da7; }
+.bar-color-8 { background-color: #9c755f; }
+.bar-color-9 { background-color: #f37b40; }
+
+/* ----------------------------------------------------------------
+   Graph Wrapper
+   ---------------------------------------------------------------- */
+.graph-wrapper {
+  position: relative;
+  width: 99.5%;
+  height: calc(100vh - 130px);
+  overflow: auto;
+  border: 2px solid #4338ca;
+  border-radius: 6px;
+  box-shadow: 0 2px 16px rgba(67, 56, 202, 0.12);
+}
+
+/* ----------------------------------------------------------------
+   Scrollbar Styling
+   ---------------------------------------------------------------- */
+.table-wrapper::-webkit-scrollbar,
+.graph-wrapper::-webkit-scrollbar,
+.popupa::-webkit-scrollbar,
+.popupb::-webkit-scrollbar,
+.popupc::-webkit-scrollbar,
+.hcm-dropdown::-webkit-scrollbar { width: 8px; height: 8px; }
+
+.table-wrapper::-webkit-scrollbar-track,
+.graph-wrapper::-webkit-scrollbar-track { background: #ede9fe; }
+
+.table-wrapper::-webkit-scrollbar-thumb,
+.graph-wrapper::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
+
+.table-wrapper::-webkit-scrollbar-thumb:hover,
+.graph-wrapper::-webkit-scrollbar-thumb:hover { background: #818cf8; }

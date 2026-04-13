@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IAS Officer Service Summary</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+  window.AIS_CONFIG = {
+    serviceType: 'IAS',
+    categoryOrder: [
+      "AGRICULTURE & ALLIED",
+      "ENERGY, INFRA & INDUSTRIES",
+      "FINANCE",
+      "IT & OTHER TECH",
+      "LOCAL BODIES ADMINISTRATION",
+      "REGULATORY",
+      "WELFARE & DEVELOPMENT",
+      "PERSONAL OFFICE",
+      "DISTRICT ADMINISTRATION",
+      "PROBATION, TRAINING , LEAVE, COMPULSORY WAIT ETC"
+    ],
+    customDepartmentOrder: {
+      "AGRICULTURE & ALLIED": [
+        "AGRICULTURE", "AH,FISHERIES ETC", "HORTICULTURE"
+      ],
+      "ENERGY, INFRA & INDUSTRIES": [
+        "ENERGY", "INDUSTRIES & INFRASTRUCTURE", "HANDLOOM & TEXTILES",
+        "WATER RESOURCE", "ROADS & BUILDINGS", "TOURISM"
+      ],
+      "FINANCE": [
+        "FINANCE", "COMMERCIAL TAX"
+      ],
+      "IT & OTHER TECH": [
+        "APSFL", "APTS", "E-SEVA", "IT & ELECTRONICS", "RTGS"
+      ],
+      "LOCAL BODIES ADMINISTRATION": [
+        "MAUD", "CRDA & AMRDA", "MUNICIPAL COMMISSIONER", "PR & RD", "GSWS"
+      ],
+      "REGULATORY": [
+        "PLANNING", "GAD", "REVENUE (LANDS)", "ENDOWMENT", "TTD",
+        "PROHIBITION & EXCISE", "STAMPS & REGISTRATION", "DISASTER MANAGEMENT",
+        "MINES & GEOLOGY", "COE & APVC", "EFST", "ELECTION COMMISION",
+        "LABOUR", "TRANSPORT"
+      ],
+      "WELFARE & DEVELOPMENT": [
+        "WELFARE", "EDUCATION", "HEALTH", "SKILL DEVELOPMENT",
+        "FOOD & CIVIL SUPPLIES", "HOUSING", "YOUTH, SPORTS & CULTURE"
+      ],
+      "PERSONAL OFFICE": [
+        "GOVERNORS OFFICE", "PRIME MINISTERS OFFICE", "CHIEF MINISTERS OFFICE"
+      ],
+      "DISTRICT ADMINISTRATION": [
+        "DISTRICT COLLECTOR", "JOINT COLLECTOR", "SUB COLLECTOR",
+        "PO ITDA", "ASSISTANT COLLECTOR (TRAINEE)", "OTHER DIST POSTS"
+      ],
+      "PROBATION, TRAINING , LEAVE, COMPULSORY WAIT ETC": [
+        "PROBATION & TRAINING", "COMPULSORY WAIT", "LEAVE"
+      ]
+    }
+  };
+  </script>
+  <script src="script_table.js" defer></script>
+</head>
+<body>
+
+<header>IAS Officer Service Summary Report</header>
+
+<div class="nav-bar">
+  <div class="nav-bar-inner">
+
+    <button onclick="location.href='graphIAS.html'" class="animated-button blue">
+      <i data-lucide="bar-chart-3"></i>Graphical View
+    </button>
+
+    <button onclick="location.href='indexIAS.html'" class="animated-button mustard">
+      <i data-lucide="circle-user-round"></i>IAS Data
+    </button>
+
+    <button onclick="location.href='indexIPS.html'" class="animated-button red">
+      <i data-lucide="shield-user"></i>IPS Data
+    </button>
+
+    <button onclick="location.href='indexIFS.html'" class="animated-button green">
+      <i data-lucide="tree-deciduous"></i>IFS Data
+    </button>
+
+    <div style="position:relative;">
+      <button id="hcmFilterBtn" class="animated-button purple">
+        <i data-lucide="user-check"></i>Select Chief Minister &#11015;
+      </button>
+      <div id="hcmDropdown" class="hcm-dropdown"></div>
+    </div>
+
+    <button onclick="signOut()" class="animated-button darkred">
+      <i data-lucide="log-out"></i>Logout
+    </button>
+
+  </div>
+</div>
+
+<!-- Cadre legend -->
+<div class="legend">
+  <span style="background-color:#a4d1ab;">Chief Secretary</span>
+  <span style="background-color:#fab1ba;">Special Chief Secretary</span>
+  <span style="background-color:#bcc9ec;">Principal Secretary</span>
+  <span style="background-color:#f5d8ee;">Secretary</span>
+  <span style="background-color:#c6f3c0;">Others</span>
+</div>
+
+<div class="table-wrapper">
+  <table id="officer-table">
+    <thead id="table-header"></thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<!-- Popup A: Officer Details -->
+<div id="officer-popupa" class="popupa">
+  <span class="popupa-close" onclick="$('#officer-popupa').hide()">&#10006;</span>
+  <div id="officer-details"></div>
+</div>
+
+<!-- Popup B: Service Detail -->
+<div id="service-popupb" class="popupb">
+  <span class="popupb-close" onclick="$('#service-popupb').hide()">&#10006;</span>
+  <div id="service-details"></div>
+</div>
+
+<!-- Popup C: Full Service History -->
+<div id="service-popupc" class="popupc">
+  <span class="popupc-close" onclick="$('#service-popupc').hide()">&#10006;</span>
+  <div id="service-details-c"></div>
+</div>
+
+</body>
+</html>
