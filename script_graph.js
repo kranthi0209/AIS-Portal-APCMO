@@ -43,7 +43,6 @@
   let allCategories         = [];
   let categoryColorClassMap = {};
   let cachedColors          = {};
-  let isDropdownVisible     = false;
   let photoMap              = {};
 
   // ----------------------------------------------------------------
@@ -67,8 +66,9 @@
       const hcmSet        = new Set();
 
       officerData.forEach(entry => {
-        if (entry.is_retired || entry.is_transferred_from_ap) return; // hide retired / transferred officers
-        const name = entry.NameoftheOfficer.trim();
+        if (entry.is_retired || entry.is_transferred_from_ap) return; // active only
+        const name = (entry.NameoftheOfficer || '').trim();
+        if (!name) return;
         const hcm  = entry.HCM?.trim();
         if (!groupedData[name]) groupedData[name] = { meta: entry, services: [] };
         groupedData[name].services.push(entry);
@@ -144,7 +144,7 @@
       .filter(([, { services }]) => services.length > 0)
       .sort((a, b) => (parseInt(a[1].meta.SeniorityNo) || 9999) - (parseInt(b[1].meta.SeniorityNo) || 9999));
 
-    officerEntries.forEach(([name, { meta, services }]) => {
+    officerEntries.forEach(([name, { meta, services }], idx) => {
       const categoryYearMap = Object.fromEntries(allCategories.map(cat => [cat, 0]));
       services.forEach(entry => {
         categoryYearMap[entry.Category] = (categoryYearMap[entry.Category] || 0) + calcDecimalYears(entry.From, entry.To);
@@ -155,7 +155,7 @@
 
       const title = document.createElement('div');
       title.className = 'chart-title';
-      title.innerHTML = `<a href="#" class="officer-link" data-officer="${escapeHtml(name)}" style="color:#ede9fe;text-decoration:none;">${meta.SeniorityNo}. ${escapeHtml(name)}</a>`;
+      title.innerHTML = `<a href="#" class="officer-link" data-officer="${escapeHtml(name)}" style="color:#ede9fe;text-decoration:none;">${idx + 1}. ${escapeHtml(name)}</a>`;
 
       const canvas = document.createElement('canvas');
       chartContainer.appendChild(title);
@@ -203,58 +203,65 @@
   // HCM Dropdown
   // ----------------------------------------------------------------
   function populateHCMCheckboxes(hcmList) {
-    const container = document.getElementById('hcmDropdown');
-    const hcmSet    = new Set(hcmList);
+    const modal    = document.getElementById('hcmModal');
+    const cardGrid = document.getElementById('hcmCardGrid');
+    const hcmSet   = new Set(hcmList);
     const sortedHCMs = [
       ...customHCMOrder.filter(h => hcmSet.has(h)),
       ...[...hcmSet].filter(h => !customHCMOrder.includes(h)).sort()
     ];
+    const termLabels = { '1':'1st','2':'2nd','3':'3rd','4':'4th' };
 
-    const html = [
-      `<div style="text-align:center;margin-bottom:10px;">
-        <button id="selectAllBtn"   style="margin-right:10px;padding:4px 12px;border-radius:6px;background:#4f46e5;color:white;border:none;cursor:pointer;font-weight:600;font-size:12px;">Select All</button>
-        <button id="deselectAllBtn" style="padding:4px 12px;border-radius:6px;background:#ef4444;color:white;border:none;cursor:pointer;font-weight:600;font-size:12px;">Deselect All</button>
-      </div>`
-    ];
+    cardGrid.innerHTML = sortedHCMs.map(hcm => {
+      const m    = hcm.match(/^(.+?)-(\d+)\.0$/);
+      const name = m ? m[1] : hcm;
+      const term = m ? (termLabels[m[2]] || m[2] + 'th') + ' Term' : '';
+      const img  = hcm.replace(/\s+/g, '_') + '.jpg';
+      const id   = 'hcmCard_' + hcm.replace(/\W+/g, '_');
+      return `<div class="hcm-card" data-hcm="${escapeHtml(hcm)}">
+        <input type="checkbox" id="${id}" value="${escapeHtml(hcm)}" style="display:none">
+        <div class="hcm-card-tick">&#10003;</div>
+        <img src="${img}" alt="${escapeHtml(name)}"
+             onerror="this.src='https://placehold.co/130x140?text=No+Photo'">
+        <div class="hcm-card-name">${escapeHtml(name)}</div>
+        ${term ? `<div class="hcm-card-term">${term}</div>` : '<div class="hcm-card-term">&nbsp;</div>'}
+      </div>`;
+    }).join('');
 
-    sortedHCMs.forEach(hcm => {
-      const id = `hcm_${hcm.replace(/\W+/g, '_')}`;
-      html.push(`<div class="hcm-item"><input type="checkbox" id="${id}" value="${hcm}"><label for="${id}">${hcm}</label></div>`);
+    cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+      card.addEventListener('click', () => {
+        card.classList.toggle('selected');
+        card.querySelector('input').checked = card.classList.contains('selected');
+        handleHCMCheckboxChange();
+      });
     });
-    container.innerHTML = html.join('');
 
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb =>
-      cb.addEventListener('change', debounce(handleHCMCheckboxChange, 50))
+    document.getElementById('hcmSelectAll').onclick = () => {
+      cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+        card.classList.add('selected');
+        card.querySelector('input').checked = true;
+      });
+      handleHCMCheckboxChange();
+    };
+    document.getElementById('hcmDeselectAll').onclick = () => {
+      cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+        card.classList.remove('selected');
+        card.querySelector('input').checked = false;
+      });
+      handleHCMCheckboxChange();
+    };
+
+    document.getElementById('hcmFilterBtn').addEventListener('click', () =>
+      modal.classList.toggle('open')
     );
-
-    document.getElementById('selectAllBtn').onclick = () => {
-      document.querySelectorAll('#hcmDropdown input[type="checkbox"]').forEach(cb => cb.checked = true);
-      handleHCMCheckboxChange();
-    };
-    document.getElementById('deselectAllBtn').onclick = () => {
-      document.querySelectorAll('#hcmDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-      handleHCMCheckboxChange();
-    };
-
-    document.getElementById('hcmFilterBtn').addEventListener('click', e => {
-      isDropdownVisible = !isDropdownVisible;
-      document.getElementById('hcmDropdown').style.display = isDropdownVisible ? 'block' : 'none';
-      e.stopPropagation();
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.classList.remove('open');
     });
-
-    document.addEventListener('click', e => {
-      if (!e.target.closest('#hcmDropdown') && !e.target.closest('#hcmFilterBtn')) {
-        document.getElementById('hcmDropdown').style.display = 'none';
-        isDropdownVisible = false;
-      }
-    });
-
-    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 
   function handleHCMCheckboxChange() {
     const selectedHCMs = Array.from(
-      document.querySelectorAll('#hcmDropdown input:checked')
+      document.querySelectorAll('#hcmCardGrid input:checked')
     ).map(cb => cb.value.trim());
 
     if (selectedHCMs.length === 0) {
@@ -293,49 +300,56 @@
   function showOfficer(data) {
     const name      = data.NameoftheOfficer?.trim();
     const services  = groupedData[name]?.services || [];
-    const fieldLabels = {
-      "Cadre":                    "Cadre",
-      "IdentityNo.":              "Identity No",
-      "DateofAppointment":        "Date of Appointment",
-      "SourceOfRecruitment":      "Source of Recruitment",
-      "EducationalQualification": "Educational Qualification",
-      "DateOfBirth":              "Date of Birth",
-      "AllotmentYear":            "Allotment Year",
-      "Domicile":                 "Domicile",
-      "EmailId":                  "Email",
-      "PhoneNo":                  "Phone Number"
-    };
-    const excludeKeys = ["From","To","Years","PostName","Department","Category","SLNO","HCM","SeniorityNo","NameoftheOfficer","currentposting"];
-    const entries     = Object.entries(data).filter(([k]) => !excludeKeys.includes(k));
-    const half        = Math.ceil(entries.length / 2);
     const seniorityNo = data.SeniorityNo?.toString()?.trim();
     const imageUrl    = photoMap[seniorityNo] || 'https://placehold.co/120x150?text=No+Image';
 
-    let html = `<div style="text-align:center;margin-bottom:15px;padding-top:16px;">
-      <img src="${imageUrl}" alt="Officer Image" style="width:180px;height:250px;object-fit:cover;border-radius:20px;border:3px solid #a5b4fc;">
-      <h2 style="margin:10px 0 5px 0;color:#1e1b4b;">${escapeHtml(data.NameoftheOfficer)}</h2>
-      <div style="font-size:14px;color:#6366f1;font-weight:600;">${escapeHtml(data.currentposting || 'Current Posting not available')}</div>
+    // Row definitions: [key1, label1, key2, label2, gradient, valueBg]
+    const fieldRows = [
+      ['SeniorityNo',             'Seniority No',       'IdentityNo.',             'Identity No',      'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
+      ['Cadre',                   'Cadre',              'AllotmentYear',            'Allotment Year',   'linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
+      ['DateofAppointment',       'Date of Appointment','DateOfBirth',              'Date of Birth',    'linear-gradient(135deg,#1e3a5f,#2563eb)', '#eff6ff'],
+      ['SourceOfRecruitment',     'Source of Recruit.', 'EducationalQualification', 'Education',        'linear-gradient(135deg,#134e4a,#0d9488)', '#f0fdfa'],
+      ['Domicile',                'Domicile',           'EmailId',                  'Email',            'linear-gradient(135deg,#14532d,#16a34a)', '#f0fdf4'],
+      ['PhoneNo',                 'Phone',              '',                         '',                 'linear-gradient(135deg,#7c2d12,#ea580c)', '#fff7ed'],
+    ];
+    const detailRows = fieldRows.map(([k1, l1, k2, l2, grad, vbg]) => {
+      const isEdu2 = k2 === 'EducationalQualification';
+      const thStyle = `width:22%;padding:5px 10px;font-size:11px;color:#ffffff;font-weight:700;white-space:nowrap;background:${grad};border:1px solid rgba(255,255,255,0.2);letter-spacing:0.3px;`;
+      const tdStyle = `width:28%;padding:5px 10px;font-size:12px;color:#1e293b;background:${vbg};border:1px solid #e2e8f0;font-weight:500;`;
+      const tdEduStyle = `width:28%;padding:5px 10px;font-size:12px;color:#dc2626;background:${vbg};border:1px solid #e2e8f0;font-weight:700;`;
+      return `<tr>
+        <th style="${thStyle}">${l1}</th>
+        <td style="${tdStyle}">${escapeHtml(String(data[k1] ?? ''))}</td>
+        <th style="${thStyle}">${l2}</th>
+        <td style="${isEdu2 ? tdEduStyle : tdStyle}">${k2 ? escapeHtml(String(data[k2] ?? '')) : ''}</td>
+      </tr>`;
+    });
+
+    let html = `
+    <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);padding:18px 20px 14px;text-align:center;border-radius:0;">
+      <img src="${imageUrl}" alt="Officer Image"
+           style="width:130px;height:165px;object-fit:cover;border-radius:14px;border:4px solid #a5b4fc;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:10px 0 4px;color:#ffffff;font-size:16px;font-weight:800;letter-spacing:0.2px;">${escapeHtml(data.NameoftheOfficer)}</h2>
+      <div style="font-size:12px;color:#c7d2fe;font-weight:600;font-style:italic;">${escapeHtml(data.currentposting || '—')}</div>
+    </div>
+    <div style="padding:12px 14px 8px;">
+      <div style="background:linear-gradient(135deg,#312e81,#4338ca);padding:5px 12px;border-radius:6px;margin-bottom:8px;">
+        <span style="color:#e0e7ff;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128203; OFFICER DETAILS</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(67,56,202,0.12);">
+        ${detailRows.join('')}
+      </table>
     </div>`;
 
-    html += `<h2 style="text-align:center;margin-top:20px;color:#1e1b4b;">Officer Details</h2>
-    <div style="display:flex;gap:20px;padding:0 16px;">
-      <table class="popupa-table" style="flex:1;">${entries.slice(0, half).map(([k, v]) => {
-        const label     = fieldLabels[k] || k;
-        const highlight = k.toLowerCase().includes('education') ? 'style="color:#dc2626;font-weight:bold;"' : '';
-        return `<tr><th>${label}</th><td ${highlight}>${escapeHtml(String(v ?? ''))}</td></tr>`;
-      }).join('')}</table>
-      <table class="popupa-table" style="flex:1;">${entries.slice(half).map(([k, v]) => {
-        const label     = fieldLabels[k] || k;
-        const highlight = k.toLowerCase().includes('education') ? 'style="color:#dc2626;font-weight:bold;"' : '';
-        return `<tr><th>${label}</th><td ${highlight}>${escapeHtml(String(v ?? ''))}</td></tr>`;
-      }).join('')}</table>
-    </div>`;
-
-    const sortedServices = services.slice().sort((a, b) => new Date(b.From) - new Date(a.From));
-    html += `<h2 style="text-align:center;margin-top:20px;color:#1e1b4b;">Service History</h2>
-    <div style="padding:0 16px 16px;">
+    const sortedServices = services.slice().sort((a, b) => parseServiceDate(b.From) - parseServiceDate(a.From));
+    html += `<div style="padding:0 14px 4px;">
+      <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:5px 12px;border-radius:6px;">
+        <span style="color:#bae6fd;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128196; SERVICE HISTORY</span>
+      </div>
+    </div>
+    <div style="padding:0 14px 16px;">
     <table class="popupc-table" style="width:100%;">
-      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Period</th><th>HCM</th></tr></thead>
+      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Duration</th><th>HCM</th></tr></thead>
       <tbody>${sortedServices.map(s =>
         `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td>${s.From}</td><td>${s.To || '<em>Present</em>'}</td><td>${fmtDuration(s.From, s.To)}</td><td>${escapeHtml(s.HCM || '')}</td></tr>`
       ).join('')}</tbody>

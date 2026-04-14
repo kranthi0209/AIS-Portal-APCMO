@@ -171,7 +171,6 @@
   let currentGroupedData = {};
   let departments        = new Set();
   let categories         = new Set();
-  let allOfficerData     = [];
   let photoMap           = {};
   const sortState        = { column: '', direction: 'asc' };
 
@@ -191,8 +190,7 @@
       loadOfficerData(serviceType),
       loadPhotos(serviceType)
     ]).then(([data, photos]) => {
-      photoMap       = photos;
-      allOfficerData = data;
+      photoMap = photos;
 
       if (!data.length) {
         document.getElementById('table-body').innerHTML =
@@ -272,6 +270,17 @@
 
     document.getElementById('table-header').innerHTML =
       `<tr>${headerRow1.join('')}</tr><tr>${headerRow2.join('')}</tr>`;
+
+    // Set row-2 sticky top to actual height of row-1 (avoids hardcoded 50px gap)
+    requestAnimationFrame(() => {
+      const row1 = document.querySelector('#table-header tr:first-child');
+      if (row1) {
+        const h = row1.offsetHeight;
+        document.querySelectorAll('#table-header tr:nth-child(2) th').forEach(th => {
+          th.style.top = h + 'px';
+        });
+      }
+    });
 
     renderBody(Object.entries(currentGroupedData), categoriesList, categoryDeptMap);
   }
@@ -392,49 +401,56 @@
   window.showOfficer = function (data) {
     const name        = data.NameoftheOfficer?.trim();
     const services    = groupedData[name]?.services || [];
-    const fieldLabels = {
-      "Cadre":                    "Cadre",
-      "IdentityNo.":              "Identity No",
-      "DateofAppointment":        "Date of Appointment",
-      "SourceOfRecruitment":      "Source of Recruitment",
-      "EducationalQualification": "Educational Qualification",
-      "DateOfBirth":              "Date of Birth",
-      "AllotmentYear":            "Allotment Year",
-      "Domicile":                 "Domicile",
-      "EmailId":                  "Email",
-      "PhoneNo":                  "Phone Number"
-    };
-    const excludeKeys = ["From","To","Years","PostName","Department","Category","SLNO","HCM","SeniorityNo","NameoftheOfficer","currentposting"];
-    const entries     = Object.entries(data).filter(([k]) => !excludeKeys.includes(k));
-    const half        = Math.ceil(entries.length / 2);
     const seniorityNo = data.SeniorityNo?.toString()?.trim();
     const imageUrl    = photoMap[seniorityNo] || 'https://placehold.co/120x150?text=No+Image';
 
-    let html = `<div style="text-align:center;margin-bottom:15px;padding-top:16px;">
-      <img src="${imageUrl}" alt="Officer Image" style="width:180px;height:250px;object-fit:cover;border-radius:20px;border:3px solid #a5b4fc;">
-      <h2 style="margin:10px 0 5px 0;color:#1e1b4b;">${escapeHtml(data.NameoftheOfficer)}</h2>
-      <div style="font-size:14px;color:#6366f1;font-weight:600;">${escapeHtml(data.currentposting || 'Current Posting not available')}</div>
+    // Row definitions: [key1, label1, key2, label2, gradient, valueBg]
+    const fieldRows = [
+      ['SeniorityNo',             'Seniority No',       'IdentityNo.',             'Identity No',      'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
+      ['Cadre',                   'Cadre',              'AllotmentYear',            'Allotment Year',   'linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
+      ['DateofAppointment',       'Date of Appointment','DateOfBirth',              'Date of Birth',    'linear-gradient(135deg,#1e3a5f,#2563eb)', '#eff6ff'],
+      ['SourceOfRecruitment',     'Source of Recruit.', 'EducationalQualification', 'Education',        'linear-gradient(135deg,#134e4a,#0d9488)', '#f0fdfa'],
+      ['Domicile',                'Domicile',           'EmailId',                  'Email',            'linear-gradient(135deg,#14532d,#16a34a)', '#f0fdf4'],
+      ['PhoneNo',                 'Phone',              '',                         '',                 'linear-gradient(135deg,#7c2d12,#ea580c)', '#fff7ed'],
+    ];
+    const detailRows = fieldRows.map(([k1, l1, k2, l2, grad, vbg]) => {
+      const isEdu2 = k2 === 'EducationalQualification';
+      const thStyle = `padding:5px 10px;font-size:11px;color:#ffffff;font-weight:700;white-space:nowrap;background:${grad};border:1px solid rgba(255,255,255,0.2);letter-spacing:0.3px;`;
+      const tdStyle = `padding:5px 10px;font-size:12px;color:#1e293b;background:${vbg};border:1px solid #e2e8f0;font-weight:500;`;
+      const tdEduStyle = `padding:5px 10px;font-size:12px;color:#dc2626;background:${vbg};border:1px solid #e2e8f0;font-weight:700;`;
+      return `<tr>
+        <th style="${thStyle}">${l1}</th>
+        <td style="${tdStyle}">${escapeHtml(String(data[k1] ?? ''))}</td>
+        <th style="${thStyle}">${l2}</th>
+        <td style="${isEdu2 ? tdEduStyle : tdStyle}">${k2 ? escapeHtml(String(data[k2] ?? '')) : ''}</td>
+      </tr>`;
+    });
+
+    let html = `
+    <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);padding:18px 20px 14px;text-align:center;border-radius:0;">
+      <img src="${imageUrl}" alt="Officer Image"
+           style="width:130px;height:165px;object-fit:cover;border-radius:14px;border:4px solid #a5b4fc;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:10px 0 4px;color:#ffffff;font-size:16px;font-weight:800;letter-spacing:0.2px;">${escapeHtml(data.NameoftheOfficer)}</h2>
+      <div style="font-size:12px;color:#c7d2fe;font-weight:600;font-style:italic;">${escapeHtml(data.currentposting || '—')}</div>
+    </div>
+    <div style="padding:12px 14px 8px;">
+      <div style="background:linear-gradient(135deg,#312e81,#4338ca);padding:5px 12px;border-radius:6px;margin-bottom:8px;">
+        <span style="color:#e0e7ff;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128203; OFFICER DETAILS</span>
+      </div>
+      <table class="officer-detail-table" style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(67,56,202,0.12);">
+        ${detailRows.join('')}
+      </table>
     </div>`;
 
-    html += `<h2 style="text-align:center;margin-top:20px;color:#1e1b4b;">Officer Details</h2>
-    <div style="display:flex;gap:20px;padding:0 16px;">
-      <table class="popupa-table" style="flex:1;">${entries.slice(0, half).map(([k, v]) => {
-        const label     = fieldLabels[k] || k;
-        const highlight = k.toLowerCase().includes('education') ? 'style="color:#dc2626;font-weight:bold;"' : '';
-        return `<tr><th>${label}</th><td ${highlight}>${escapeHtml(String(v ?? ''))}</td></tr>`;
-      }).join('')}</table>
-      <table class="popupa-table" style="flex:1;">${entries.slice(half).map(([k, v]) => {
-        const label     = fieldLabels[k] || k;
-        const highlight = k.toLowerCase().includes('education') ? 'style="color:#dc2626;font-weight:bold;"' : '';
-        return `<tr><th>${label}</th><td ${highlight}>${escapeHtml(String(v ?? ''))}</td></tr>`;
-      }).join('')}</table>
-    </div>`;
-
-    const sortedServices = services.slice().sort((a, b) => new Date(b.From) - new Date(a.From));
-    html += `<h2 style="text-align:center;margin-top:20px;color:#1e1b4b;">Service History</h2>
-    <div style="padding:0 16px 16px;">
-    <table class="popupc-table" style="width:100%;margin-top:10px;">
-      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Period</th><th>HCM</th></tr></thead>
+    const sortedServices = services.slice().sort((a, b) => parseServiceDate(b.From) - parseServiceDate(a.From));
+    html += `<div style="padding:0 14px 4px;">
+      <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:5px 12px;border-radius:6px;">
+        <span style="color:#bae6fd;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128196; SERVICE HISTORY</span>
+      </div>
+    </div>
+    <div style="padding:0 14px 16px;">
+    <table class="popupc-table" style="width:100%;">
+      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Duration</th><th>HCM</th></tr></thead>
       <tbody>${sortedServices.map(s =>
         `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td>${s.From}</td><td>${s.To || '<em>Present</em>'}</td><td>${fmtDuration(s.From, s.To)}</td><td>${escapeHtml(s.HCM || '')}</td></tr>`
       ).join('')}</tbody>
@@ -486,15 +502,15 @@
     const officer = currentGroupedData[name];
     if (!officer) return;
     const services = officer.services;
+    const sortedAll = services.slice().sort((a, b) => parseServiceDate(b.From) - parseServiceDate(a.From));
     let html = `<h2 style="text-align:center;color:#1e1b4b;padding:12px 0 4px;">Service History — ${escapeHtml(name)}</h2>
     <div style="padding:0 12px 12px;">
     <table class="popupc-table">
-      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Period</th><th>HCM</th></tr></thead>
-      <tbody>`;
-    services.forEach(s => {
-      html += `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td>${s.From}</td><td>${s.To || '<em>Present</em>'}</td><td>${fmtDuration(s.From, s.To)}</td><td>${escapeHtml((s.HCM || '').trim())}</td></tr>`;
-    });
-    html += `</tbody></table></div>`;
+      <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Duration</th><th>HCM</th></tr></thead>
+      <tbody>${sortedAll.map(s =>
+        `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td>${s.From}</td><td>${s.To || '<em>Present</em>'}</td><td>${fmtDuration(s.From, s.To)}</td><td>${escapeHtml((s.HCM || '').trim())}</td></tr>`
+      ).join('')}</tbody>
+    </table></div>`;
     $('#service-details-c').html(html);
     $('#service-popupc').fadeIn();
   };
@@ -542,47 +558,65 @@
   // HCM Dropdown
   // ----------------------------------------------------------------
   function populateHCMCheckboxes(hcmList) {
-    const container = document.getElementById('hcmDropdown');
-    container.innerHTML = '';
-
-    const buttonGroup = document.createElement('div');
-    buttonGroup.innerHTML = `<div style="text-align:center;margin-bottom:10px;">
-      <button id="selectAllBtn"   style="margin-right:10px;padding:4px 12px;border-radius:6px;background:#4f46e5;color:white;border:none;cursor:pointer;font-weight:600;font-size:12px;">Select All</button>
-      <button id="deselectAllBtn" style="padding:4px 12px;border-radius:6px;background:#ef4444;color:white;border:none;cursor:pointer;font-weight:600;font-size:12px;">Deselect All</button>
-    </div>`;
-    container.appendChild(buttonGroup);
-
-    const hcmSet     = new Set(hcmList);
+    const modal    = document.getElementById('hcmModal');
+    const cardGrid = document.getElementById('hcmCardGrid');
+    const hcmSet   = new Set(hcmList);
     const sortedHCMs = [
       ...customHCMOrder.filter(h => hcmSet.has(h)),
       ...[...hcmSet].filter(h => !customHCMOrder.includes(h)).sort()
     ];
+    const termLabels = { '1':'1st','2':'2nd','3':'3rd','4':'4th' };
 
-    sortedHCMs.forEach(hcm => {
-      const id  = `hcm_${hcm.replace(/\W+/g, '_')}`;
-      const div = document.createElement('div');
-      div.className = 'hcm-item';
-      div.innerHTML = `<input type="checkbox" id="${id}" value="${hcm}"><label for="${id}">${hcm}</label>`;
-      container.appendChild(div);
+    cardGrid.innerHTML = sortedHCMs.map(hcm => {
+      const m    = hcm.match(/^(.+?)-(\d+)\.0$/);
+      const name = m ? m[1] : hcm;
+      const term = m ? (termLabels[m[2]] || m[2] + 'th') + ' Term' : '';
+      const img  = hcm.replace(/\s+/g, '_') + '.jpg';
+      const id   = 'hcmCard_' + hcm.replace(/\W+/g, '_');
+      return `<div class="hcm-card" data-hcm="${escapeHtml(hcm)}">
+        <input type="checkbox" id="${id}" value="${escapeHtml(hcm)}" style="display:none">
+        <div class="hcm-card-tick">&#10003;</div>
+        <img src="${img}" alt="${escapeHtml(name)}"
+             onerror="this.src='https://placehold.co/130x140?text=No+Photo'">
+        <div class="hcm-card-name">${escapeHtml(name)}</div>
+        ${term ? `<div class="hcm-card-term">${term}</div>` : '<div class="hcm-card-term">&nbsp;</div>'}
+      </div>`;
+    }).join('');
+
+    cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+      card.addEventListener('click', () => {
+        card.classList.toggle('selected');
+        card.querySelector('input').checked = card.classList.contains('selected');
+        handleHCMCheckboxChange();
+      });
     });
 
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb =>
-      cb.addEventListener('change', handleHCMCheckboxChange)
+    document.getElementById('hcmSelectAll').onclick = () => {
+      cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+        card.classList.add('selected');
+        card.querySelector('input').checked = true;
+      });
+      handleHCMCheckboxChange();
+    };
+    document.getElementById('hcmDeselectAll').onclick = () => {
+      cardGrid.querySelectorAll('.hcm-card').forEach(card => {
+        card.classList.remove('selected');
+        card.querySelector('input').checked = false;
+      });
+      handleHCMCheckboxChange();
+    };
+
+    document.getElementById('hcmFilterBtn').addEventListener('click', () =>
+      modal.classList.toggle('open')
     );
-
-    document.getElementById('selectAllBtn').addEventListener('click', () => {
-      document.querySelectorAll('#hcmDropdown input[type="checkbox"]').forEach(cb => cb.checked = true);
-      handleHCMCheckboxChange();
-    });
-    document.getElementById('deselectAllBtn').addEventListener('click', () => {
-      document.querySelectorAll('#hcmDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-      handleHCMCheckboxChange();
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.classList.remove('open');
     });
   }
 
   function handleHCMCheckboxChange() {
     const selectedHCMs = Array.from(
-      document.querySelectorAll('#hcmDropdown input:checked')
+      document.querySelectorAll('#hcmCardGrid input:checked')
     ).map(cb => cb.value.trim());
     filterByHCM(selectedHCMs);
   }
@@ -607,26 +641,9 @@
   }
 
   // ----------------------------------------------------------------
-  // HCM filter button toggle
-  // ----------------------------------------------------------------
-  let isDropdownVisible = false;
-
-  document.getElementById('hcmFilterBtn').addEventListener('click', e => {
-    const dropdown = document.getElementById('hcmDropdown');
-    isDropdownVisible = !isDropdownVisible;
-    dropdown.style.display = isDropdownVisible ? 'block' : 'none';
-    e.stopPropagation();
-  });
-
-  // ----------------------------------------------------------------
   // Global click delegation
   // ----------------------------------------------------------------
   document.addEventListener('click', function (e) {
-    if (!e.target.closest('#hcmDropdown') && !e.target.closest('#hcmFilterBtn')) {
-      document.getElementById('hcmDropdown').style.display = 'none';
-      isDropdownVisible = false;
-    }
-
     const deptTh = e.target.closest('th[data-department-category]');
     if (deptTh && !deptTh.classList.contains('category-header')) {
       const department = deptTh.textContent.trim();
@@ -653,3 +670,10 @@
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
 })(); // end IIFE
+
+// (width configuration removed — widths are fixed in style_dashboard.css)
+
+var _DEFAULT_COL_WIDTHS = {  // kept as no-op stub to avoid reference errors if cached
+  tableWidth: 0
+};
+

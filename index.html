@@ -214,7 +214,7 @@
 <script src="supabase_config.js"></script>
 <script>
   async function login() {
-    const email    = document.getElementById('email').value.trim();
+    const email    = document.getElementById('email').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errorEl  = document.getElementById('error-msg');
     errorEl.textContent = '';
@@ -224,19 +224,24 @@
     loginBtn.textContent = 'Signing in…';
     loginBtn.disabled = true;
 
-    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await _supabase.rpc('login_user', { p_email: email, p_password: password });
     loginBtn.textContent = 'Sign In';
     loginBtn.disabled = false;
 
     if (error) {
-      errorEl.textContent = 'Login failed: ' + error.message;
-    } else {
-      window.location.href = 'table.html?service=IAS';
+      errorEl.textContent = 'Error: ' + error.message;
+      return;
     }
+    if (!data || data.length === 0) {
+      errorEl.textContent = 'Invalid email or password.';
+      return;
+    }
+    saveSession(data[0]);
+    window.location.href = 'table.html?service=IAS';
   }
 
-  async function logout() {
-    await _supabase.auth.signOut();
+  function logout() {
+    localStorage.removeItem('ais_session');
     document.getElementById('loginDiv').classList.remove('hidden');
     document.getElementById('homeDiv').classList.add('hidden');
     document.getElementById('email').value    = '';
@@ -244,13 +249,13 @@
     document.getElementById('error-msg').textContent = '';
   }
 
-  _supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-      document.getElementById('loginDiv').classList.add('hidden');
-      document.getElementById('homeDiv').classList.remove('hidden');
-      document.getElementById('userEmail').textContent = session.user.email;
-    }
-  });
+  // Check existing session
+  const _existingSession = getSession();
+  if (_existingSession) {
+    document.getElementById('loginDiv').classList.add('hidden');
+    document.getElementById('homeDiv').classList.remove('hidden');
+    document.getElementById('userEmail').textContent = _existingSession.email;
+  }
 
   document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 </script>

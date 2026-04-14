@@ -10,11 +10,35 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ----------------------------------------------------------------
-// Auth helpers
+// Custom session auth (no Supabase Auth — credentials in user_roles)
 // ----------------------------------------------------------------
 
+const _SESSION_KEY = 'ais_session';
+const _SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
+
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(_SESSION_KEY));
+    if (!s || !s.email) return null;
+    if (s.loginAt && Date.now() - s.loginAt > _SESSION_TTL) {
+      localStorage.removeItem(_SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch { return null; }
+}
+
+function saveSession(user) {
+  localStorage.setItem(_SESSION_KEY, JSON.stringify({
+    id:      user.id,
+    email:   user.email,
+    role:    user.role,
+    loginAt: Date.now()
+  }));
+}
+
 async function requireAuth() {
-  const { data: { session } } = await _supabase.auth.getSession();
+  const session = getSession();
   if (!session) {
     window.location.href = 'index.html';
     return null;
@@ -22,8 +46,8 @@ async function requireAuth() {
   return session;
 }
 
-async function signOut() {
-  await _supabase.auth.signOut();
+function signOut() {
+  localStorage.removeItem(_SESSION_KEY);
   window.location.href = 'index.html';
 }
 
@@ -32,10 +56,17 @@ async function signOut() {
 // 'row' is one officer_postings row with embedded 'officers' object
 // ----------------------------------------------------------------
 
+// Compute decimal years between two date strings (to_date defaults to today)
+function _computeYears(from_date, to_date) {
+  if (!from_date) return 0;
+  const from = new Date(from_date);
+  const to   = to_date ? new Date(to_date) : new Date();
+  return Math.max(0, (to - from) / (365.25 * 24 * 60 * 60 * 1000));
+}
+
 function mapRow(row) {
   const o = row.officers || {};
   return {
-    SLNO:                     o.slno,
     SeniorityNo:              o.seniority_no,
     'IdentityNo.':            o.identity_no,
     Cadre:                    o.cadre,
@@ -53,6 +84,7 @@ function mapRow(row) {
     is_transferred_from_ap:   o.is_transferred_from_ap ?? false,
     From:                     row.from_date,
     To:                       row.to_date,
+    Years:                    _computeYears(row.from_date, row.to_date),
     HCM:                      row.hcm,
     PostName:                 row.post_name,
     Department:               row.department,
@@ -77,7 +109,7 @@ async function loadOfficerData(serviceType) {
       .select(`
         from_date, to_date, hcm, post_name, department, category,
         officers!inner(
-          slno, seniority_no, identity_no, cadre, name_of_officer,
+          seniority_no, identity_no, cadre, name_of_officer,
           current_posting, date_of_appointment, source_of_recruitment,
           educational_qualification, date_of_birth, allotment_year,
           domicile, email_id, phone_no, is_retired, is_transferred_from_ap
@@ -121,18 +153,50 @@ async function loadPhotos(serviceType) {
 }
 
 // ----------------------------------------------------------------
+// App-wide settings helpers  (key-value store in app_settings table)
+//
+// Required Supabase SQL (run once in the SQL Editor):
+//
+//   CREATE TABLE IF NOT EXISTS public.app_settings (
+//     key        TEXT PRIMARY KEY,
+//     value      TEXT NOT NULL DEFAULT '{}',
+//     updated_at TIMESTAMPTZ DEFAULT now()
+//   );
+//   ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+//   CREATE POLICY "auth_all" ON public.app_settings
+//     FOR ALL TO authenticated USING (true) WITH CHECK (true);
+//
+// ----------------------------------------------------------------
+
+async function loadSetting(key) {
+  try {
+    const { data, error } = await _supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle();
+    if (error || !data) return null;
+    return JSON.parse(data.value);
+  } catch (e) { return null; }
+}
+
+async function saveSetting(key, value) {
+  try {
+    const { error } = await _supabase
+      .from('app_settings')
+      .upsert(
+        { key, value: JSON.stringify(value), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+    return !error;
+  } catch (e) { return false; }
+}
+
+// ----------------------------------------------------------------
 // Check if current user is admin
 // ----------------------------------------------------------------
 
 async function isAdmin() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) return false;
-
-  const { data } = await _supabase
-    .from('user_roles')
-    .select('role')
-    .eq('email', session.user.email)
-    .single();
-
-  return data?.role === 'admin';
+  const session = getSession();
+  return session?.role === 'admin';
 }

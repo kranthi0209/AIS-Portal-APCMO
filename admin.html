@@ -227,6 +227,29 @@
     }
     #toast.show { opacity: 1; }
     #toast.error { background: #991b1b; }
+
+    /* ---- Confirm Modal ---- */
+    .confirm-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(30,27,75,0.55); z-index: 600;
+      align-items: center; justify-content: center;
+    }
+    .confirm-modal-overlay.open { display: flex; }
+    .confirm-modal-box {
+      background: white; border-radius: 16px; padding: 32px 28px 24px;
+      width: 92%; max-width: 420px;
+      box-shadow: 0 24px 60px rgba(30,27,75,0.4);
+      text-align: center;
+      animation: confirm-zoom 0.18s ease-out;
+    }
+    @keyframes confirm-zoom {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .confirm-modal-icon  { font-size: 44px; margin-bottom: 10px; line-height: 1; }
+    .confirm-modal-title { font-size: 18px; font-weight: 800; color: #1e1b4b; margin-bottom: 8px; }
+    .confirm-modal-msg   { font-size: 14px; color: #374151; margin-bottom: 22px; line-height: 1.55; }
+    .confirm-modal-btns  { display: flex; gap: 10px; justify-content: center; }
   </style>
 </head>
 <body>
@@ -311,7 +334,7 @@
             <tr>
               <th>Sl No</th><th>Photo</th>
               <th>Name of Officer</th><th>Cadre</th><th>Status</th>
-              <th>Retires On</th><th>Current Posting</th>
+              <th>Date of Birth</th><th>Retires On</th><th style="min-width:220px;">Current Posting</th>
               <th style="width:280px;">Actions</th>
             </tr>
           </thead>
@@ -352,14 +375,22 @@
   <div class="tab-panel" id="tab-users">
     <div class="section-card">
       <div class="section-header">
-        <h3>&#128101; User Roles</h3>
+        <h3>&#128101; All Users</h3>
         <div class="toolbar">
-          <button class="btn btn-primary" onclick="openUserModal()">+ Add User Role</button>
+          <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
         </div>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Email</th><th>Role</th><th style="width:120px;">Actions</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:40px;">Sl No</th>
+              <th>Email</th>
+              <th style="width:150px;">Password</th>
+              <th style="width:90px;">Role</th>
+              <th style="width:160px;">Actions</th>
+            </tr>
+          </thead>
           <tbody id="users-tbody"></tbody>
         </table>
       </div>
@@ -517,13 +548,16 @@
   </div>
 </div>
 
-<!-- 4. User Role Modal -->
+<!-- 4. User Modal (Add / Edit) -->
 <div class="modal-overlay" id="user-modal">
-  <div class="modal" style="max-width:420px;">
-    <h2>Add / Update User Role</h2>
+  <div class="modal" style="max-width:440px;">
+    <h2 id="user-modal-title">Add User</h2>
     <div class="form-grid">
       <div class="form-group full"><label>Email</label>
         <input id="usr-email" type="email" placeholder="user@gov.in">
+      </div>
+      <div class="form-group full"><label>Password <span id="usr-pw-hint" style="font-weight:400;color:#94a3b8;font-size:11px;"></span></label>
+        <input id="usr-password" type="password" placeholder="Enter password">
       </div>
       <div class="form-group full"><label>Role</label>
         <select id="usr-role">
@@ -534,7 +568,20 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
-      <button class="btn btn-success" onclick="saveUserRole()">&#10003; Save Role</button>
+      <button class="btn btn-success" onclick="saveUserRole()">&#10003; Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Confirm Modal -->
+<div class="confirm-modal-overlay" id="confirmModal">
+  <div class="confirm-modal-box">
+    <div class="confirm-modal-icon" id="confirmIcon">&#9888;</div>
+    <div class="confirm-modal-title" id="confirmTitle">Confirm Action</div>
+    <div class="confirm-modal-msg" id="confirmMsg">Are you sure?</div>
+    <div class="confirm-modal-btns">
+      <button id="confirmOkBtn" class="btn btn-danger">Confirm</button>
+      <button onclick="closeConfirm()" class="btn btn-ghost">Cancel</button>
     </div>
   </div>
 </div>
@@ -567,7 +614,7 @@ let retireFilterMax  = 9999 * 12 + 11;
   const session = await requireAuth();
   if (!session) return;
 
-  document.getElementById('nav-user-email').textContent = session.user.email;
+  document.getElementById('nav-user-email').textContent = session.email;
 
   const admin = await isAdmin();
   if (!admin) {
@@ -577,7 +624,7 @@ let retireFilterMax  = 9999 * 12 + 11;
                   padding:36px;box-shadow:0 4px 24px rgba(67,56,202,0.15);border:2px solid #c7d2fe;">
         <h2 style="color:#1e1b4b;margin-bottom:12px;">&#128274; Admin Access Required</h2>
         <p style="color:#374151;margin-bottom:16px;">
-          Your account (<strong>${esc(session.user.email)}</strong>) does not have admin privileges.
+          Your account (<strong>${esc(session.email)}</strong>) does not have admin privileges.
         </p>
         <h3 style="color:#1e1b4b;margin-bottom:10px;">Setup Steps</h3>
         <ol style="color:#374151;line-height:2;padding-left:20px;">
@@ -587,7 +634,7 @@ let retireFilterMax  = 9999 * 12 + 11;
         </ol>
         <pre style="background:#1e1b4b;color:#e0e7ff;padding:16px;border-radius:10px;
                     font-size:13px;margin:12px 0;overflow-x:auto;"><code>INSERT INTO public.user_roles (email, role)
-VALUES ('${esc(session.user.email)}', 'admin')
+VALUES ('${esc(session.email)}', 'admin')
 ON CONFLICT (email) DO UPDATE SET role = 'admin';</code></pre>
         <div style="display:flex;gap:10px;margin-top:20px;">
           <button onclick="location.reload()" class="btn btn-primary">&#8635; Refresh Page</button>
@@ -649,7 +696,7 @@ async function loadOfficers() {
   lastSvc = svc;
 
   const tbody = document.getElementById('officers-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading officers…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading officers…</td></tr>';
   closePostingsSection();
 
   try {
@@ -663,7 +710,7 @@ async function loadOfficers() {
     initRetirementSlider();
     renderOfficers(1);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
     showToast('Error loading officers: ' + err.message, true);
   }
 }
@@ -728,9 +775,13 @@ function renderOfficers(page) {
     return `<tr id="ofr-row-${o.id}" class="${isSelected ? 'selected' : ''}" style="${rowOpacity}">
       <td style="font-weight:700;color:#4338ca;">${slNo}</td>
       <td>${photoHtml}</td>
-      <td style="font-weight:600;">${esc(o.name_of_officer ?? '')}</td>
+      <td>
+        <div style="font-weight:600;">${esc(o.name_of_officer ?? '')}</div>
+        ${(o.allotment_year || o.source_of_recruitment) ? `<div style="font-size:11px;color:#6366f1;margin-top:3px;">${[o.allotment_year, o.source_of_recruitment].filter(Boolean).map(v => esc(v)).join(' &bull; ')}</div>` : ''}
+      </td>
       <td style="font-size:12px;">${esc(o.cadre ?? '')}</td>
       <td>${statusBadge}</td>
+      <td style="font-size:12px;text-align:center;">${esc(o.date_of_birth ?? '')}</td>
       <td style="text-align:center;">${retireCellHtml}</td>
       <td style="font-size:12px;word-break:break-word;">${esc(o.current_posting ?? '')}</td>
       <td style="white-space:nowrap;">
@@ -746,20 +797,25 @@ function renderOfficers(page) {
   renderOfficersPagination(total, page || 1);
 }
 
-async function markRetired(officerId, retire) {
-  const label = retire ? 'retire' : 'restore';
-  if (!confirm(`Are you sure you want to ${label} this officer?`)) return;
-  const { error } = await _supabase.from('officers')
-    .update({ is_retired: retire })
-    .eq('id', officerId);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast(retire ? 'Officer marked as Retired.' : 'Officer restored to Active.');
-  // Update local cache without full reload
-  const idx = allOfficers.findIndex(o => o.id === officerId);
-  if (idx >= 0) allOfficers[idx].is_retired = retire;
-  renderOfficers(1);
-  // Close postings panel if this was the selected officer
-  if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+function markRetired(officerId, retire) {
+  showConfirm(
+    retire ? 'Retire Officer' : 'Restore Officer',
+    retire
+      ? 'Mark this officer as Retired? They will be hidden from active views.'
+      : 'Restore this officer to Active status?',
+    async function () {
+      const { error } = await _supabase.from('officers')
+        .update({ is_retired: retire })
+        .eq('id', officerId);
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast(retire ? 'Officer marked as Retired.' : 'Officer restored to Active.');
+      const idx = allOfficers.findIndex(o => o.id === officerId);
+      if (idx >= 0) allOfficers[idx].is_retired = retire;
+      renderOfficers(1);
+      if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+    },
+    retire ? 'danger' : 'restore'
+  );
 }
 
 function renderOfficersPagination(total, page) {
@@ -820,7 +876,7 @@ function openEditOfficerModal(o) {
 // ================================================================
 // Officer Modal — Save (Insert or Update)
 // ================================================================
-async function saveOfficer() {
+function saveOfficer() {
   const officerId = document.getElementById('ofr-id').value;
 
   const payload = {
@@ -845,28 +901,33 @@ async function saveOfficer() {
   if (!payload.name_of_officer) { showToast('Name of Officer is required.', true); return; }
   if (!payload.seniority_no)    { showToast('Seniority No is required.', true); return; }
 
-  if (officerId) {
-    // Update existing officer
-    const { error } = await _supabase.from('officers').update(payload).eq('id', officerId);
-    if (error) { showToast('Error: ' + error.message, true); return; }
-    showToast('Officer updated successfully.');
-  } else {
-    // Insert new officer
-    const { error } = await _supabase.from('officers')
-      .upsert(payload, { onConflict: 'service_type,seniority_no' });
-    if (error) { showToast('Error: ' + error.message, true); return; }
-    showToast('Officer added successfully.');
-  }
-
-  closeModal('officer-modal');
-  lastSvc = '';         // force reload
-  await loadOfficers();
-
-  // If the edited officer is the currently selected one, refresh postings panel header
-  if (selectedOfficer && officerId && selectedOfficer.id == officerId) {
-    selectedOfficer.name = payload.name_of_officer;
-    document.getElementById('selected-officer-name').textContent = payload.name_of_officer;
-  }
+  const isUpdate = !!officerId;
+  showConfirm(
+    isUpdate ? 'Update Officer' : 'Add New Officer',
+    isUpdate
+      ? `Save changes to "${payload.name_of_officer}"?`
+      : `Add new officer "${payload.name_of_officer}"?`,
+    async function () {
+      if (isUpdate) {
+        const { error } = await _supabase.from('officers').update(payload).eq('id', officerId);
+        if (error) { showToast('Error: ' + error.message, true); return; }
+        showToast('Officer updated successfully.');
+      } else {
+        const { error } = await _supabase.from('officers')
+          .upsert(payload, { onConflict: 'service_type,seniority_no' });
+        if (error) { showToast('Error: ' + error.message, true); return; }
+        showToast('Officer added successfully.');
+      }
+      closeModal('officer-modal');
+      lastSvc = '';
+      await loadOfficers();
+      if (selectedOfficer && isUpdate && selectedOfficer.id == officerId) {
+        selectedOfficer.name = payload.name_of_officer;
+        document.getElementById('selected-officer-name').textContent = payload.name_of_officer;
+      }
+    },
+    'save'
+  );
 }
 
 // ================================================================
@@ -975,7 +1036,7 @@ function openEditPostingModal(p) {
 // ================================================================
 // Posting Modal — Save (Insert or Update)
 // ================================================================
-async function savePosting() {
+function savePosting() {
   const postingId  = document.getElementById('pst-id').value;
   const officerId  = document.getElementById('pst-officer-id').value;
   const svc        = document.getElementById('svcFilter').value;
@@ -998,74 +1059,157 @@ async function savePosting() {
 
   if (!payload.post_name) { showToast('Post Name is required.', true); return; }
 
-  if (postingId) {
-    // Update existing posting
-    const { error } = await _supabase.from('officer_postings').update(payload).eq('id', postingId);
-    if (error) { showToast('Error: ' + error.message, true); return; }
-    showToast('Posting updated successfully.');
-  } else {
-    // Insert new posting
-    const { error } = await _supabase.from('officer_postings').insert(payload);
-    if (error) { showToast('Error: ' + error.message, true); return; }
-    showToast('Posting added successfully.');
-  }
-
-  closeModal('posting-modal');
-  // Reload postings for current officer
-  if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+  const isUpdate = !!postingId;
+  showConfirm(
+    isUpdate ? 'Update Posting' : 'Add Posting',
+    isUpdate
+      ? `Save changes to posting "${payload.post_name}"?`
+      : `Add new posting "${payload.post_name}"?`,
+    async function () {
+      if (isUpdate) {
+        const { error } = await _supabase.from('officer_postings').update(payload).eq('id', postingId);
+        if (error) { showToast('Error: ' + error.message, true); return; }
+        showToast('Posting updated successfully.');
+      } else {
+        const { error } = await _supabase.from('officer_postings').insert(payload);
+        if (error) { showToast('Error: ' + error.message, true); return; }
+        showToast('Posting added successfully.');
+      }
+      closeModal('posting-modal');
+      if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+    },
+    'save'
+  );
 }
 
 // ================================================================
 // Posting — Delete
 // ================================================================
-async function deletePosting(id) {
-  if (!confirm('Delete this posting record? This cannot be undone.')) return;
-  const { error } = await _supabase.from('officer_postings').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast('Posting deleted.');
-  if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+function deletePosting(id) {
+  showConfirm(
+    'Delete Posting',
+    'Delete this posting record? This action cannot be undone.',
+    async function () {
+      const { error } = await _supabase.from('officer_postings').delete().eq('id', id);
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast('Posting deleted.');
+      if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+    },
+    'danger'
+  );
 }
 
 // ================================================================
 // Users
 // ================================================================
 async function loadUsers() {
-  const { data, error } = await _supabase.from('user_roles').select('*').order('email');
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  document.getElementById('users-tbody').innerHTML = (data || []).map(u => `
-    <tr>
-      <td>${esc(u.email)}</td>
-      <td><span class="badge ${u.role}">${u.role}</span></td>
-      <td>
-        <button class="btn btn-danger btn-sm" onclick="deleteUserRole(${u.id})">Remove</button>
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading users…</td></tr>';
+
+  const { data, error } = await _supabase
+    .from('user_roles')
+    .select('id, email, password, role')
+    .order('email');
+
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(error.message)}</td></tr>`;
+    return;
+  }
+
+  const users = data || [];
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#64748b;">No users found. Click <strong>+ Add User</strong> to create one.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map((u, idx) => {
+    const roleBadge = `<span class="badge ${u.role}">${u.role}</span>`;
+    return `<tr>
+      <td style="text-align:center;color:#94a3b8;">${idx + 1}</td>
+      <td style="font-weight:500;">${esc(u.email)}</td>
+      <td style="font-size:12px;font-family:monospace;">${esc(u.password || '')}</td>
+      <td>${roleBadge}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-amber btn-sm" onclick='openEditUserModal(${JSON.stringify(u)})'>&#9998; Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${esc(u.email)}')">&#128465; Delete</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
+// _editingUserId: null = new user, number = editing existing
+let _editingUserId = null;
+
 function openUserModal() {
-  document.getElementById('usr-email').value = '';
-  document.getElementById('usr-role').value  = 'user';
+  _editingUserId = null;
+  document.getElementById('user-modal-title').textContent = 'Add User';
+  document.getElementById('usr-email').value    = '';
+  document.getElementById('usr-password').value = '';
+  document.getElementById('usr-role').value     = 'user';
+  document.getElementById('usr-email').disabled = false;
+  document.getElementById('usr-pw-hint').textContent = '';
   document.getElementById('user-modal').classList.add('open');
 }
 
-async function saveUserRole() {
-  const email = document.getElementById('usr-email').value.trim().toLowerCase();
-  const role  = document.getElementById('usr-role').value;
-  if (!email) { showToast('Email is required.', true); return; }
-  const { error } = await _supabase.from('user_roles')
-    .upsert({ email, role }, { onConflict: 'email' });
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast('User role saved.');
-  closeModal('user-modal');
-  loadUsers();
+function openEditUserModal(u) {
+  _editingUserId = u.id;
+  document.getElementById('user-modal-title').textContent = 'Edit User';
+  document.getElementById('usr-email').value    = u.email;
+  document.getElementById('usr-password').value = u.password || '';
+  document.getElementById('usr-role').value     = u.role;
+  document.getElementById('usr-email').disabled = true;
+  document.getElementById('usr-pw-hint').textContent = '';
+  document.getElementById('user-modal').classList.add('open');
 }
 
-async function deleteUserRole(id) {
-  if (!confirm('Remove this user role?')) return;
-  const { error } = await _supabase.from('user_roles').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast('User role removed.');
-  loadUsers();
+function saveUserRole() {
+  const email    = document.getElementById('usr-email').value.trim().toLowerCase();
+  const password = document.getElementById('usr-password').value;
+  const role     = document.getElementById('usr-role').value;
+  const isNew    = (_editingUserId === null);
+
+  if (!email) { showToast('Email is required.', true); return; }
+  if (isNew && !password) { showToast('Password is required for new users.', true); return; }
+
+  showConfirm(
+    isNew ? 'Add User' : 'Update User',
+    isNew ? `Add user ${email} with role "${role}"?` : `Update role for ${email}?`,
+    async function () {
+      if (isNew) {
+        const { error: insErr } = await _supabase
+          .from('user_roles')
+          .insert({ email, role, password });
+        if (insErr) { showToast('Error: ' + insErr.message, true); return; }
+        showToast('User added successfully.');
+      } else {
+        const updates = { role };
+        if (password) updates.password = password;
+        const { error: updErr } = await _supabase
+          .from('user_roles')
+          .update(updates)
+          .eq('id', _editingUserId);
+        if (updErr) { showToast('Error: ' + updErr.message, true); return; }
+        showToast('User updated successfully.');
+      }
+      closeModal('user-modal');
+      loadUsers();
+    },
+    'save'
+  );
+}
+
+function deleteUser(id, email) {
+  showConfirm(
+    'Delete User',
+    `Delete user <strong>${esc(email)}</strong>? They will no longer be able to log in.`,
+    async function () {
+      const { error } = await _supabase.from('user_roles').delete().eq('id', id);
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast('User deleted.');
+      loadUsers();
+    },
+    'danger'
+  );
 }
 
 // ================================================================
@@ -1190,18 +1334,25 @@ function resetRetireFilter() {
 // ================================================================
 // Mark Transferred from AP
 // ================================================================
-async function markTransferredFromAP(officerId, transferred) {
-  const label = transferred ? 'mark as Transferred from AP' : 'restore to Active';
-  if (!confirm(`Are you sure you want to ${label} this officer?`)) return;
-  const { error } = await _supabase.from('officers')
-    .update({ is_transferred_from_ap: transferred })
-    .eq('id', officerId);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast(transferred ? 'Officer marked as Transferred from AP.' : 'Officer restored to Active.');
-  const idx = allOfficers.findIndex(o => o.id === officerId);
-  if (idx >= 0) allOfficers[idx].is_transferred_from_ap = transferred;
-  renderOfficers(1);
-  if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+function markTransferredFromAP(officerId, transferred) {
+  showConfirm(
+    transferred ? 'Transfer from AP' : 'Restore Officer',
+    transferred
+      ? 'Mark this officer as Transferred from AP? They will be hidden from active views.'
+      : 'Restore this officer to Active status?',
+    async function () {
+      const { error } = await _supabase.from('officers')
+        .update({ is_transferred_from_ap: transferred })
+        .eq('id', officerId);
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast(transferred ? 'Officer marked as Transferred from AP.' : 'Officer restored to Active.');
+      const idx = allOfficers.findIndex(o => o.id === officerId);
+      if (idx >= 0) allOfficers[idx].is_transferred_from_ap = transferred;
+      renderOfficers(1);
+      if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+    },
+    transferred ? 'danger' : 'restore'
+  );
 }
 
 // ================================================================
@@ -1292,7 +1443,7 @@ function loadTransferDepts() {
     depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
 }
 
-async function saveTransfer() {
+function saveTransfer() {
   const officerId   = document.getElementById('tr-officer-id').value;
   const svc         = document.getElementById('tr-service-type').value;
   const postName    = (document.getElementById('tr-post_name').value || '').trim();
@@ -1300,55 +1451,63 @@ async function saveTransfer() {
   const department  = document.getElementById('tr-department').value;
   const fromDate    = (document.getElementById('tr-from_date').value || '').trim() || null;
   const hcm         = (document.getElementById('tr-hcm').value || '').trim() || null;
+  const officerName = document.getElementById('tr-officer-display').textContent;
 
   if (!postName)   { showToast('Post Name is required.', true); return; }
   if (!fromDate)   { showToast('From Date is required.', true); return; }
 
-  // Step 1 — close any open posting (blank to_date) by setting its to_date = fromDate
-  const { data: openPostings, error: fetchErr } = await _supabase
-    .from('officer_postings')
-    .select('id')
-    .eq('officer_id', officerId)
-    .is('to_date', null);
-
-  if (fetchErr) { showToast('Error fetching postings: ' + fetchErr.message, true); return; }
-
-  if (openPostings && openPostings.length > 0) {
-    for (const p of openPostings) {
-      const { error: upErr } = await _supabase
+  showConfirm(
+    'Transfer Officer',
+    `Transfer "${officerName}" to "${postName}" effective ${fromDate}? The current open posting will be closed.`,
+    async function () {
+      // Step 1 — close any open posting (blank to_date) by setting its to_date = fromDate
+      const { data: openPostings, error: fetchErr } = await _supabase
         .from('officer_postings')
-        .update({ to_date: fromDate })
-        .eq('id', p.id);
-      if (upErr) { showToast('Error updating existing posting: ' + upErr.message, true); return; }
-    }
-  }
+        .select('id')
+        .eq('officer_id', officerId)
+        .is('to_date', null);
 
-  // Step 2 — insert new posting
-  const { error: insErr } = await _supabase.from('officer_postings').insert({
-    officer_id:   parseInt(officerId),
-    service_type: svc,
-    post_name:    postName,
-    category:     category || null,
-    department:   department || null,
-    from_date:    fromDate,
-    to_date:      null,
-    hcm:          hcm
-  });
-  if (insErr) { showToast('Error creating new posting: ' + insErr.message, true); return; }
+      if (fetchErr) { showToast('Error fetching postings: ' + fetchErr.message, true); return; }
 
-  // Step 3 — update officer's current_posting field
-  await _supabase.from('officers').update({ current_posting: postName }).eq('id', officerId);
+      if (openPostings && openPostings.length > 0) {
+        for (const p of openPostings) {
+          const { error: upErr } = await _supabase
+            .from('officer_postings')
+            .update({ to_date: fromDate })
+            .eq('id', p.id);
+          if (upErr) { showToast('Error updating existing posting: ' + upErr.message, true); return; }
+        }
+      }
 
-  // Update local cache
-  const idx = allOfficers.findIndex(o => o.id == officerId);
-  if (idx >= 0) allOfficers[idx].current_posting = postName;
+      // Step 2 — insert new posting
+      const { error: insErr } = await _supabase.from('officer_postings').insert({
+        officer_id:   parseInt(officerId),
+        service_type: svc,
+        post_name:    postName,
+        category:     category || null,
+        department:   department || null,
+        from_date:    fromDate,
+        to_date:      null,
+        hcm:          hcm
+      });
+      if (insErr) { showToast('Error creating new posting: ' + insErr.message, true); return; }
 
-  showToast('Transfer saved — new posting created.');
-  closeModal('transfer-modal');
-  if (selectedOfficer && selectedOfficer.id == officerId) {
-    await selectOfficer(selectedOfficer.id, selectedOfficer.name);
-  }
-  renderOfficers(1);
+      // Step 3 — update officer's current_posting field
+      await _supabase.from('officers').update({ current_posting: postName }).eq('id', officerId);
+
+      // Update local cache
+      const idx = allOfficers.findIndex(o => o.id == officerId);
+      if (idx >= 0) allOfficers[idx].current_posting = postName;
+
+      showToast('Transfer saved — new posting created.');
+      closeModal('transfer-modal');
+      if (selectedOfficer && selectedOfficer.id == officerId) {
+        await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+      }
+      renderOfficers(1);
+    },
+    'warning'
+  );
 }
 
 // ================================================================
@@ -1431,11 +1590,43 @@ function showToast(msg, isError = false) {
   setTimeout(() => el.classList.remove('show'), 3500);
 }
 
+// ================================================================
+// Confirm Modal
+// ================================================================
+function showConfirm(title, msg, onConfirm, type) {
+  type = type || 'warning';
+  var icons   = { warning: '&#9888;', danger: '&#128465;', save: '&#128190;', restore: '&#8635;' };
+  var classes = { warning: 'btn btn-primary', danger: 'btn btn-danger', save: 'btn btn-success', restore: 'btn btn-success' };
+  var labels  = { warning: 'Confirm', danger: 'Delete', save: 'Save', restore: 'Restore' };
+
+  document.getElementById('confirmIcon').innerHTML  = icons[type]   || icons.warning;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent   = msg;
+
+  var okBtn = document.getElementById('confirmOkBtn');
+  okBtn.className   = classes[type] || classes.warning;
+  okBtn.textContent = labels[type]  || 'Confirm';
+  okBtn.onclick = function () {
+    closeConfirm();
+    onConfirm();
+  };
+
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
+});
+// Confirm modal overlay click
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
 });
 </script>
 </body>

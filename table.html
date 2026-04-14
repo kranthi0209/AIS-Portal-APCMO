@@ -73,23 +73,74 @@
   document.getElementById('nav-inner').innerHTML =
     '<button onclick="location.href=\'graph.html?service=' + svc + '\'" class="animated-button blue">' +
       '<i data-lucide="bar-chart-3"></i>Graphical View</button>' +
+    '<button onclick="location.href=\'photo.html?service=' + svc + '\'" class="animated-button pink">' +
+      '<i data-lucide="image"></i>Photo View</button>' +
     '<button onclick="location.href=\'table.html?service=IAS\'" class="animated-button mustard">' +
       '<i data-lucide="circle-user-round"></i>IAS Data</button>' +
     '<button onclick="location.href=\'table.html?service=IPS\'" class="animated-button red">' +
       '<i data-lucide="shield-user"></i>IPS Data</button>' +
     '<button onclick="location.href=\'table.html?service=IFS\'" class="animated-button green">' +
       '<i data-lucide="tree-deciduous"></i>IFS Data</button>' +
-    '<div style="position:relative;">' +
-      '<button id="hcmFilterBtn" class="animated-button purple">' +
-        '<i data-lucide="user-check"></i>Select Chief Minister &#11015;</button>' +
-      '<div id="hcmDropdown" class="hcm-dropdown"></div>' +
-    '</div>' +
-    '<button onclick="location.href=\'admin.html\'" class="animated-button teal">' +
+    '<button id="hcmFilterBtn" class="animated-button purple">' +
+      '<i data-lucide="user-check"></i>Select Chief Minister</button>' +
+    '<button id="adminNavBtn" onclick="location.href=\'admin.html\'" class="animated-button teal" style="display:none">' +
       '<i data-lucide="settings"></i>Admin</button>' +
     '<button onclick="signOut()" class="animated-button darkred">' +
-      '<i data-lucide="log-out"></i>Logout</button>';
+      '<i data-lucide="log-out"></i>Logout</button>' +
+    '<button id="fsBtn" onclick="toggleFullscreen()" class="animated-button yellow">' +
+      '<i data-lucide="maximize"></i>Fullscreen</button>';
 })();
+isAdmin().then(function(admin) {
+  if (admin) {
+    var btn = document.getElementById('adminNavBtn');
+    if (btn) { btn.style.display = ''; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+  }
+});
 </script>
+
+<script>
+// ---- Fullscreen helpers ----
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(function () {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', function () {
+  var btn = document.getElementById('fsBtn');
+  if (!btn) return;
+  if (document.fullscreenElement) {
+    btn.innerHTML = '<i data-lucide="minimize"></i>Exit Full';
+  } else {
+    btn.innerHTML = '<i data-lucide="maximize"></i>Fullscreen';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+// Auto-enter fullscreen — works when page is opened via a user gesture (e.g. login button)
+document.addEventListener('DOMContentLoaded', function () {
+  document.documentElement.requestFullscreen().catch(function () {
+    // Browser blocked auto-fullscreen; user can click the button manually
+  });
+});
+</script>
+
+<!-- HCM Selector Modal -->
+<div id="hcmModal" class="hcm-modal-overlay">
+  <div class="hcm-modal-box">
+    <div class="hcm-modal-header">
+      <span>&#128081; Select Chief Minister</span>
+      <span class="hcm-modal-close" onclick="document.getElementById('hcmModal').classList.remove('open')">&#10006;</span>
+    </div>
+    <div class="hcm-modal-actions">
+      <button id="hcmSelectAll">Select All</button>
+      <button id="hcmDeselectAll">Deselect All</button>
+    </div>
+    <div id="hcmCardGrid" class="hcm-card-grid"></div>
+  </div>
+</div>
 
 <script src="script_table.js" defer></script>
 </body>

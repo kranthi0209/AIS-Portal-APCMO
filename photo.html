@@ -3,52 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIS Officer Service Graphical Report</title>
+  <title>AIS Officer Photo View</title>
   <link rel="stylesheet" href="style_dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase_config.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
-<header id="page-header">AIS Officer Service Graphical Report</header>
+<header id="page-header">AIS Officer Photo View</header>
 
 <div class="nav-bar">
   <div class="nav-bar-inner" id="nav-inner"></div>
 </div>
 
-<div class="graph-wrapper">
-  <div id="legend" class="legend-container"></div>
-  <div id="chartGrid" class="chart-grid"></div>
+<!-- Retirement Date Dual-Range Slider -->
+<div id="photo-retire-bar" class="retire-filter-bar" style="display:none;">
+  <div class="retire-slider-row">
+    <span class="retire-slider-label">&#128197; Retirement Date</span>
+    <span class="retire-year-pill" id="photo-ret-min-lbl">—</span>
+    <div class="dual-range-outer">
+      <div class="dual-range-track">
+        <div class="dual-range-fill" id="photo-ret-track-fill"></div>
+      </div>
+      <input type="range" id="photo-ret-min" oninput="photoRetireSlider('min')">
+      <input type="range" id="photo-ret-max" oninput="photoRetireSlider('max')">
+    </div>
+    <span class="retire-year-pill" id="photo-ret-max-lbl">—</span>
+    <button class="retire-reset-btn" onclick="photoRetireReset()">&#8635; All</button>
+  </div>
 </div>
 
-<!-- Popup A: Officer Details -->
-<div id="officer-popupa" class="popupa">
-  <span class="popupa-close" onclick="$('#officer-popupa').hide()">&#10006;</span>
-  <div id="officer-details"></div>
+<div class="photo-wrapper">
+  <div id="photoGrid" class="photo-grid"></div>
 </div>
 
-<!-- Set header/title and build nav immediately -->
+<!-- Officer detail popup -->
+<div id="photo-popup" class="photo-popup-overlay">
+  <div class="photo-popup-box">
+    <span class="photo-popup-close" onclick="document.getElementById('photo-popup').classList.remove('open')">&#10006;</span>
+    <div id="photo-popup-details"></div>
+  </div>
+</div>
+
+<!-- Build nav immediately -->
 <script>
 (function () {
   var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
   var labels = {
-    IAS: 'IAS Officer Service Graphical Report',
-    IPS: 'IPS Officer Service Graphical Report',
-    IFS: 'IFS Officer Service Graphical Report'
+    IAS: 'IAS Officer Photo View',
+    IPS: 'IPS Officer Photo View',
+    IFS: 'IFS Officer Photo View'
   };
-  var label = labels[svc] || labels.IAS;
-  document.getElementById('page-header').textContent = label;
-  document.title = label;
+  document.getElementById('page-header').textContent = labels[svc] || labels.IAS;
+  document.title = labels[svc] || labels.IAS;
 
   document.getElementById('nav-inner').innerHTML =
     '<button onclick="location.href=\'table.html?service=' + svc + '\'" class="animated-button black">' +
       '<i data-lucide="table"></i>Tabular View</button>' +
-    '<button onclick="location.href=\'photo.html?service=' + svc + '\'" class="animated-button pink">' +
-      '<i data-lucide="image"></i>Photo View</button>' +
+    '<button onclick="location.href=\'graph.html?service=' + svc + '\'" class="animated-button blue">' +
+      '<i data-lucide="bar-chart-3"></i>Graphical View</button>' +
     '<button onclick="location.href=\'table.html?service=IAS\'" class="animated-button mustard">' +
       '<i data-lucide="circle-user-round"></i>IAS Data</button>' +
     '<button onclick="location.href=\'table.html?service=IPS\'" class="animated-button red">' +
@@ -72,8 +86,8 @@ isAdmin().then(function(admin) {
 });
 </script>
 
+<!-- Fullscreen -->
 <script>
-// ---- Fullscreen helpers ----
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(function () {});
@@ -81,23 +95,16 @@ function toggleFullscreen() {
     document.exitFullscreen();
   }
 }
-
 document.addEventListener('fullscreenchange', function () {
   var btn = document.getElementById('fsBtn');
   if (!btn) return;
-  if (document.fullscreenElement) {
-    btn.innerHTML = '<i data-lucide="minimize"></i>Exit Full';
-  } else {
-    btn.innerHTML = '<i data-lucide="maximize"></i>Fullscreen';
-  }
+  btn.innerHTML = document.fullscreenElement
+    ? '<i data-lucide="minimize"></i>Exit Full'
+    : '<i data-lucide="maximize"></i>Fullscreen';
   if (typeof lucide !== 'undefined') lucide.createIcons();
 });
-
-// Auto-enter fullscreen — works when page is opened via a user gesture (e.g. login button)
 document.addEventListener('DOMContentLoaded', function () {
-  document.documentElement.requestFullscreen().catch(function () {
-    // Browser blocked auto-fullscreen; user can click the button manually
-  });
+  document.documentElement.requestFullscreen().catch(function () {});
 });
 </script>
 
@@ -116,6 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
   </div>
 </div>
 
-<script src="script_graph.js"></script>
+<script src="script_photo.js"></script>
 </body>
 </html>

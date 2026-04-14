@@ -99,6 +99,8 @@ header {
 .animated-button.darkred { background: linear-gradient(135deg, #b91c1c, #450a0a); }   /* crimson  */
 .animated-button.teal    { background: linear-gradient(135deg, #0891b2, #0e7490); }   /* cyan     */
 .animated-button.yellow  { background: linear-gradient(135deg, #ca8a04, #713f12); }
+.animated-button.pink    { background: linear-gradient(135deg, #db2777, #9d174d); }   /* rose     */
+.animated-button.orange  { background: linear-gradient(135deg, #ea580c, #9a3412); }   /* orange   (kept for future use) */
 
 /* ----------------------------------------------------------------
    Cadre Legend (table view)
@@ -171,8 +173,10 @@ th {
   cursor: pointer;
   font-weight: 600;
   color: #1e1b4b;
-  height: 48px;              /* consistent row-1 header height */
-  white-space: nowrap;       /* headers don't wrap by default */
+  height: 4px;              /* consistent row-1 header height */
+  white-space: normal;       /* wrap to content width */
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 th:hover { background: linear-gradient(180deg, #c7d2fe, #a5b4fc); }
 
@@ -181,31 +185,43 @@ th[data-department-category] {
   writing-mode: sideways-lr;
   white-space: normal;
   vertical-align: bottom;
-  padding: 8px 4px 12px;
-  height: 150px;
-  width: 32px;               /* column takes just the line-height of text */
-  min-width: 32px;
+  padding: 4px 4px 4px;
+  height: 50px;
+  width: 49px;
+  min-width: 49px;
+  max-width: 49px;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
-/* Row 2 of header sticks just below row 1 */
+/* Row 2 of header sticks just below row 1 — top set dynamically by JS */
 table thead tr:nth-child(2) th {
-  top: 48px;                 /* matches th height above */
+  top: 0;
   z-index: 5;
   background: linear-gradient(180deg, #ede9fe, #ddd6fe);
   border: 1px solid #a5b4fc;
-  height: auto;              /* row 2 height driven by rotated text (150px) */
+  height: auto; 
+  text-align: center;             /* row 2 height driven by rotated text (120px) */
   white-space: normal;
 }
 
 /* Total columns in row 2 */
 th.category-total-header {
+  width: 52px;
   min-width: 52px;
-  white-space: nowrap;
+  max-width: 52px;
+  white-space: normal;
+  word-break: break-word;
   vertical-align: bottom;
-  padding: 4px 8px 12px;
+  padding: 4px 4px 12px;
   cursor: pointer;
+}
+
+/* All data cells except the two sticky columns → 40 px wide */
+td:not(.sticky-col):not(.sticky-col-2) {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
 }
 
 /* ----------------------------------------------------------------
@@ -220,39 +236,53 @@ th.category-header {
   cursor: default;
 }
 
-/* ----------------------------------------------------------------
-   Sticky Columns
-   ---------------------------------------------------------------- */
+:root {
+  --col1-width: 55px;
+  --col2-width: 150px;
+}
+
+/* Sticky Columns */
 .sticky-col {
   position: sticky;
-  border: 1px solid #a5b4fc;
   left: 0;
   z-index: 7;
   background: #ddd6fe;
   text-align: center;
   font-weight: 600;
-  width: 55px;
-  min-width: 55px;
-}
-.sticky-col-2 {
-  position: sticky;
+  width: var(--col1-width);
+  min-width: var(--col1-width);
   border: 1px solid #a5b4fc;
-  left: 55px;               /* must match sticky-col width */
-  z-index: 7;
-  background: #ede9fe;
-  width: 150px;
-  min-width: 150px;
-  max-width: 150px;
-  white-space: normal;      /* allow text to wrap */
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-th.sticky-col, th.sticky-col-2 {
-  z-index: 8;
-  background: linear-gradient(135deg, #c4b5fd, #a5b4fc);
-  border: 1px solid #818cf8;
+  will-change: transform;
 }
 
+.sticky-col-2 {
+  position: sticky;
+  left: var(--col1-width);
+  z-index: 7;
+  background: #ede9fe;
+  width: var(--col2-width);
+  min-width: var(--col2-width);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  border: 1px solid #a5b4fc;
+  will-change: transform;
+}
+
+th.sticky-col,
+th.sticky-col-2 {
+  z-index: 10;
+  background: linear-gradient(135deg, #c4b5fd, #a5b4fc);
+  border: 1px solid #818cf8;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  height: auto;
+  font-size: 12px;
+  padding: 4px 6px;
+  vertical-align: middle;
+}
 /* ----------------------------------------------------------------
    Category Total Cell
    ---------------------------------------------------------------- */
@@ -281,53 +311,143 @@ td a:hover, .officer-link:hover {
 /* ----------------------------------------------------------------
    HCM Dropdown
    ---------------------------------------------------------------- */
-.hcm-dropdown {
+/* ----------------------------------------------------------------
+   HCM Selector Modal
+   ---------------------------------------------------------------- */
+.hcm-modal-overlay {
   display: none;
-  position: absolute;
-  top: 46px;
-  right: 0;
-  background: #f5f3ff;
-  border: 1px solid #a78bfa;
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 12px 32px rgba(109, 40, 217, 0.22);
-  z-index: 10000;
-  max-height: 520px;
-  overflow-y: auto;
-  width: 450px !important;
-  min-width: 450px !important;
-  text-align: left;
-}
-
-.hcm-item {
-  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  z-index: 1100;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  width: 410px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
+  justify-content: center;
+  backdrop-filter: blur(3px);
 }
-.hcm-item:hover { background: #ede9fe; }
+.hcm-modal-overlay.open { display: flex; }
 
-.hcm-item img {
-  width: var(--hcm-img-size, 34px);
-  height: var(--hcm-img-size, 34px);
-  border-radius: 50%;
-  border: 1px solid #ccc;
+.hcm-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  border: 2px solid #4338ca;
+  width: 92%;
+  max-width: 940px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 70px rgba(67, 56, 202, 0.4);
+  animation: popup-zoom-flex 0.22s ease forwards;
+  display: flex;
+  flex-direction: column;
+}
+
+.hcm-modal-header {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 14px 14px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.hcm-modal-header span { color: #e0e7ff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+.hcm-modal-close {
+  color: #fca5a5;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  font-weight: bold;
+  transition: color 0.15s;
+}
+.hcm-modal-close:hover { color: #ef4444; }
+
+.hcm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px 4px;
+  background: #f8f7ff;
+  border-bottom: 1px solid #e0e7ff;
+}
+.hcm-modal-actions button {
+  padding: 5px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  transition: opacity 0.15s;
+}
+.hcm-modal-actions button:hover { opacity: 0.85; }
+#hcmSelectAll   { background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; }
+#hcmDeselectAll { background: linear-gradient(135deg,#dc2626,#b91c1c); color: #fff; }
+
+.hcm-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+
+.hcm-card {
+  border: 2px solid #e0e7ff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, background 0.18s;
+  text-align: center;
+  overflow: hidden;
+  background: #f8f7ff;
+  user-select: none;
+  position: relative;
+}
+.hcm-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(67, 56, 202, 0.18);
+}
+.hcm-card.selected {
+  border-color: #4338ca;
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px #818cf8;
+}
+.hcm-card img {
+  width: 100%;
+  height: 140px;
   object-fit: cover;
+  display: block;
 }
-.hcm-item input {
-  transform: scale(1.3);
-  margin-right: 6px;
-  cursor: pointer;
+.hcm-card-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e1b4b;
+  padding: 6px 6px 2px;
+  line-height: 1.3;
+  word-break: break-word;
 }
-.hcm-item label {
+.hcm-card.selected .hcm-card-name { color: #4338ca; }
+.hcm-card-term {
+  font-size: 10px;
+  color: #818cf8;
+  font-weight: 700;
+  padding-bottom: 6px;
+}
+.hcm-card-tick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #4338ca;
+  color: #fff;
   font-size: 13px;
-  cursor: pointer;
-  flex: 1;
+  font-weight: 900;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(67,56,202,0.4);
 }
+.hcm-card.selected .hcm-card-tick { display: flex; }
 
 /* ----------------------------------------------------------------
    Popup A — Officer Details  (white + indigo accent)
@@ -586,20 +706,257 @@ canvas {
 }
 
 /* ----------------------------------------------------------------
+   Photo View — Wrapper & Grid
+   ---------------------------------------------------------------- */
+.photo-wrapper {
+  position: relative;
+  width: 99.5%;
+  height: calc(100vh - 130px);
+  overflow: auto;
+  border: 2px solid #4338ca;
+  border-radius: 6px;
+  box-shadow: 0 2px 16px rgba(67, 56, 202, 0.12);
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+@media (max-width: 900px)  { .photo-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
+@media (max-width: 560px)  { .photo-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ----------------------------------------------------------------
+   Photo Tile
+   ---------------------------------------------------------------- */
+.photo-tile {
+  background: #ffffff;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(67, 56, 202, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+.photo-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(67, 56, 202, 0.22);
+}
+
+.photo-tile img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+  background: #ede9fe;
+}
+
+.photo-tile-body {
+  padding: 8px 8px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  align-items: center;
+}
+
+.photo-tile-sno {
+  font-size: 11px;
+  font-weight: 800;
+  color: #818cf8;
+  letter-spacing: 0.5px;
+}
+
+.photo-tile-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e1b4b;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.photo-tile-batch {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4338ca;
+  letter-spacing: 0.5px;
+}
+
+.photo-tile-source {
+  font-size: 10px;
+  color: #6366f1;
+  font-style: italic;
+  word-break: break-word;
+  flex: 1;
+}
+
+.photo-tile-retire {
+  font-size: 10px;
+  color: #dc2626;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ----------------------------------------------------------------
+   Photo Popup
+   ---------------------------------------------------------------- */
+.photo-popup-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 27, 75, 0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.photo-popup-overlay.open { display: flex; }
+
+@keyframes popup-zoom-flex {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.photo-popup-box {
+  background: #ffffff;
+  border: 3px solid #4338ca;
+  border-radius: 16px;
+  padding: 0;
+  width: 90%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 70px rgba(67, 56, 202, 0.35);
+  animation: popup-zoom-flex 0.25s ease forwards;
+}
+
+.photo-popup-close {
+  float: right;
+  margin: 10px 14px 0 0;
+  cursor: pointer;
+  font-size: 22px;
+  color: #dc2626;
+  font-weight: bold;
+  line-height: 1;
+}
+.photo-popup-close:hover { color: #ef4444; }
+
+/* ----------------------------------------------------------------
+   Officer Details popup — Field Name / Field Value fixed widths
+   ---------------------------------------------------------------- */
+.officer-detail-table { width: 100%; table-layout: fixed; }
+.officer-detail-table th { width: 22%; }
+.officer-detail-table td { width: 28%; }
+
+/* ----------------------------------------------------------------
+   Service History popup (popupc-table) — fixed column widths
+   Post Name | Dept | Category | From | To | Duration | HCM
+   ---------------------------------------------------------------- */
+.popupc-table { table-layout: fixed; width: 100%; }
+.popupc-table th:nth-child(1), .popupc-table td:nth-child(1) { width: 190px; }
+.popupc-table th:nth-child(2), .popupc-table td:nth-child(2) { width: 110px; }
+.popupc-table th:nth-child(3), .popupc-table td:nth-child(3) { width: 110px; }
+.popupc-table th:nth-child(4), .popupc-table td:nth-child(4) { width:  80px; }
+.popupc-table th:nth-child(5), .popupc-table td:nth-child(5) { width:  80px; }
+.popupc-table th:nth-child(6), .popupc-table td:nth-child(6) { width: 100px; }
+.popupc-table th:nth-child(7), .popupc-table td:nth-child(7) { width: 150px; }
+
+/* ----------------------------------------------------------------
+   Service Detail popup (popupb-table) — fixed column widths
+   Post Name | From | To | Period | HCM
+   ---------------------------------------------------------------- */
+.popupb-table { table-layout: fixed; width: 100%; }
+.popupb-table th:nth-child(1), .popupb-table td:nth-child(1) { width: 220px; }
+.popupb-table th:nth-child(2), .popupb-table td:nth-child(2) { width:  80px; }
+.popupb-table th:nth-child(3), .popupb-table td:nth-child(3) { width:  80px; }
+.popupb-table th:nth-child(4), .popupb-table td:nth-child(4) { width: 100px; }
+.popupb-table th:nth-child(5), .popupb-table td:nth-child(5) { width: 150px; }
+
+/* ----------------------------------------------------------------
+   Retirement Date Dual-Range Slider  (Photo view + shared)
+   ---------------------------------------------------------------- */
+.retire-filter-bar {
+  padding: 10px 20px 10px;
+  background: linear-gradient(135deg, #f5f3ff, #eef0fb);
+  border-bottom: 2px solid #c7d2fe;
+}
+.retire-slider-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.retire-slider-label {
+  font-size: 12.5px; font-weight: 700; color: #374151;
+  white-space: nowrap; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.retire-year-pill {
+  font-size: 13px; font-weight: 800; color: white;
+  background: #4338ca; padding: 3px 10px; border-radius: 20px;
+  min-width: 82px; text-align: center; white-space: nowrap;
+}
+.dual-range-outer {
+  flex: 1; min-width: 220px; position: relative; height: 44px;
+}
+.dual-range-track {
+  position: absolute; left: 0; right: 0; top: 50%;
+  transform: translateY(-50%);
+  height: 6px; background: #c7d2fe; border-radius: 3px;
+  pointer-events: none;
+}
+.dual-range-fill {
+  position: absolute; height: 100%; background: #4338ca; border-radius: 3px;
+}
+.dual-range-outer input[type=range] {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 100%; height: 44px; margin: 0; padding: 0;
+  background: transparent; pointer-events: none;
+  -webkit-appearance: none; appearance: none; outline: none;
+}
+.dual-range-outer input[type=range]::-webkit-slider-runnable-track {
+  height: 6px; background: transparent;
+}
+.dual-range-outer input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #4338ca; border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(67,56,202,0.45);
+  cursor: pointer; pointer-events: all; margin-top: -8px;
+}
+.dual-range-outer input[type=range]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #4338ca; border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(67,56,202,0.45);
+  cursor: pointer; pointer-events: all;
+}
+.dual-range-outer input[type=range]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(67,56,202,0.2), 0 2px 8px rgba(67,56,202,0.45);
+}
+.retire-reset-btn {
+  padding: 4px 11px; border: 1.5px solid #c7d2fe; border-radius: 6px;
+  background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #4338ca;
+}
+.retire-reset-btn:hover { background: #eef0fb; }
+
+/* ----------------------------------------------------------------
    Scrollbar Styling
    ---------------------------------------------------------------- */
 .table-wrapper::-webkit-scrollbar,
 .graph-wrapper::-webkit-scrollbar,
+.photo-wrapper::-webkit-scrollbar,
 .popupa::-webkit-scrollbar,
 .popupb::-webkit-scrollbar,
 .popupc::-webkit-scrollbar,
-.hcm-dropdown::-webkit-scrollbar { width: 8px; height: 8px; }
+.hcm-modal-box::-webkit-scrollbar { width: 8px; height: 8px; }
 
 .table-wrapper::-webkit-scrollbar-track,
-.graph-wrapper::-webkit-scrollbar-track { background: #ede9fe; }
+.graph-wrapper::-webkit-scrollbar-track,
+.photo-wrapper::-webkit-scrollbar-track { background: #ede9fe; }
 
 .table-wrapper::-webkit-scrollbar-thumb,
-.graph-wrapper::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
+.graph-wrapper::-webkit-scrollbar-thumb,
+.photo-wrapper::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover,
-.graph-wrapper::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+.graph-wrapper::-webkit-scrollbar-thumb:hover,
+.photo-wrapper::-webkit-scrollbar-thumb:hover { background: #818cf8; }
