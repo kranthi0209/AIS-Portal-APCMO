@@ -20,19 +20,19 @@
   // HCM order (same for all three services)
   // ----------------------------------------------------------------
   const customHCMOrder = [
-    "Nedurumalli Janardhana Reddy",
-    "Kotla Vijaya Bhaskara Reddy",
-    "Nandamuri Taraka Rama Rao-3.0",
-    "Nara Chandrababu Naidu-1.0",
-    "Nara Chandrababu Naidu-2.0",
-    "Yeduguri Sandinti Rajasekhara Reddy-1.0",
-    "Yeduguri Sandinti Rajasekhara Reddy-2.0",
-    "Konijeti Rosaiah",
-    "Nallari Kiran Kumar Reddy",
-    "Presidents Rule (Narasimhan)",
-    "Nara Chandrababu Naidu-3.0",
-    "Yeduguri Sandinti Jagan Mohan Reddy",
-    "Nara Chandrababu Naidu-4.0"
+    "NEDURUMALLI JANARDHANA REDDY",
+    "KOTLA VIJAYA BHASKARA REDDY",
+    "NANDAMURI TARAKA RAMA RAO-3.0",
+    "NARA CHANDRABABU NAIDU-1.0",
+    "NARA CHANDRABABU NAIDU-2.0",
+    "YEDUGURI SANDINTI RAJASEKHARA REDDY-1.0",
+    "YEDUGURI SANDINTI RAJASEKHARA REDDY-2.0",
+    "KONIJETI ROSAIAH",
+    "NALLARI KIRAN KUMAR REDDY",
+    "PRESIDENTS RULE (NARASIMHAN)",
+    "NARA CHANDRABABU NAIDU-3.0",
+    "YEDUGURI SANDINTI JAGAN MOHAN REDDY",
+    "NARA CHANDRABABU NAIDU-4.0"
   ];
 
   // ----------------------------------------------------------------
