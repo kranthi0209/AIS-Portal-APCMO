@@ -236,10 +236,10 @@
       categories.add(entry.Category);
     });
 
-    // Sort by seniority and assign sequential display rank among active officers
+    // Sort by officers.id ascending and assign sequential display rank
     const sorted = {};
     Object.entries(groupedData)
-      .sort(([, a], [, b]) => (parseInt(a.meta.SeniorityNo) || 9999) - (parseInt(b.meta.SeniorityNo) || 9999))
+      .sort(([, a], [, b]) => (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0))
       .forEach(([k, v], rank) => { v.displayRank = rank + 1; sorted[k] = v; });
     groupedData = sorted;
 
@@ -253,7 +253,7 @@
   function renderTable() {
     const categoriesList = categoryOrder.filter(cat => categories.has(cat));
     const headerRow1 = [
-      '<th rowspan="2" class="sticky-col" onclick="sortBySeniority()">S.No</th>',
+      '<th rowspan="2" class="sticky-col" onclick="sortByIdentity()">S.No</th>',
       '<th rowspan="2" class="sticky-col-2" onclick="sortByName()">Name of the Officer</th>'
     ];
     const headerRow2 = [];
@@ -344,8 +344,8 @@
     renderBody(arr, categoryOrder.filter(cat => categories.has(cat)), getOrderedDeptMap(Object.entries(groupedData)));
   }
 
-  window.sortBySeniority = function () {
-    sortAndRender(m => +m.SeniorityNo, 'seniority');
+  window.sortByIdentity = function () {
+    sortAndRender(m => m.OfficerId || 0, 'identity');
   };
 
   window.sortByName = function () {
@@ -401,13 +401,13 @@
   window.showOfficer = function (data) {
     const name        = data.NameoftheOfficer?.trim();
     const services    = groupedData[name]?.services || [];
-    const seniorityNo = data.SeniorityNo?.toString()?.trim();
-    const imageUrl    = photoMap[seniorityNo] || 'https://placehold.co/120x150?text=No+Image';
+    const identityNo  = data['IdentityNo.']?.toString()?.trim();
+    const imageUrl    = photoMap[identityNo] || 'https://placehold.co/120x150?text=No+Image';
 
     // Row definitions: [key1, label1, key2, label2, gradient, valueBg]
     const fieldRows = [
-      ['SeniorityNo',             'Seniority No',       'IdentityNo.',             'Identity No',      'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
-      ['Cadre',                   'Cadre',              'AllotmentYear',            'Allotment Year',   'linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
+      ['IdentityNo.',             'Identity No',        'AllotmentYear',           'Allotment Year',   'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
+      ['Cadre',                   'Cadre',              'SourceOfRecruitment',      'Source of Recruit.','linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
       ['DateofAppointment',       'Date of Appointment','DateOfBirth',              'Date of Birth',    'linear-gradient(135deg,#1e3a5f,#2563eb)', '#eff6ff'],
       ['SourceOfRecruitment',     'Source of Recruit.', 'EducationalQualification', 'Education',        'linear-gradient(135deg,#134e4a,#0d9488)', '#f0fdfa'],
       ['Domicile',                'Domicile',           'EmailId',                  'Email',            'linear-gradient(135deg,#14532d,#16a34a)', '#f0fdf4'],

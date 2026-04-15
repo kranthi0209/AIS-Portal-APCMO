@@ -67,7 +67,7 @@ function _computeYears(from_date, to_date) {
 function mapRow(row) {
   const o = row.officers || {};
   return {
-    SeniorityNo:              o.seniority_no,
+    OfficerId:                o.id,
     'IdentityNo.':            o.identity_no,
     Cadre:                    o.cadre,
     NameoftheOfficer:         o.name_of_officer,
@@ -109,7 +109,7 @@ async function loadOfficerData(serviceType) {
       .select(`
         from_date, to_date, hcm, post_name, department, category,
         officers!inner(
-          seniority_no, identity_no, cadre, name_of_officer,
+          id, identity_no, cadre, name_of_officer,
           current_posting, date_of_appointment, source_of_recruitment,
           educational_qualification, date_of_birth, allotment_year,
           domicile, email_id, phone_no, is_retired, is_transferred_from_ap
@@ -136,7 +136,7 @@ async function loadOfficerData(serviceType) {
 async function loadPhotos(serviceType) {
   const { data, error } = await _supabase
     .from('officers')
-    .select('seniority_no, photo_url')
+    .select('identity_no, photo_url')
     .eq('service_type', serviceType)
     .not('photo_url', 'is', null);
 
@@ -147,50 +147,11 @@ async function loadPhotos(serviceType) {
 
   const map = {};
   (data || []).forEach(r => {
-    if (r.photo_url) map[String(r.seniority_no)] = r.photo_url;
+    if (r.photo_url) map[String(r.identity_no)] = r.photo_url;
   });
   return map;
 }
 
-// ----------------------------------------------------------------
-// App-wide settings helpers  (key-value store in app_settings table)
-//
-// Required Supabase SQL (run once in the SQL Editor):
-//
-//   CREATE TABLE IF NOT EXISTS public.app_settings (
-//     key        TEXT PRIMARY KEY,
-//     value      TEXT NOT NULL DEFAULT '{}',
-//     updated_at TIMESTAMPTZ DEFAULT now()
-//   );
-//   ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
-//   CREATE POLICY "auth_all" ON public.app_settings
-//     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-//
-// ----------------------------------------------------------------
-
-async function loadSetting(key) {
-  try {
-    const { data, error } = await _supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', key)
-      .maybeSingle();
-    if (error || !data) return null;
-    return JSON.parse(data.value);
-  } catch (e) { return null; }
-}
-
-async function saveSetting(key, value) {
-  try {
-    const { error } = await _supabase
-      .from('app_settings')
-      .upsert(
-        { key, value: JSON.stringify(value), updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      );
-    return !error;
-  } catch (e) { return false; }
-}
 
 // ----------------------------------------------------------------
 // Check if current user is admin

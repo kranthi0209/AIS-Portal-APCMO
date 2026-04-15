@@ -308,7 +308,6 @@
             <option value="all">All Officers</option>
           </select>
           <input type="text" id="officerSearch" placeholder="Search name…" oninput="renderOfficers(1)" style="width:180px;">
-          <button class="btn btn-primary" onclick="openAddOfficerModal()">+ Add New Officer</button>
         </div>
       </div>
       <!-- Retirement Date Dual-Range Slider -->
@@ -332,7 +331,8 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Sl No</th><th>Photo</th>
+              <th style="width:48px;">Sl No</th>
+              <th>Photo</th>
               <th>Name of Officer</th><th>Cadre</th><th>Status</th>
               <th>Date of Birth</th><th>Retires On</th><th style="min-width:220px;">Current Posting</th>
               <th style="width:280px;">Actions</th>
@@ -364,6 +364,71 @@
           </thead>
           <tbody id="postings-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- CSV Upload Section -->
+    <div class="section-card" style="margin-top:24px;">
+      <div class="section-header">
+        <h3>&#128228; Upload Officers Data from CSV</h3>
+      </div>
+      <div class="section-body">
+
+        <!-- Export backup buttons -->
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:10px;">&#128190; Export Current Data (Backup)</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="exportTable('officers')">&#11015; Export Officers CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="exportTable('officer_postings')">&#11015; Export Postings CSV</button>
+            <div id="export-status" style="font-size:12px;color:#2563eb;font-weight:600;display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Warning banner -->
+        <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:22px;line-height:1;">&#9888;&#65039;</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#991b1b;margin-bottom:4px;">DESTRUCTIVE OPERATION — READ CAREFULLY</div>
+            <div style="font-size:12.5px;color:#7f1d1d;line-height:1.6;">
+              Uploading a CSV will <strong>automatically export backups</strong> of both tables, then
+              <strong>permanently DELETE all existing officers and all their postings</strong>, then replace them with the CSV data.
+              The backup CSV files will be downloaded to your computer before any deletion begins.
+            </div>
+          </div>
+        </div>
+
+        <!-- Expected format hint -->
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#166534;">
+          <strong>Expected CSV columns (header row required):</strong><br>
+          <code style="font-size:11px;color:#065f46;">service_type, identity_no, name_of_officer, cadre, current_posting, date_of_appointment, source_of_recruitment, educational_qualification, date_of_birth, allotment_year, domicile, email_id, phone_no, photo_url, is_retired, is_transferred_from_ap</code><br>
+          <span style="margin-top:4px;display:block;">Column names are case-insensitive. <code>is_retired</code> and <code>is_transferred_from_ap</code> accept <code>true/false</code> or <code>1/0</code>. Dates: <code>YYYY-MM-DD</code> preferred.</span>
+        </div>
+
+        <!-- File drop zone -->
+        <div id="csv-drop-zone"
+             style="border:2.5px dashed #c7d2fe;border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;background:#fafbff;transition:background 0.2s,border-color 0.2s;"
+             onclick="document.getElementById('csv-file-input').click()"
+             ondragover="csvDragOver(event)" ondragleave="csvDragLeave(event)" ondrop="csvDrop(event)">
+          <div style="font-size:36px;margin-bottom:10px;">&#128196;</div>
+          <div style="font-size:14px;font-weight:700;color:#4338ca;">Click to select CSV file</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">or drag &amp; drop here</div>
+          <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" onchange="csvFileSelected(event)">
+        </div>
+
+        <!-- Preview area (hidden until file selected) -->
+        <div id="csv-preview-area" style="display:none;margin-top:18px;">
+          <div id="csv-summary" style="margin-bottom:12px;"></div>
+          <div id="csv-error-list" style="margin-bottom:12px;"></div>
+          <div id="csv-preview-table-wrap" style="overflow-x:auto;margin-bottom:16px;"></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-danger" onclick="csvUpload()" id="csv-upload-btn">
+              &#128190; Backup, Delete All &amp; Upload CSV
+            </button>
+            <button class="btn btn-ghost" onclick="csvReset()">&#10006; Clear</button>
+            <div id="csv-progress" style="font-size:13px;color:#4338ca;font-weight:600;display:none;"></div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -410,15 +475,9 @@
     <input type="hidden" id="ofr-id">
     <div class="form-grid">
       <div class="form-group"><label>Service Type</label>
-        <select id="ofr-service_type">
+        <select id="ofr-service_type" onchange="onOfficerSvcChange()">
           <option>IAS</option><option>IPS</option><option>IFS</option>
         </select>
-      </div>
-      <div class="form-group"><label>SLNO</label>
-        <input id="ofr-slno" type="number" min="1">
-      </div>
-      <div class="form-group"><label>Seniority No</label>
-        <input id="ofr-seniority_no" type="number" min="1">
       </div>
       <div class="form-group"><label>Identity No</label>
         <input id="ofr-identity_no">
@@ -430,19 +489,19 @@
         <input id="ofr-current_posting" placeholder="Present designation / office">
       </div>
       <div class="form-group"><label>Cadre</label>
-        <input id="ofr-cadre" placeholder="e.g. Chief Secretary">
+        <select id="ofr-cadre"><option value="">— Select Cadre —</option></select>
+      </div>
+      <div class="form-group"><label>Source of Recruitment</label>
+        <select id="ofr-source_of_recruitment"><option value="">— Select —</option></select>
       </div>
       <div class="form-group"><label>Allotment Year</label>
         <input id="ofr-allotment_year" placeholder="e.g. 1995">
       </div>
       <div class="form-group"><label>Date of Appointment</label>
-        <input id="ofr-date_of_appointment" placeholder="DD-MM-YYYY">
+        <input id="ofr-date_of_appointment" type="date">
       </div>
       <div class="form-group"><label>Date of Birth</label>
-        <input id="ofr-date_of_birth" placeholder="DD-MM-YYYY">
-      </div>
-      <div class="form-group"><label>Source of Recruitment</label>
-        <input id="ofr-source_of_recruitment" placeholder="e.g. Direct Recruit">
+        <input id="ofr-date_of_birth" type="date">
       </div>
       <div class="form-group"><label>Domicile</label>
         <input id="ofr-domicile" placeholder="State / Region">
@@ -472,7 +531,7 @@
   <div class="modal" style="max-width:620px;">
     <h2 id="posting-modal-title">Add Posting</h2>
     <input type="hidden" id="pst-id">
-    <input type="hidden" id="pst-officer-id">
+    <input type="hidden" id="pst-identity-no">
     <div class="officer-banner">
       Officer: <strong id="pst-officer-display"></strong>
     </div>
@@ -512,6 +571,7 @@
   <div class="modal" style="max-width:620px;">
     <h2>&#8646; Transfer Officer</h2>
     <input type="hidden" id="tr-officer-id">
+    <input type="hidden" id="tr-identity-no">
     <input type="hidden" id="tr-service-type">
     <div class="officer-banner">
       Officer: <strong id="tr-officer-display"></strong>
@@ -704,7 +764,7 @@ async function loadOfficers() {
       .from('officers')
       .select('*')
       .eq('service_type', svc)
-      .order('seniority_no', { ascending: true });
+      .order('id', { ascending: true });
     if (error) throw error;
     allOfficers = data || [];
     initRetirementSlider();
@@ -740,8 +800,7 @@ function renderOfficers(page) {
   const pageData = filtered.slice(((page || 1) - 1) * PAGE_SIZE, (page || 1) * PAGE_SIZE);
 
   document.getElementById('officers-tbody').innerHTML = pageData.map((o, idx) => {
-    const slNo = ((page || 1) - 1) * PAGE_SIZE + idx + 1;
-    const isSelected      = selectedOfficer && selectedOfficer.id === o.id;
+    const isSelected      = selectedOfficer && selectedOfficer.identity_no === o.identity_no;
     const isRetired       = !!o.is_retired;
     const isTransferredAP = !!o.is_transferred_from_ap;
     const photoHtml = o.photo_url
@@ -773,7 +832,7 @@ function renderOfficers(page) {
       : '<span style="color:#94a3b8;font-size:11px;">N/A</span>';
 
     return `<tr id="ofr-row-${o.id}" class="${isSelected ? 'selected' : ''}" style="${rowOpacity}">
-      <td style="font-weight:700;color:#4338ca;">${slNo}</td>
+      <td style="text-align:center;font-size:12px;font-weight:700;color:#6366f1;">${((page || 1) - 1) * PAGE_SIZE + idx + 1}</td>
       <td>${photoHtml}</td>
       <td>
         <div style="font-weight:600;">${esc(o.name_of_officer ?? '')}</div>
@@ -786,10 +845,10 @@ function renderOfficers(page) {
       <td style="font-size:12px;word-break:break-word;">${esc(o.current_posting ?? '')}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-amber btn-sm" onclick='openEditOfficerModal(${JSON.stringify(o)})' title="Edit Officer">&#9998; Edit</button>
-        <button class="btn btn-primary btn-sm" onclick='openTransferModal(${o.id},"${esc(o.name_of_officer ?? '')}","${esc(o.service_type ?? '')}")' title="Transfer (Internal Posting Change)">&#8646; Transfer</button>
+        <button class="btn btn-primary btn-sm" onclick='openTransferModal(${o.id},"${esc(o.identity_no ?? '')}","${esc(o.name_of_officer ?? '')}","${esc(o.service_type ?? '')}")' title="Transfer (Internal Posting Change)">&#8646; Transfer</button>
         ${retireBtn}
         ${transferAPBtn}
-        <button class="btn btn-teal btn-sm" onclick='selectOfficer(${o.id},"${esc(o.name_of_officer ?? '')}")' title="Manage Postings">&#128203;</button>
+        <button class="btn btn-teal btn-sm" onclick='selectOfficer("${esc(o.identity_no ?? '')}","${esc(o.name_of_officer ?? '')}")' title="Manage Postings">&#128203;</button>
       </td>
     </tr>`;
   }).join('');
@@ -812,7 +871,7 @@ function markRetired(officerId, retire) {
       const idx = allOfficers.findIndex(o => o.id === officerId);
       if (idx >= 0) allOfficers[idx].is_retired = retire;
       renderOfficers(1);
-      if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+      if (selectedOfficer && allOfficers.find(o => o.id === officerId)?.identity_no === selectedOfficer.identity_no) closePostingsSection();
     },
     retire ? 'danger' : 'restore'
   );
@@ -832,44 +891,72 @@ function renderOfficersPagination(total, page) {
 }
 
 // ================================================================
-// Officer Modal — Add
+// Cadres cache + dropdown helpers
 // ================================================================
-function openAddOfficerModal() {
-  document.getElementById('officer-modal-title').textContent = 'Add New Officer';
-  document.getElementById('ofr-id').value = '';
-  const svc = document.getElementById('svcFilter').value;
-  document.getElementById('ofr-service_type').value = svc;
-  ['slno','seniority_no','identity_no','name_of_officer','current_posting','cadre',
-   'allotment_year','date_of_appointment','date_of_birth','source_of_recruitment',
-   'domicile','educational_qualification','email_id','phone_no','photo_url'].forEach(f => {
-    const el = document.getElementById('ofr-' + f);
-    if (el) el.value = '';
-  });
-  document.getElementById('officer-modal').classList.add('open');
+let _cadresCache = [];
+
+async function loadCadres() {
+  if (_cadresCache.length) return;
+  const { data } = await _supabase.from('cadres').select('type,cadre_name').order('cadre_name');
+  _cadresCache = data || [];
+}
+
+const _sourceOptions = {
+  IAS: ['RR', 'SCS', 'Non-SCS'],
+  IPS: ['RR', 'SPS'],
+  IFS: ['RR', 'SFS']
+};
+
+function updateCadreDropdown(svc, currentVal) {
+  const sel = document.getElementById('ofr-cadre');
+  const opts = _cadresCache.filter(c => c.type === svc);
+  sel.innerHTML = '<option value="">— Select Cadre —</option>' +
+    opts.map(c => `<option value="${esc(c.cadre_name)}"${c.cadre_name === currentVal ? ' selected' : ''}>${esc(c.cadre_name)}</option>`).join('');
+}
+
+function updateSourceDropdown(svc, currentVal) {
+  const sel = document.getElementById('ofr-source_of_recruitment');
+  sel.innerHTML = '<option value="">— Select —</option>' +
+    (_sourceOptions[svc] || []).map(v => `<option value="${v}"${v === currentVal ? ' selected' : ''}>${v}</option>`).join('');
+}
+
+function onOfficerSvcChange() {
+  const svc = document.getElementById('ofr-service_type').value;
+  updateCadreDropdown(svc, '');
+  updateSourceDropdown(svc, '');
+}
+
+// Convert any stored date string to YYYY-MM-DD for <input type="date">
+function toInputDate(s) {
+  if (!s) return '';
+  s = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return s;
 }
 
 // ================================================================
 // Officer Modal — Edit
 // ================================================================
-function openEditOfficerModal(o) {
+async function openEditOfficerModal(o) {
+  await loadCadres();
   document.getElementById('officer-modal-title').textContent = 'Edit Officer — ' + esc(o.name_of_officer ?? '');
   document.getElementById('ofr-id').value                    = o.id ?? '';
   document.getElementById('ofr-service_type').value          = o.service_type ?? 'IAS';
-  document.getElementById('ofr-slno').value                  = o.slno ?? '';
-  document.getElementById('ofr-seniority_no').value          = o.seniority_no ?? '';
   document.getElementById('ofr-identity_no').value           = o.identity_no ?? '';
   document.getElementById('ofr-name_of_officer').value       = o.name_of_officer ?? '';
   document.getElementById('ofr-current_posting').value       = o.current_posting ?? '';
-  document.getElementById('ofr-cadre').value                 = o.cadre ?? '';
   document.getElementById('ofr-allotment_year').value        = o.allotment_year ?? '';
-  document.getElementById('ofr-date_of_appointment').value   = o.date_of_appointment ?? '';
-  document.getElementById('ofr-date_of_birth').value         = o.date_of_birth ?? '';
-  document.getElementById('ofr-source_of_recruitment').value = o.source_of_recruitment ?? '';
+  document.getElementById('ofr-date_of_appointment').value   = toInputDate(o.date_of_appointment);
+  document.getElementById('ofr-date_of_birth').value         = toInputDate(o.date_of_birth);
   document.getElementById('ofr-domicile').value              = o.domicile ?? '';
   document.getElementById('ofr-educational_qualification').value = o.educational_qualification ?? '';
   document.getElementById('ofr-email_id').value              = o.email_id ?? '';
   document.getElementById('ofr-phone_no').value              = o.phone_no ?? '';
   document.getElementById('ofr-photo_url').value             = o.photo_url ?? '';
+  updateCadreDropdown(o.service_type ?? 'IAS', o.cadre ?? '');
+  updateSourceDropdown(o.service_type ?? 'IAS', o.source_of_recruitment ?? '');
   document.getElementById('officer-modal').classList.add('open');
 }
 
@@ -881,8 +968,6 @@ function saveOfficer() {
 
   const payload = {
     service_type:              document.getElementById('ofr-service_type').value,
-    slno:                      numVal('ofr-slno'),
-    seniority_no:              numVal('ofr-seniority_no'),
     identity_no:               strVal('ofr-identity_no'),
     name_of_officer:           strVal('ofr-name_of_officer'),
     current_posting:           strVal('ofr-current_posting'),
@@ -898,50 +983,37 @@ function saveOfficer() {
     photo_url:                 strVal('ofr-photo_url') || null
   };
 
+  if (!officerId) { showToast('No officer selected for editing.', true); return; }
   if (!payload.name_of_officer) { showToast('Name of Officer is required.', true); return; }
-  if (!payload.seniority_no)    { showToast('Seniority No is required.', true); return; }
 
-  const isUpdate = !!officerId;
-  showConfirm(
-    isUpdate ? 'Update Officer' : 'Add New Officer',
-    isUpdate
-      ? `Save changes to "${payload.name_of_officer}"?`
-      : `Add new officer "${payload.name_of_officer}"?`,
+  showConfirm('Update Officer', `Save changes to "${payload.name_of_officer}"?`,
     async function () {
-      if (isUpdate) {
-        const { error } = await _supabase.from('officers').update(payload).eq('id', officerId);
-        if (error) { showToast('Error: ' + error.message, true); return; }
-        showToast('Officer updated successfully.');
-      } else {
-        const { error } = await _supabase.from('officers')
-          .upsert(payload, { onConflict: 'service_type,seniority_no' });
-        if (error) { showToast('Error: ' + error.message, true); return; }
-        showToast('Officer added successfully.');
-      }
+      const { error } = await _supabase.from('officers').update(payload).eq('id', officerId);
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast('Officer updated successfully.');
       closeModal('officer-modal');
       lastSvc = '';
       await loadOfficers();
-      if (selectedOfficer && isUpdate && selectedOfficer.id == officerId) {
+      if (selectedOfficer && allOfficers.find(o => o.id == officerId)?.identity_no === selectedOfficer.identity_no) {
         selectedOfficer.name = payload.name_of_officer;
         document.getElementById('selected-officer-name').textContent = payload.name_of_officer;
       }
-    },
-    'save'
-  );
+    }, 'save');
 }
+
 
 // ================================================================
 // Postings — Select Officer → Load Postings
 // ================================================================
-async function selectOfficer(officerId, officerName) {
-  selectedOfficer = { id: officerId, name: officerName };
+async function selectOfficer(identityNo, officerName) {
+  selectedOfficer = { identity_no: identityNo, name: officerName };
 
   // Highlight selected row
   document.querySelectorAll('#officers-tbody tr').forEach(r => r.classList.remove('selected'));
-  const row = document.getElementById('ofr-row-' + officerId);
-  if (row) {
-    row.classList.add('selected');
-    row.scrollIntoView({ block: 'nearest' });
+  const matchRow = allOfficers.find(o => o.identity_no == identityNo);
+  if (matchRow) {
+    const row = document.getElementById('ofr-row-' + matchRow.id);
+    if (row) { row.classList.add('selected'); row.scrollIntoView({ block: 'nearest' }); }
   }
 
   document.getElementById('selected-officer-name').textContent = officerName;
@@ -954,16 +1026,20 @@ async function selectOfficer(officerId, officerName) {
     const { data, error } = await _supabase
       .from('officer_postings')
       .select('*')
-      .eq('officer_id', officerId)
+      .eq('identity_no', identityNo)
       .order('from_date', { ascending: false });
     if (error) throw error;
-    currentPostings = data || [];
+    currentPostings = (data || []).sort((a, b) => {
+      const da = a.from_date ? new Date(a.from_date) : new Date(0);
+      const db = b.from_date ? new Date(b.from_date) : new Date(0);
+      return db - da;  // descending — most recent first
+    });
     renderPostings();
 
     // Scroll to postings section
     document.getElementById('postings-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="9" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
     showToast('Error loading postings: ' + err.message, true);
   }
 }
@@ -1006,7 +1082,7 @@ function openAddPostingModal() {
   if (!selectedOfficer) { showToast('Please select an officer first.', true); return; }
   document.getElementById('posting-modal-title').textContent  = 'Add Posting';
   document.getElementById('pst-id').value                     = '';
-  document.getElementById('pst-officer-id').value             = selectedOfficer.id;
+  document.getElementById('pst-identity-no').value            = selectedOfficer.identity_no;
   document.getElementById('pst-officer-display').textContent  = selectedOfficer.name;
   ['post_name','department','category','from_date','to_date','hcm'].forEach(f => {
     const el = document.getElementById('pst-' + f);
@@ -1021,7 +1097,7 @@ function openAddPostingModal() {
 function openEditPostingModal(p) {
   document.getElementById('posting-modal-title').textContent  = 'Edit Posting';
   document.getElementById('pst-id').value                     = p.id ?? '';
-  document.getElementById('pst-officer-id').value             = p.officer_id ?? '';
+  document.getElementById('pst-identity-no').value            = p.identity_no ?? '';
   document.getElementById('pst-officer-display').textContent  = selectedOfficer ? selectedOfficer.name : '';
   document.getElementById('pst-post_name').value              = p.post_name   ?? '';
   document.getElementById('pst-department').value             = p.department  ?? '';
@@ -1038,16 +1114,16 @@ function openEditPostingModal(p) {
 // ================================================================
 function savePosting() {
   const postingId  = document.getElementById('pst-id').value;
-  const officerId  = document.getElementById('pst-officer-id').value;
+  const identityNo = document.getElementById('pst-identity-no').value;
   const svc        = document.getElementById('svcFilter').value;
 
-  if (!officerId) { showToast('No officer selected.', true); return; }
+  if (!identityNo) { showToast('No officer selected.', true); return; }
 
   const fromDate = strVal('pst-from_date') || null;
   const toDate   = strVal('pst-to_date')   || null;
 
   const payload = {
-    officer_id:   parseInt(officerId),
+    identity_no:  identityNo,
     service_type: svc,
     post_name:    strVal('pst-post_name'),
     department:   strVal('pst-department'),
@@ -1076,7 +1152,7 @@ function savePosting() {
         showToast('Posting added successfully.');
       }
       closeModal('posting-modal');
-      if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+      if (selectedOfficer) await selectOfficer(selectedOfficer.identity_no, selectedOfficer.name);
     },
     'save'
   );
@@ -1093,7 +1169,7 @@ function deletePosting(id) {
       const { error } = await _supabase.from('officer_postings').delete().eq('id', id);
       if (error) { showToast('Error: ' + error.message, true); return; }
       showToast('Posting deleted.');
-      if (selectedOfficer) await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+      if (selectedOfficer) await selectOfficer(selectedOfficer.identity_no, selectedOfficer.name);
     },
     'danger'
   );
@@ -1349,7 +1425,7 @@ function markTransferredFromAP(officerId, transferred) {
       const idx = allOfficers.findIndex(o => o.id === officerId);
       if (idx >= 0) allOfficers[idx].is_transferred_from_ap = transferred;
       renderOfficers(1);
-      if (selectedOfficer && selectedOfficer.id === officerId) closePostingsSection();
+      if (selectedOfficer && allOfficers.find(o => o.id === officerId)?.identity_no === selectedOfficer.identity_no) closePostingsSection();
     },
     transferred ? 'danger' : 'restore'
   );
@@ -1413,8 +1489,9 @@ const ALL_DEPT_CONFIG = {
   }
 };
 
-function openTransferModal(officerId, officerName, serviceType) {
+function openTransferModal(officerId, identityNo, officerName, serviceType) {
   document.getElementById('tr-officer-id').value       = officerId;
+  document.getElementById('tr-identity-no').value      = identityNo;
   document.getElementById('tr-service-type').value     = serviceType;
   document.getElementById('tr-officer-display').textContent = officerName;
   document.getElementById('tr-post_name').value        = '';
@@ -1445,6 +1522,7 @@ function loadTransferDepts() {
 
 function saveTransfer() {
   const officerId   = document.getElementById('tr-officer-id').value;
+  const identityNo  = document.getElementById('tr-identity-no').value;
   const svc         = document.getElementById('tr-service-type').value;
   const postName    = (document.getElementById('tr-post_name').value || '').trim();
   const category    = document.getElementById('tr-category').value;
@@ -1464,7 +1542,7 @@ function saveTransfer() {
       const { data: openPostings, error: fetchErr } = await _supabase
         .from('officer_postings')
         .select('id')
-        .eq('officer_id', officerId)
+        .eq('identity_no', identityNo)
         .is('to_date', null);
 
       if (fetchErr) { showToast('Error fetching postings: ' + fetchErr.message, true); return; }
@@ -1481,7 +1559,7 @@ function saveTransfer() {
 
       // Step 2 — insert new posting
       const { error: insErr } = await _supabase.from('officer_postings').insert({
-        officer_id:   parseInt(officerId),
+        identity_no:  identityNo,
         service_type: svc,
         post_name:    postName,
         category:     category || null,
@@ -1501,8 +1579,8 @@ function saveTransfer() {
 
       showToast('Transfer saved — new posting created.');
       closeModal('transfer-modal');
-      if (selectedOfficer && selectedOfficer.id == officerId) {
-        await selectOfficer(selectedOfficer.id, selectedOfficer.name);
+      if (selectedOfficer && selectedOfficer.identity_no == identityNo) {
+        await selectOfficer(selectedOfficer.identity_no, selectedOfficer.name);
       }
       renderOfficers(1);
     },
@@ -1538,14 +1616,6 @@ function fmtDuration(fromStr, toStr) {
   return `${yy} Yr${yy !== 1 ? 's' : ''} ${mm} Mo ${dd} Day${dd !== 1 ? 's' : ''}`;
 }
 
-function calcDecimalYears(fromStr, toStr) {
-  if (!fromStr || !String(fromStr).trim()) return null;
-  const from = parseServiceDate(fromStr);
-  const to   = (toStr && String(toStr).trim()) ? parseServiceDate(toStr) : new Date();
-  const diffMs = to - from;
-  if (diffMs <= 0) return 0;
-  return parseFloat((diffMs / (365.25 * 24 * 3600 * 1000)).toFixed(4));
-}
 
 function updatePostingDuration() {
   const from = document.getElementById('pst-from_date')?.value;
@@ -1573,14 +1643,6 @@ function esc(t) {
 function strVal(id) {
   const v = (document.getElementById(id)?.value ?? '').trim();
   return v || null;
-}
-function numVal(id) {
-  const v = parseInt(document.getElementById(id)?.value);
-  return isNaN(v) ? null : v;
-}
-function floatVal(id) {
-  const v = parseFloat(document.getElementById(id)?.value);
-  return isNaN(v) ? null : v;
 }
 function showToast(msg, isError = false) {
   const el = document.getElementById('toast');
@@ -1628,6 +1690,295 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 document.getElementById('confirmModal').addEventListener('click', function(e) {
   if (e.target === this) closeConfirm();
 });
+
+// ================================================================
+// CSV Upload — Officers Table Full Replace
+// ================================================================
+let _csvRows = null;
+
+// Drag-and-drop handlers
+function csvDragOver(e) {
+  e.preventDefault();
+  document.getElementById('csv-drop-zone').style.background = '#eef2ff';
+  document.getElementById('csv-drop-zone').style.borderColor = '#6366f1';
+}
+function csvDragLeave(e) {
+  document.getElementById('csv-drop-zone').style.background = '#fafbff';
+  document.getElementById('csv-drop-zone').style.borderColor = '#c7d2fe';
+}
+function csvDrop(e) {
+  e.preventDefault();
+  csvDragLeave(e);
+  const file = e.dataTransfer?.files?.[0];
+  if (file) _csvReadFile(file);
+}
+function csvFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (file) _csvReadFile(file);
+}
+function csvReset() {
+  _csvRows = null;
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-preview-area').style.display = 'none';
+  document.getElementById('csv-drop-zone').style.display = '';
+}
+
+function _csvReadFile(file) {
+  if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+    showToast('Please select a .csv file.', true); return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const { rows, errors } = _parseCSV(ev.target.result);
+    _csvRows = rows;
+    _renderCSVPreview(rows, errors, file.name);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ---- CSV Parser (handles quoted fields) ----
+function _parseCSVLine(line) {
+  const out = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) { out.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+function _parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                    .split('\n').filter(l => l.trim());
+  if (lines.length < 2) return { rows: [], errors: ['CSV has no data rows.'] };
+
+  const rawHeaders = _parseCSVLine(lines[0]);
+  const headers    = rawHeaders.map(h => h.replace(/^"|"$/g, '').toLowerCase().trim().replace(/\s+/g, '_'));
+
+  const REQUIRED = ['service_type', 'identity_no', 'name_of_officer'];
+  const missing  = REQUIRED.filter(r => !headers.includes(r));
+  if (missing.length) {
+    return { rows: [], errors: [`Missing required columns: ${missing.join(', ')}`] };
+  }
+
+  const rows = []; const errors = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = _parseCSVLine(lines[i]);
+    const row  = {};
+    headers.forEach((h, j) => { row[h] = (vals[j] ?? '').replace(/^"|"$/g, '').trim(); });
+
+    if (!row.name_of_officer) { errors.push(`Row ${i + 1}: name_of_officer is empty — skipped.`); continue; }
+    if (!row.service_type)    { errors.push(`Row ${i + 1}: service_type is empty — skipped.`);    continue; }
+
+    const toBool = v => v === 'true' || v === '1' || v === 'TRUE' || v === 'yes' || v === 'YES';
+    const toNull = v => (v === '' || v === 'null' || v === 'NULL') ? null : v;
+
+    rows.push({
+      service_type:              toNull(row.service_type),
+      identity_no:               toNull(row.identity_no),
+      name_of_officer:           toNull(row.name_of_officer),
+      cadre:                     toNull(row.cadre),
+      current_posting:           toNull(row.current_posting),
+      date_of_appointment:       toNull(row.date_of_appointment),
+      source_of_recruitment:     toNull(row.source_of_recruitment),
+      educational_qualification: toNull(row.educational_qualification),
+      date_of_birth:             toNull(row.date_of_birth),
+      allotment_year:            toNull(row.allotment_year),
+      domicile:                  toNull(row.domicile),
+      email_id:                  toNull(row.email_id),
+      phone_no:                  toNull(row.phone_no),
+      photo_url:                 toNull(row.photo_url),
+      is_retired:                toBool(row.is_retired ?? ''),
+      is_transferred_from_ap:    toBool(row.is_transferred_from_ap ?? '')
+    });
+  }
+  return { rows, errors };
+}
+
+// ---- Preview Renderer ----
+function _renderCSVPreview(rows, errors, fileName) {
+  document.getElementById('csv-drop-zone').style.display = 'none';
+  document.getElementById('csv-preview-area').style.display = '';
+  document.getElementById('csv-progress').style.display = 'none';
+
+  // Summary
+  const svcCount = {};
+  rows.forEach(r => { svcCount[r.service_type] = (svcCount[r.service_type] || 0) + 1; });
+  const svcStr = Object.entries(svcCount).map(([k, v]) => `${k}: ${v}`).join(', ');
+  document.getElementById('csv-summary').innerHTML =
+    `<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:8px;padding:10px 14px;font-size:13px;">
+       <strong>&#128196; ${esc(fileName)}</strong> &mdash;
+       <span style="color:#4338ca;font-weight:700;">${rows.length} valid records</span>
+       ${svcStr ? `<span style="color:#64748b;margin-left:8px;">(${esc(svcStr)})</span>` : ''}
+     </div>`;
+
+  // Errors
+  const errEl = document.getElementById('csv-error-list');
+  if (errors.length) {
+    errEl.innerHTML = `<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 14px;max-height:120px;overflow-y:auto;">
+      <div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:4px;">&#9888; ${errors.length} row(s) skipped:</div>
+      ${errors.map(e => `<div style="font-size:11.5px;color:#7f1d1d;">${esc(e)}</div>`).join('')}
+    </div>`;
+    errEl.style.display = '';
+  } else {
+    errEl.style.display = 'none';
+  }
+
+  // Preview table (first 5 rows)
+  if (!rows.length) {
+    document.getElementById('csv-upload-btn').disabled = true;
+    document.getElementById('csv-preview-table-wrap').innerHTML =
+      '<div style="color:#dc2626;font-size:13px;">No valid rows to upload.</div>';
+    return;
+  }
+  document.getElementById('csv-upload-btn').disabled = false;
+
+  const COLS = ['service_type','identity_no','name_of_officer','cadre','current_posting','allotment_year','is_retired'];
+  const preview = rows.slice(0, 5);
+  const thStyle = 'padding:6px 10px;background:linear-gradient(135deg,#1e1b4b,#3730a3);color:#e0e7ff;font-size:11px;white-space:nowrap;';
+  const tdStyle = 'padding:5px 10px;font-size:12px;border-bottom:1px solid #e0e7ff;';
+  document.getElementById('csv-preview-table-wrap').innerHTML =
+    `<div style="font-size:12px;color:#64748b;margin-bottom:6px;">Preview (first ${preview.length} of ${rows.length} rows):</div>
+     <table style="border-collapse:collapse;width:100%;border:1px solid #c7d2fe;border-radius:8px;overflow:hidden;">
+       <thead><tr>${COLS.map(c => `<th style="${thStyle}">${esc(c)}</th>`).join('')}</tr></thead>
+       <tbody>
+         ${preview.map(r => `<tr>${COLS.map(c => `<td style="${tdStyle}">${esc(String(r[c] ?? ''))}</td>`).join('')}</tr>`).join('')}
+       </tbody>
+     </table>`;
+}
+
+// ---- Export Utilities ----
+function _rowsToCSV(rows) {
+  if (!rows || !rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  const escape  = v => {
+    const s = String(v ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? '"' + s.replace(/"/g, '""') + '"'
+      : s;
+  };
+  return [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(','))
+  ].join('\n');
+}
+
+function _triggerDownload(csvText, filename) {
+  const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function _fetchAllRows(tableName) {
+  const PAGE = 1000;
+  let all = [], from = 0;
+  while (true) {
+    const { data, error } = await _supabase
+      .from(tableName).select('*').order('id').range(from, from + PAGE - 1);
+    if (error) throw new Error(`Fetch ${tableName}: ${error.message}`);
+    all = all.concat(data || []);
+    if ((data || []).length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
+async function exportTable(tableName) {
+  const statusEl = document.getElementById('export-status');
+  statusEl.style.display = '';
+  statusEl.style.color   = '#2563eb';
+  statusEl.textContent   = `⏳ Exporting ${tableName}…`;
+  try {
+    const rows = await _fetchAllRows(tableName);
+    if (!rows.length) { statusEl.textContent = `⚠ ${tableName} is empty — nothing to export.`; return; }
+    const ts       = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    _triggerDownload(_rowsToCSV(rows), `${tableName}_backup_${ts}.csv`);
+    statusEl.style.color = '#059669';
+    statusEl.textContent = `✓ ${tableName} — ${rows.length} rows downloaded.`;
+  } catch (err) {
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = `✗ ${err.message}`;
+    showToast('Export failed: ' + err.message, true);
+  }
+}
+
+// ---- Upload (Backup → Delete All → Insert) ----
+async function csvUpload() {
+  if (!_csvRows || !_csvRows.length) { showToast('No data to upload.', true); return; }
+
+  showConfirm(
+    '&#9888; Backup, Replace ALL Officers Data',
+    `The system will:\n1. Download backup CSVs of both tables to your computer\n2. Delete ALL existing officers and postings\n3. Insert ${_csvRows.length} records from your CSV\n\nProceed?`,
+    async function () {
+      const progEl = document.getElementById('csv-progress');
+      const btn    = document.getElementById('csv-upload-btn');
+      btn.disabled = true;
+      progEl.style.display = '';
+      progEl.style.color   = '#4338ca';
+
+      try {
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+
+        // Step 1 — backup officers
+        progEl.textContent = 'Step 1/5 — Backing up officers table…';
+        const officerRows = await _fetchAllRows('officers');
+        if (officerRows.length) _triggerDownload(_rowsToCSV(officerRows), `officers_backup_${ts}.csv`);
+
+        // Step 2 — backup postings
+        progEl.textContent = 'Step 2/5 — Backing up officer_postings table…';
+        const postingRows = await _fetchAllRows('officer_postings');
+        if (postingRows.length) _triggerDownload(_rowsToCSV(postingRows), `officer_postings_backup_${ts}.csv`);
+
+        // Step 3 — delete all postings (FK constraint must go first)
+        progEl.textContent = 'Step 3/5 — Deleting all postings…';
+        const { error: delPErr } = await _supabase
+          .from('officer_postings').delete().gte('id', 1);
+        if (delPErr) throw new Error('Delete postings: ' + delPErr.message);
+
+        // Step 4 — delete all officers
+        progEl.textContent = 'Step 4/5 — Deleting all officers…';
+        const { error: delOErr } = await _supabase
+          .from('officers').delete().gte('id', 1);
+        if (delOErr) throw new Error('Delete officers: ' + delOErr.message);
+
+        // Step 5 — batch insert new officers
+        const BATCH = 200;
+        const total = _csvRows.length;
+        let inserted = 0;
+        while (inserted < total) {
+          const batch = _csvRows.slice(inserted, inserted + BATCH);
+          progEl.textContent = `Step 5/5 — Inserting… ${inserted + batch.length} / ${total}`;
+          const { error: insErr } = await _supabase.from('officers').insert(batch);
+          if (insErr) throw new Error(`Insert at row ${inserted + 1}: ${insErr.message}`);
+          inserted += batch.length;
+        }
+
+        progEl.style.color = '#059669';
+        progEl.textContent = `✓ Done — ${total} officers uploaded. Backups saved to your Downloads folder.`;
+        showToast(`${total} officers uploaded. Backups downloaded.`);
+        csvReset();
+        lastSvc = '';
+        loadOfficers();
+
+      } catch (err) {
+        progEl.style.color = '#dc2626';
+        progEl.textContent = '✗ Error: ' + err.message;
+        showToast('Upload failed: ' + err.message, true);
+        btn.disabled = false;
+      }
+    },
+    'danger'
+  );
+}
 </script>
 </body>
 </html>

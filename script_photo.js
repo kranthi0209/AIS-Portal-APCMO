@@ -71,17 +71,17 @@
         groupedData[name].services.push(entry);
       });
 
-      // Use the posting with the lowest SeniorityNo as the meta record
+      // Use the posting with the lowest OfficerId as the meta record
       for (const [, grp] of Object.entries(groupedData)) {
         grp.meta = grp.services.reduce((a, b) =>
-          parseInt(a.SeniorityNo) < parseInt(b.SeniorityNo) ? a : b
+          (a.OfficerId || 0) < (b.OfficerId || 0) ? a : b
         );
       }
 
-      // Sort by SeniorityNo
+      // Sort by officers.id ascending
       const sorted = {};
       Object.entries(groupedData)
-        .sort(([, a], [, b]) => (parseInt(a.meta.SeniorityNo) || 9999) - (parseInt(b.meta.SeniorityNo) || 9999))
+        .sort(([, a], [, b]) => (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0))
         .forEach(([k, v]) => { sorted[k] = v; });
       groupedData        = sorted;
       currentGroupedData = Object.assign({}, groupedData);
@@ -126,9 +126,7 @@
     const grid    = document.getElementById('photoGrid');
     const entries = Object.entries(data)
       .filter(([, { services }]) => services.length > 0)
-      .sort(([, a], [, b]) =>
-        (parseInt(a.meta.SeniorityNo) || 9999) - (parseInt(b.meta.SeniorityNo) || 9999)
-      );
+      .sort(([, a], [, b]) => (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0));
 
     if (!entries.length) {
       grid.innerHTML =
@@ -139,9 +137,9 @@
     }
 
     grid.innerHTML = entries.map(([name, { meta }], idx) => {
-      const seniorityNo  = String(meta.SeniorityNo || '').trim(); // used for photo lookup
-      const displayNo    = idx + 1;                               // sequential from 1
-      const imgUrl       = photoMap[seniorityNo] || 'https://placehold.co/160x200?text=No+Photo';
+      const identityNo   = String(meta['IdentityNo.'] || '').trim(); // used for photo lookup
+      const displayNo    = idx + 1;                                  // sequential from 1
+      const imgUrl       = photoMap[identityNo] || 'https://placehold.co/160x200?text=No+Photo';
       const batch        = meta.AllotmentYear   || '—';
       const allotType    = meta.SourceOfRecruitment || '—';
       const retires      = retirementMonthYear(meta.DateOfBirth);
@@ -179,8 +177,8 @@
     if (!officer) return;
 
     const { meta, services } = officer;
-    const seniorityNo = String(meta.SeniorityNo || '').trim(); // used for photo lookup
-    const imgUrl      = photoMap[seniorityNo] || 'https://placehold.co/140x180?text=No+Photo';
+    const identityNo  = String(meta['IdentityNo.'] || '').trim(); // used for photo lookup
+    const imgUrl      = photoMap[identityNo] || 'https://placehold.co/140x180?text=No+Photo';
 
     // Category totals — sum computed years for every row, descending
     const catTotals = {};
@@ -213,8 +211,8 @@
 
     // Officer detail rows — 4-column layout: [label | value | label | value]
     const fieldRows = [
-      ['SeniorityNo',         'Seniority No',      'IdentityNo.',              'Identity No',    'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
-      ['Cadre',               'Cadre',             'AllotmentYear',            'Allotment Year', 'linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
+      ['IdentityNo.',         'Identity No',       'AllotmentYear',            'Allotment Year', 'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
+      ['Cadre',               'Cadre',             'SourceOfRecruitment',      'Source of Recruit.','linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
       ['DateofAppointment',   'Date of Appt.',     'DateOfBirth',              'Date of Birth',  'linear-gradient(135deg,#1e3a5f,#2563eb)', '#eff6ff'],
       ['SourceOfRecruitment', 'Source of Recruit.','EducationalQualification', 'Education',      'linear-gradient(135deg,#134e4a,#0d9488)', '#f0fdfa'],
       ['Domicile',            'Domicile',          'EmailId',                  'Email',          'linear-gradient(135deg,#14532d,#16a34a)', '#f0fdf4'],
