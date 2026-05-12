@@ -178,6 +178,49 @@
   let filtered    = [];   // current filtered subset
   let currentWheelData = { scores: [], ranks: [] }; // scores for open wheel
   let activeSegSet = new Set(); // indices of segments with open detail cards
+  let sortKey = 'seniority'; // 'seniority' | 'score_weighted' | 'score_0'..'score_13'
+  let sortDir = 'asc';       // 'asc' | 'desc'
+  let weights = new Array(14).fill(1); // equal weights for weighted score
+
+  // Batch + retirement range filter state
+  let batchRange   = { lo: 0, hi: 9999 };
+  let retireRange  = { lo: 0, hi: 9999 };
+  let batchExtent  = { min: 0, max: 9999 };
+  let retireExtent = { min: 0, max: 9999 };
+
+  function computeWeightedScore(scores) {
+    const totalW = weights.reduce((s, w) => s + w, 0);
+    if (totalW === 0) return 0;
+    return scores.reduce((sum, sc, i) => sum + sc * (weights[i] || 0), 0) / totalW;
+  }
+
+  function getRetireYear(meta) {
+    if (!meta.DateOfBirth) return null;
+    const d = parseDate(String(meta.DateOfBirth));
+    if (isNaN(d.getTime())) return null;
+    return d.getFullYear() + 60;
+  }
+
+  function computeOfficerRanks(grpList) {
+    const N = grpList.length;
+    // Per-category rank: sort by score desc, assign 1-based position
+    WHEEL_CATS.forEach((_, ci) => {
+      const order = [...grpList].sort((a, b) => (b.scores[ci] || 0) - (a.scores[ci] || 0));
+      order.forEach((grp, pos) => {
+        if (!grp.catRanks) grp.catRanks = new Array(WHEEL_CATS.length).fill(0);
+        grp.catRanks[ci] = pos + 1;
+      });
+    });
+    // Overall rank: sort by avg score desc
+    const byAvg = [...grpList].sort((a, b) => {
+      const sa = a.scores.reduce((s, v) => s + v, 0);
+      const sb = b.scores.reduce((s, v) => s + v, 0);
+      return sb - sa;
+    });
+    byAvg.forEach((grp, pos) => { grp.overallRank = pos + 1; });
+    // Store total officer count so wheel can display "Rank X of N"
+    grpList.forEach(grp => { grp.totalOfficers = N; });
+  }
 
   // Try to load HCM photos from DB; silently skip if table absent
   async function fetchHcmPhotos() {
@@ -220,6 +263,14 @@
         );
       }
 
+      // Pre-assign stable scores for each officer (used for sorting + 360° wheel)
+      for (const grp of Object.values(grouped)) {
+        grp.scores = WHEEL_CATS.map(() => parseFloat((Math.random() * 9.5 + 0.5).toFixed(2)));
+      }
+
+      // Compute cross-officer ranks for every category + overall
+      computeOfficerRanks(Object.values(grouped));
+
       // Sort by OfficerId ascending (same order as other views)
       allOfficers = Object.entries(grouped)
         .sort(([, a], [, b]) => (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0));
@@ -251,6 +302,7 @@
     fillSelect('fCadre',    [...cadres].sort(),    'All Cadres');
     fillSelect('fSource',   [...sources].sort(),   'All Sources');
     fillSelect('fDomicile', [...domiciles].sort(),  'All Domiciles');
+    buildRangeSliders();
   }
 
   function fillSelect(id, values, allLabel) {
@@ -259,6 +311,77 @@
     sel.innerHTML = `<option value="">${allLabel}</option>` +
       values.map(v => `<option value="${escAttr(v)}">${esc(v)}</option>`).join('');
   }
+
+  // ── Range sliders (Batch + Retirement) ────────────────────────
+  function buildRangeSliders() {
+    let bMin = Infinity, bMax = -Infinity;
+    let rMin = Infinity, rMax = -Infinity;
+
+    allOfficers.forEach(([, { meta }]) => {
+      const b = parseInt(meta.AllotmentYear, 10);
+      if (!isNaN(b)) { bMin = Math.min(bMin, b); bMax = Math.max(bMax, b); }
+      const ry = getRetireYear(meta);
+      if (ry) { rMin = Math.min(rMin, ry); rMax = Math.max(rMax, ry); }
+    });
+
+    if (!isFinite(bMin)) { bMin = 1980; bMax = 2024; }
+    if (!isFinite(rMin)) { rMin = 2024; rMax = 2042; }
+
+    batchExtent  = { min: bMin, max: bMax };
+    retireExtent = { min: rMin, max: rMax };
+    batchRange   = { lo: bMin, hi: bMax };
+    retireRange  = { lo: rMin, hi: rMax };
+
+    initSliderEl('batch',  bMin, bMax, bMin, bMax);
+    initSliderEl('retire', rMin, rMax, rMin, rMax);
+    syncSliderUI('batch');
+    syncSliderUI('retire');
+  }
+
+  function initSliderEl(type, minV, maxV, loV, hiV) {
+    const lo = document.getElementById(type + 'Lo');
+    const hi = document.getElementById(type + 'Hi');
+    if (lo) { lo.min = minV; lo.max = maxV; lo.value = loV; }
+    if (hi) { hi.min = minV; hi.max = maxV; hi.value = hiV; }
+  }
+
+  function syncSliderUI(type) {
+    const ext = type === 'batch' ? batchExtent : retireExtent;
+    const rng = type === 'batch' ? batchRange  : retireRange;
+    const fill  = document.getElementById(type + 'Fill');
+    const label = document.getElementById(type + 'RangeLabel');
+    const span  = ext.max - ext.min || 1;
+    if (fill) {
+      fill.style.left  = ((rng.lo - ext.min) / span * 100).toFixed(2) + '%';
+      fill.style.width = ((rng.hi - rng.lo)  / span * 100).toFixed(2) + '%';
+    }
+    if (label) label.textContent = rng.lo + ' – ' + rng.hi;
+  }
+
+  window.onSlider = function (type) {
+    const loEl = document.getElementById(type + 'Lo');
+    const hiEl = document.getElementById(type + 'Hi');
+    if (!loEl || !hiEl) return;
+    let lo = parseInt(loEl.value, 10);
+    let hi = parseInt(hiEl.value, 10);
+    if (lo > hi) {
+      if (document.activeElement === loEl) { lo = hi; loEl.value = lo; }
+      else                                 { hi = lo; hiEl.value = hi; }
+    }
+    const rng = type === 'batch' ? batchRange : retireRange;
+    rng.lo = lo; rng.hi = hi;
+    syncSliderUI(type);
+    applyFilters360();
+  };
+
+  window.resetRangeSliders = function () {
+    batchRange  = { lo: batchExtent.min,  hi: batchExtent.max  };
+    retireRange = { lo: retireExtent.min, hi: retireExtent.max };
+    initSliderEl('batch',  batchExtent.min,  batchExtent.max,  batchExtent.min,  batchExtent.max);
+    initSliderEl('retire', retireExtent.min, retireExtent.max, retireExtent.min, retireExtent.max);
+    syncSliderUI('batch');
+    syncSliderUI('retire');
+  };
 
   // ── Apply all filters ──────────────────────────────────────────
   window.applyFilters360 = function () {
@@ -272,10 +395,103 @@
       if (sourceVal && (meta.SourceOfRecruitment || '').trim() !== sourceVal) return false;
       if (domVal    && (meta.Domicile            || '').trim() !== domVal)    return false;
       if (nameVal   && !name.toLowerCase().includes(nameVal))                 return false;
+      const batchNum = parseInt(meta.AllotmentYear, 10);
+      if (!isNaN(batchNum) && (batchNum < batchRange.lo || batchNum > batchRange.hi)) return false;
+      const ry = getRetireYear(meta);
+      if (ry !== null && (ry < retireRange.lo || ry > retireRange.hi)) return false;
       return true;
     });
 
+    // Sort filtered list
+    if (sortKey === 'seniority') {
+      filtered.sort(([, a], [, b]) =>
+        sortDir === 'asc'
+          ? (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0)
+          : (b.meta.OfficerId || 0) - (a.meta.OfficerId || 0)
+      );
+    } else if (sortKey === 'score_weighted') {
+      filtered.sort(([, a], [, b]) => {
+        const sa = a.scores ? computeWeightedScore(a.scores) : 0;
+        const sb = b.scores ? computeWeightedScore(b.scores) : 0;
+        return sortDir === 'asc' ? sa - sb : sb - sa;
+      });
+    } else {
+      const si = parseInt(sortKey.replace('score_', ''), 10);
+      filtered.sort(([, a], [, b]) =>
+        sortDir === 'asc'
+          ? (a.scores?.[si] || 0) - (b.scores?.[si] || 0)
+          : (b.scores?.[si] || 0) - (a.scores?.[si] || 0)
+      );
+    }
+
     renderGrid(filtered);
+  };
+
+  window.applySort360 = function () {
+    sortKey = document.getElementById('sortSelect360')?.value || 'seniority';
+    applyFilters360();
+  };
+
+  window.toggleSortDir = function () {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    const btn = document.getElementById('sortDirBtn');
+    if (btn) btn.textContent = sortDir === 'asc' ? '↑ Asc' : '↓ Desc';
+    applyFilters360();
+  };
+
+  window.resetSort360 = function () {
+    sortKey = 'seniority';
+    sortDir = 'asc';
+    weights = new Array(14).fill(1);
+    const sel = document.getElementById('sortSelect360');
+    if (sel) sel.value = 'seniority';
+    const btn = document.getElementById('sortDirBtn');
+    if (btn) btn.textContent = '↑ Asc';
+  };
+
+  // ── Weights popup ──────────────────────────────────────────────
+  window.openWeightsPopup = function () {
+    const body = document.getElementById('weightsBody');
+    if (!body) return;
+    body.innerHTML = WHEEL_CATS.map((cat, i) => `
+      <div class="weight-row">
+        <span class="weight-icon">${CAT_DETAILS[i]?.icon || '●'}</span>
+        <span class="weight-label" style="color:${cat.color}">${esc(cat.label)}</span>
+        <input type="range" class="weight-slider" id="wSlider${i}"
+               min="0" max="10" step="1" value="${weights[i]}"
+               style="accent-color:${cat.color}"
+               oninput="document.getElementById('wVal${i}').textContent=this.value">
+        <span class="weight-val" id="wVal${i}">${weights[i]}</span>
+      </div>`).join('');
+    const ov = document.getElementById('weightsOverlay');
+    if (ov) ov.style.display = 'flex';
+  };
+
+  window.closeWeightsPopup = function () {
+    const ov = document.getElementById('weightsOverlay');
+    if (ov) ov.style.display = 'none';
+  };
+
+  window.applyWeights = function () {
+    WHEEL_CATS.forEach((_, i) => {
+      const sl = document.getElementById('wSlider' + i);
+      if (sl) weights[i] = parseInt(sl.value, 10);
+    });
+    closeWeightsPopup();
+    sortKey = 'score_weighted';
+    const sel = document.getElementById('sortSelect360');
+    if (sel) sel.value = 'score_weighted';
+    applyFilters360();
+  };
+
+  window.resetWeights = function () {
+    weights = new Array(14).fill(1);
+    WHEEL_CATS.forEach((_, i) => {
+      const sl = document.getElementById('wSlider' + i);
+      if (sl) sl.value = 1;
+      const vl = document.getElementById('wVal' + i);
+      if (vl) vl.textContent = '1';
+    });
   };
 
   // ── Render grid ────────────────────────────────────────────────
@@ -290,11 +506,27 @@
       return;
     }
 
-    grid.innerHTML = entries.map(([name, { meta }], idx) => {
+    const isWeighted = sortKey === 'score_weighted';
+    const scoreIdx   = (!isWeighted && sortKey.startsWith('score_'))
+      ? parseInt(sortKey.replace('score_', ''), 10) : -1;
+
+    grid.innerHTML = entries.map(([name, grpData], idx) => {
+      const { meta } = grpData;
       const identityNo = String(meta['IdentityNo.'] || '').trim();
       const imgUrl     = photoMap[identityNo] || 'https://placehold.co/105x86?text=No+Photo';
       const batch      = meta.AllotmentYear || '—';
       const color      = cadreColor(meta.Cadre);
+
+      let scoreVal = null, scoreColor = '', scoreLabel = '';
+      if (isWeighted && grpData.scores) {
+        scoreVal   = computeWeightedScore(grpData.scores).toFixed(2);
+        scoreColor = '#4f46e5';
+        scoreLabel = 'Weighted';
+      } else if (scoreIdx >= 0 && grpData.scores) {
+        scoreVal   = grpData.scores[scoreIdx].toFixed(2);
+        scoreColor = WHEEL_CATS[scoreIdx].color;
+        scoreLabel = WHEEL_CATS[scoreIdx].label;
+      }
 
       return `<div class="c360" data-name="${escAttr(name)}" data-seq="${idx + 1}"
                    style="border-top-color:${color}">
@@ -304,6 +536,7 @@
           <div class="c360-sno">#${idx + 1}</div>
           <div class="c360-name">${esc(name)}</div>
           <div class="c360-batch">${esc(batch)}</div>
+          ${scoreVal !== null ? `<div class="c360-score" style="background:${scoreColor}18;color:${scoreColor}">${esc(scoreLabel)}: <strong>${scoreVal}</strong></div>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -496,24 +729,32 @@
   function open360Wheel(name, seqNo) {
     const entry = allOfficers.find(([n]) => n === name);
     if (!entry) return;
-    const [, { meta }] = entry;
+    const [, grp] = entry;
+    const { meta } = grp;
 
     const identityNo = String(meta['IdentityNo.'] || '').trim();
     const imgUrl = photoMap[identityNo] || '';
 
-    // Random scores (0.50–9.99) + per-category ranks 1-14
-    const scores = WHEEL_CATS.map(() => parseFloat((Math.random() * 9.5 + 0.5).toFixed(2)));
-    const sorted = [...scores].sort((a, b) => b - a);
-    const ranks  = scores.map(s => sorted.indexOf(s) + 1);
+    // Use pre-assigned stable scores; fallback to random if missing
+    const scores = (grp.scores && grp.scores.length === WHEEL_CATS.length)
+      ? grp.scores
+      : WHEEL_CATS.map(() => parseFloat((Math.random() * 9.5 + 0.5).toFixed(2)));
+
+    // Cross-officer per-category ranks (rank among all loaded officers)
+    const ranks = (grp.catRanks && grp.catRanks.length === WHEEL_CATS.length)
+      ? grp.catRanks
+      : scores.map((_, i) => i + 1); // plain fallback
+
     const avg    = (scores.reduce((a, v) => a + v, 0) / WHEEL_CATS.length).toFixed(2);
+    const totalN = grp.totalOfficers || allOfficers.length || 1;
 
     // Store for segment detail panel; clear any floating cards from previous officer
-    currentWheelData = { scores, ranks };
+    currentWheelData = { scores, ranks, totalOfficers: totalN };
     activeSegSet.clear();
     document.getElementById('wheelOverlay').querySelectorAll('.sdp-card').forEach(function(c){ c.remove(); });
 
-    // Overall rank: random 1-150 (independent of per-category ranks)
-    const overallRank = Math.floor(Math.random() * 150) + 1;
+    // Overall rank based on avg score among all loaded officers
+    const overallRank = grp.overallRank || '—';
 
     // Abbreviate Source of Recruitment to initials
     function abbrevSOR(s) {
@@ -526,8 +767,8 @@
     // Header: Name (Year: SOR) on top, rank+avg badges below
     document.getElementById('wheelName').innerHTML =
       esc(name) + ' <span class="wheel-batch">(' + esc(String(year)) + ': ' + esc(sor) + ')</span>';
-    document.getElementById('wheelRankBadge').textContent = 'Overall Rank #' + overallRank;
-    document.getElementById('wheelAvgBadge').textContent  = 'Weighted Avg: ' + avg + '/10';
+    document.getElementById('wheelRankBadge').textContent = 'Overall Rank #' + overallRank + ' of ' + totalN;
+    document.getElementById('wheelAvgBadge').textContent  = 'Avg Score: ' + avg + '/10';
 
     // ── SVG constants ─────────────────────────────────────────────
     const CX = 320, CY = 320;
@@ -722,7 +963,7 @@
     s += `<rect x="${CX - 52}" y="${bcy - 9}" width="104" height="37" rx="18" ry="18"
             fill="#451a03" stroke="#f59e0b" stroke-width="1.5" opacity="0.95"/>
           <text x="${CX}" y="${bcy + 5}" text-anchor="middle" font-size="12" font-weight="900"
-            fill="#fde68a">Rank #${overallRank}</text>
+            fill="#fde68a">Rank #${overallRank} / ${totalN}</text>
           <text id="wAvg" x="${CX}" y="${bcy + 19}" text-anchor="middle" font-size="10"
             font-weight="700" fill="#fcd34d">Avg: 0.00/10</text>`;
 
@@ -818,6 +1059,7 @@
 
     const score = currentWheelData.scores[i] || 0;
     const rank  = currentWheelData.ranks[i]  || '—';
+    const N     = currentWheelData.totalOfficers || allOfficers.length || '?';
 
     activeSegSet.add(i);
 
@@ -868,6 +1110,7 @@
         '<div class="sdp-title-group">' +
           '<div class="sdp-title">' + cat.label + '</div>' +
           '<div class="sdp-score-badge" style="background:' + cat.color + '">Score: ' + score.toFixed(2) + ' / 10</div>' +
+          '<div class="sdp-rank-badge" style="color:' + cat.color + '">Rank #' + rank + ' of ' + N + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="sdp-source">&#128204; ' + det.source + '</div>' +
@@ -906,6 +1149,7 @@
 
     const score = currentWheelData.scores[i] || 0;
     const rank  = currentWheelData.ranks[i]  || '—';
+    const N     = currentWheelData.totalOfficers || allOfficers.length || '?';
 
     // Remove any existing popup first
     const overlay = document.getElementById('wheelOverlay');
@@ -945,8 +1189,8 @@
         metricsHtml +
       '</div>' +
       '<div class="sdp-popup-footer">' +
-        '<span class="sdp-popup-rank-label">Category Rank (among 14)</span>' +
-        '<span class="sdp-popup-rank-val" style="background:' + cat.color + '">#' + rank + '</span>' +
+        '<span class="sdp-popup-rank-label">Rank in ' + cat.label + '</span>' +
+        '<span class="sdp-popup-rank-val" style="background:' + cat.color + '">#' + rank + ' of ' + N + '</span>' +
       '</div>';
 
     function closePopup() { bg.remove(); }
