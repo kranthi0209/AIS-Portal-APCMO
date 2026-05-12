@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | AIS Officers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #eef2ff; min-height: 100vh; }
+
+    /* ── Header ── */
+    .top-header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4f46e5 100%);
+      padding: 14px 24px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 16px rgba(30,27,75,0.45);
+    }
+    .ap-seal {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 2px solid rgba(165,180,252,0.5); background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .header-text { flex: 1; }
+    .header-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #a5b4fc; }
+    .header-title { font-size: clamp(14px,1.6vw,20px); font-weight: 800; color: #fff; }
+    .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-h {
+      padding: 9px 16px; border-radius: 8px; font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; border: none;
+    }
+    .btn-h-appraisal {
+      background: linear-gradient(135deg, #7c3aed, #4c1d95);
+      color: #ede9fe; box-shadow: 0 3px 10px rgba(124,58,237,0.4);
+    }
+    .btn-h-appraisal:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(124,58,237,0.55); }
+    .btn-h-dashboard {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(165,180,252,0.4); color: #a5b4fc;
+    }
+    .btn-h-dashboard:hover { background: rgba(255,255,255,0.22); }
+    .btn-h-logout {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(165,180,252,0.3); color: #a5b4fc;
+    }
+    .btn-h-logout:hover { background: rgba(255,255,255,0.18); }
+
+    /* ── Officer profile bar ── */
+    .profile-bar {
+      background: #fff; padding: 10px 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      border-bottom: 2px solid #c7d2fe; box-shadow: 0 2px 8px rgba(30,27,75,0.07);
+    }
+    .profile-left { display: flex; align-items: center; gap: 12px; }
+    .profile-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .profile-name { font-size: 15px; font-weight: 800; color: #1e1b4b; }
+    .profile-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .svc-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    }
+    .svc-ias { background: #dbeafe; color: #1e40af; }
+    .svc-ips { background: #fce7f3; color: #9d174d; }
+    .svc-ifs { background: #dcfce7; color: #14532d; }
+
+    /* ── Page ── */
+    .page-content { padding: 20px 24px 48px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Section heading ── */
+    .section-heading {
+      font-size: 12px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #e0e7ff;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Module grid ── */
+    .mod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+
+    /* ── Module card ── */
+    .mod-card {
+      background: #fff; border-radius: 16px;
+      border: 2px solid #e0e7ff;
+      box-shadow: 0 2px 12px rgba(79,70,229,0.07);
+      padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .mod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,70,229,0.14); }
+    .mod-card-header {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .mod-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0;
+    }
+    .mod-title { font-size: 13px; font-weight: 700; color: #1e1b4b; }
+    .mod-sub   { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+
+    .mod-score {
+      font-size: 40px; font-weight: 900; line-height: 1;
+    }
+    .mod-score-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
+
+    .mod-row { display: flex; align-items: center; justify-content: space-between; }
+    .mod-key { font-size: 11px; color: #94a3b8; }
+    .mod-val { font-size: 12px; font-weight: 700; color: #334155; }
+
+    .mod-empty { font-size: 12px; color: #94a3b8; font-style: italic; text-align: center; padding: 8px 0; }
+
+    .mod-tag {
+      display: inline-block; padding: 2px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .tag-submitted { background: #dcfce7; color: #14532d; }
+    .tag-draft     { background: #fef9c3; color: #854d0e; }
+    .tag-none      { background: #f1f5f9; color: #94a3b8; }
+
+    .mod-link {
+      margin-top: auto; padding: 8px 16px; border-radius: 8px; border: none;
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.18s; text-align: center;
+    }
+    .mod-link-primary {
+      background: linear-gradient(135deg, #4f46e5, #312e81);
+      color: #fff; box-shadow: 0 3px 10px rgba(79,70,229,0.3);
+    }
+    .mod-link-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(79,70,229,0.45); }
+    .mod-link-secondary {
+      background: #eef2ff; color: #4f46e5; border: 1.5px solid #c7d2fe;
+    }
+    .mod-link-secondary:hover { background: #e0e7ff; }
+
+    /* score ring colours */
+    .score-green  { color: #059669; }
+    .score-blue   { color: #2563eb; }
+    .score-amber  { color: #d97706; }
+    .score-red    { color: #dc2626; }
+    .score-grey   { color: #94a3b8; }
+
+    /* ── mini bar ── */
+    .mini-bar-wrap { background: #f1f5f9; border-radius: 6px; height: 6px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+
+    /* ── entries list ── */
+    .entry-list { display: flex; flex-direction: column; gap: 6px; }
+    .entry-item {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; background: #f8fafc; border-radius: 7px; padding: 6px 10px;
+    }
+    .entry-item-label { color: #475569; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-item-score { font-weight: 800; margin-left: 10px; }
+
+    /* ── Loading ── */
+    .loading-spinner { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ══ Header ══ -->
+<header class="top-header">
+  <div class="ap-seal">&#127961;</div>
+  <div class="header-text">
+    <div class="header-label">Government of Andhra Pradesh — CMO</div>
+    <div class="header-title">My Officer Dashboard</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-h btn-h-appraisal" onclick="location.href='self_appraisal.html'">&#128221; Self Appraisal</button>
+    <button class="btn-h btn-h-dashboard" onclick="location.href='landing.html'">&#128200; Main Dashboard</button>
+    <button class="btn-h btn-h-logout" onclick="signOut()">&#128274; Sign Out</button>
+  </div>
+</header>
+
+<!-- ══ Profile bar ══ -->
+<div class="profile-bar">
+  <div class="profile-left">
+    <div class="profile-avatar" id="profileAvatar">👤</div>
+    <div>
+      <div class="profile-name" id="profileName">Loading…</div>
+      <div class="profile-meta" id="profileMeta"></div>
+    </div>
+  </div>
+  <span id="svcBadge"></span>
+</div>
+
+<!-- ══ Page content ══ -->
+<div class="page-content" id="pageContent">
+  <div class="loading-spinner">Loading your dashboard…</div>
+</div>
+
+<script>
+// ================================================================
+// State
+// ================================================================
+var _session = null;
+var _officer = null;
+
+// ================================================================
+// Init
+// ================================================================
+(async function init() {
+  _session = await requireAuth();
+  if (!_session) return;
+
+  var role = (_session.role || '').toLowerCase();
+  if (role !== 'ias' && role !== 'ips' && role !== 'ifs') {
+    location.href = 'index.html'; return;
+  }
+
+  await loadOfficer();
+  renderPage();
+})();
+
+async function loadOfficer() {
+  var q = _supabase.from('officers').select(
+    'id, identity_no, name_of_officer, service_type, current_posting, allotment_year, cadre'
+  );
+  if (_session.officer_id) q = q.eq('id', _session.officer_id);
+  else                      q = q.eq('identity_no', _session.email);
+  var { data } = await q.maybeSingle();
+  _officer = data;
+
+  if (!_officer) return;
+
+  var svcMap = { ias:'👤', ips:'🛡', ifs:'🌲' };
+  var svc    = (_officer.service_type || '').toUpperCase();
+  var svcL   = svc.toLowerCase();
+  document.getElementById('profileAvatar').textContent = svcMap[svcL] || '👤';
+  document.getElementById('profileName').textContent   = _officer.name_of_officer || _session.email;
+  document.getElementById('profileMeta').textContent   =
+    [_officer.current_posting, _officer.cadre, _officer.allotment_year ? 'Batch ' + _officer.allotment_year : '']
+    .filter(Boolean).join(' · ');
+  document.getElementById('svcBadge').innerHTML =
+    '<span class="svc-badge svc-' + svcL + '">' + (svcMap[svcL]||'') + ' ' + svc + '</span>';
+}
+
+// ================================================================
+// Fetch all module data in parallel
+// ================================================================
+async function renderPage() {
+  if (!_officer) {
+    document.getElementById('pageContent').innerHTML =
+      '<div class="loading-spinner" style="color:#dc2626;">Officer profile not found. Contact administrator.</div>';
+    return;
+  }
+
+  var id = _officer.identity_no;
+
+  var [saRes, swRes, intRes, gsdpRes, partyRes, mediaRes] = await Promise.all([
+    _supabase.from('self_appraisal').select('*').eq('identity_no', id).order('entered_at', { ascending: false }),
+    _supabase.from('swarna_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
+    _supabase.from('integrity_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
+    _supabase.from('gsdp_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
+    _supabase.from('party_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
+    _supabase.from('media_data').select('*').eq('identity_no', id).order('period_from', { ascending: false })
+  ]);
+
+  var sa    = saRes.data    || [];
+  var sw    = swRes.data    || [];
+  var integ = intRes.data   || [];
+  var gsdp  = gsdpRes.data  || [];
+  var party = partyRes.data || [];
+  var media = mediaRes.data || [];
+
+  var html =
+    '<div class="section-heading">📊 My Performance Modules</div>' +
+    '<div class="mod-grid">' +
+      cardSelfAppraisal(sa) +
+      cardSwarna(sw) +
+      cardIntegrity(integ) +
+      cardGsdp(gsdp) +
+      cardParty(party) +
+      cardMedia(media) +
+    '</div>';
+
+  document.getElementById('pageContent').innerHTML = html;
+}
+
+// ================================================================
+// Card builders
+// ================================================================
+
+function cardSelfAppraisal(rows) {
+  var latest = rows[0] || null;
+  var submitted = rows.filter(function(r) { return r.status === 'submitted'; }).length;
+  var draft     = rows.filter(function(r) { return r.status === 'draft'; }).length;
+
+  var statusTag, statusMsg, btnLabel, btnClass;
+  if (!latest) {
+    statusTag = '<span class="mod-tag tag-none">Not Started</span>';
+    statusMsg = 'No appraisal submitted yet.';
+    btnLabel  = '📝 Start Appraisal'; btnClass = 'mod-link-primary';
+  } else if (latest.status === 'submitted') {
+    statusTag = '<span class="mod-tag tag-submitted">✅ Submitted</span>';
+    statusMsg = 'Last submitted: ' + fmtDate(latest.submitted_at);
+    btnLabel  = '📝 New Appraisal'; btnClass = 'mod-link-secondary';
+  } else {
+    statusTag = '<span class="mod-tag tag-draft">✏️ Draft in Progress</span>';
+    statusMsg = 'Last saved: ' + fmtDate(latest.updated_at || latest.entered_at);
+    btnLabel  = '📝 Continue Draft'; btnClass = 'mod-link-primary';
+  }
+
+  var sectionsFilledMax = 0;
+  if (latest) {
+    ['innovations','digitalisations','new_policies','de_regularisation','leadership_skills'].forEach(function(s) {
+      if (latest[s] && latest[s].trim()) sectionsFilledMax++;
+    });
+  }
+
+  return card({
+    icon: '📝', iconBg: '#eef2ff',
+    title: 'Self Appraisal', sub: submitted + ' submitted · ' + draft + ' draft',
+    body:
+      '<div class="mod-row">' +
+        '<span class="mod-key">Status</span>' + statusTag +
+      '</div>' +
+      (latest ? '<div class="mod-row"><span class="mod-key">Sections filled</span><span class="mod-val">' + sectionsFilledMax + ' / 5</span></div>' : '') +
+      '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + statusMsg + '</div>',
+    btn: btnLabel, btnClass: btnClass,
+    btnAction: "location.href='self_appraisal.html'"
+  });
+}
+
+function cardSwarna(rows) {
+  if (!rows.length) return card({ icon:'⭐', iconBg:'#fffbeb', title:'Swarna AP KPI', sub:'No data uploaded', body:'<div class="mod-empty">No Swarna AP KPI score recorded.</div>', btn:null });
+
+  var latest = rows[0];
+  var sc = parseFloat(latest.swarna_score) || 0;
+  var cls = scoreClass(sc);
+  var periods = rows.length;
+
+  return card({
+    icon:'⭐', iconBg:'#fffbeb',
+    title:'Swarna AP KPI', sub: periods + ' period' + (periods>1?'s':'') + ' recorded',
+    body:
+      '<div><div class="mod-score ' + cls + '">' + sc.toFixed(1) + '</div>' +
+      '<div class="mod-score-label">out of 100 — ' + fmtPeriod(latest.period_from, latest.period_to) + '</div></div>' +
+      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + sc + '%;background:' + scoreHex(sc) + '"></div></div>' +
+      (latest.department_post ? '<div class="mod-row"><span class="mod-key">Post</span><span class="mod-val" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(latest.department_post) + '</span></div>' : '') +
+      (latest.achievements    ? '<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic;">"' + esc(latest.achievements).slice(0,100) + (latest.achievements.length>100?'…':'"') + '</div>' : ''),
+    btn: null
+  });
+}
+
+function cardIntegrity(rows) {
+  if (!rows.length) return card({ icon:'🔍', iconBg:'#ecfdf5', title:'Integrity Index', sub:'No data uploaded', body:'<div class="mod-empty">No Integrity Index recorded.</div>', btn:null });
+
+  var latest = rows[0];
+  var sc  = parseFloat(latest.integrity_index) || 0;
+  var cls = scoreClass(sc);
+  var corrupt = (latest.corrupt_activities || '').toLowerCase() === 'yes';
+
+  return card({
+    icon:'🔍', iconBg:'#ecfdf5',
+    title:'Integrity Index', sub: rows.length + ' period' + (rows.length>1?'s':'') + ' recorded',
+    body:
+      '<div><div class="mod-score ' + cls + '">' + sc.toFixed(1) + '</div>' +
+      '<div class="mod-score-label">out of 100 — ' + fmtPeriod(latest.period_from, latest.period_to) + '</div></div>' +
+      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + sc + '%;background:' + scoreHex(sc) + '"></div></div>' +
+      '<div class="mod-row"><span class="mod-key">Corrupt Activities</span>' +
+        '<span class="mod-tag" style="background:' + (corrupt?'#fee2e2':'#dcfce7') + ';color:' + (corrupt?'#991b1b':'#14532d') + ';">' +
+          (corrupt ? '⚠ Yes' : '✓ None') + '</span>' +
+      '</div>' +
+      (corrupt && latest.activity_details ? '<div style="font-size:11px;color:#dc2626;margin-top:4px;">' + esc(latest.activity_details).slice(0,80) + '</div>' : ''),
+    btn: null
+  });
+}
+
+function cardGsdp(rows) {
+  if (!rows.length) return card({ icon:'📊', iconBg:'#ecfdf5', title:'GSDP Contribution', sub:'No data uploaded', body:'<div class="mod-empty">No GSDP contribution recorded.</div>', btn:null });
+
+  var deptRows = rows.filter(function(r){ return r.contribution_type === 'Department'; });
+  var distRows = rows.filter(function(r){ return r.contribution_type === 'District'; });
+  var top = rows.slice(0, 4);
+
+  var listHtml = '<div class="entry-list">' +
+    top.map(function(r) {
+      var sc = parseFloat(r.gsdp_score) || 0;
+      return '<div class="entry-item">' +
+        '<span style="font-size:11px;margin-right:4px;">' + (r.contribution_type==='Department'?'🏛':'📍') + '</span>' +
+        '<span class="entry-item-label">' + esc(r.entity_name) + '</span>' +
+        '<span class="entry-item-score ' + scoreClass(sc) + '">' + sc.toFixed(0) + '</span>' +
+      '</div>';
+    }).join('') +
+    (rows.length > 4 ? '<div style="font-size:11px;color:#94a3b8;text-align:center;">+' + (rows.length-4) + ' more entries</div>' : '') +
+  '</div>';
+
+  return card({
+    icon:'📊', iconBg:'#ecfdf5',
+    title:'GSDP Contribution', sub: deptRows.length + ' dept · ' + distRows.length + ' district entries',
+    body: listHtml,
+    btn: null
+  });
+}
+
+function cardParty(rows) {
+  if (!rows.length) return card({ icon:'🎭', iconBg:'#fff1f2', title:'Party Feedback', sub:'No data uploaded', body:'<div class="mod-empty">No Party feedback recorded.</div>', btn:null });
+
+  var scores = rows.map(function(r) { return parseFloat(r.feedback_score) || 0; });
+  var avg  = scores.reduce(function(a,b){return a+b;},0) / scores.length;
+  var best = Math.max.apply(null, scores);
+  var low  = Math.min.apply(null, scores);
+
+  var sourceCount = {};
+  rows.forEach(function(r) {
+    sourceCount[r.feedback_from] = (sourceCount[r.feedback_from] || 0) + 1;
+  });
+  var topSource = Object.keys(sourceCount).sort(function(a,b){ return sourceCount[b]-sourceCount[a]; })[0];
+
+  return card({
+    icon:'🎭', iconBg:'#fff1f2',
+    title:'Party Feedback', sub: rows.length + ' feedback record' + (rows.length>1?'s':''),
+    body:
+      '<div><div class="mod-score ' + scoreClass(avg) + '">' + avg.toFixed(1) + '</div>' +
+      '<div class="mod-score-label">average score out of 100</div></div>' +
+      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + avg + '%;background:' + scoreHex(avg) + '"></div></div>' +
+      '<div class="mod-row"><span class="mod-key">Best / Lowest</span><span class="mod-val">' + best.toFixed(0) + ' / ' + low.toFixed(0) + '</span></div>' +
+      (topSource ? '<div class="mod-row"><span class="mod-key">Top source</span><span class="mod-val" style="max-width:160px;text-align:right;">' + esc(topSource) + '</span></div>' : ''),
+    btn: null
+  });
+}
+
+function cardMedia(rows) {
+  if (!rows.length) return card({ icon:'📰', iconBg:'#fefce8', title:'Media Feedback', sub:'No data uploaded', body:'<div class="mod-empty">No Media feedback recorded.</div>', btn:null });
+
+  var scores = rows.map(function(r) { return parseFloat(r.feedback_score) || 0; });
+  var avg  = scores.reduce(function(a,b){return a+b;},0) / scores.length;
+  var best = Math.max.apply(null, scores);
+  var low  = Math.min.apply(null, scores);
+
+  var top = rows.slice(0, 3);
+
+  return card({
+    icon:'📰', iconBg:'#fefce8',
+    title:'Media Feedback', sub: rows.length + ' outlet' + (rows.length>1?'s':'') + ' covered',
+    body:
+      '<div><div class="mod-score ' + scoreClass(avg) + '">' + avg.toFixed(1) + '</div>' +
+      '<div class="mod-score-label">average score out of 100</div></div>' +
+      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + avg + '%;background:' + scoreHex(avg) + '"></div></div>' +
+      '<div class="mod-row"><span class="mod-key">Best / Lowest</span><span class="mod-val">' + best.toFixed(0) + ' / ' + low.toFixed(0) + '</span></div>' +
+      '<div class="entry-list" style="margin-top:6px;">' +
+        top.map(function(r) {
+          var sc = parseFloat(r.feedback_score)||0;
+          return '<div class="entry-item"><span class="entry-item-label">' + esc(r.media_details) + '</span>' +
+            '<span class="entry-item-score ' + scoreClass(sc) + '">' + sc.toFixed(0) + '</span></div>';
+        }).join('') +
+      '</div>',
+    btn: null
+  });
+}
+
+// ================================================================
+// Generic card renderer
+// ================================================================
+function card(o) {
+  return '<div class="mod-card">' +
+    '<div class="mod-card-header">' +
+      '<div class="mod-icon" style="background:' + o.iconBg + '">' + o.icon + '</div>' +
+      '<div><div class="mod-title">' + o.title + '</div>' +
+      '<div class="mod-sub">' + esc(o.sub || '') + '</div></div>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:8px;flex:1;">' + o.body + '</div>' +
+    (o.btn ? '<button class="mod-link ' + (o.btnClass||'mod-link-secondary') + '" onclick="' + o.btnAction + '">' + o.btn + '</button>' : '') +
+  '</div>';
+}
+
+// ================================================================
+// Utilities
+// ================================================================
+function scoreClass(s) {
+  if (s >= 76) return 'score-green';
+  if (s >= 51) return 'score-blue';
+  if (s >= 26) return 'score-amber';
+  return s > 0 ? 'score-red' : 'score-grey';
+}
+function scoreHex(s) {
+  if (s >= 76) return '#059669';
+  if (s >= 51) return '#2563eb';
+  if (s >= 26) return '#d97706';
+  return '#dc2626';
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+function fmtPeriod(f, t) {
+  if (!f) return '';
+  var from = new Date(f).toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+  var to   = t ? new Date(t).toLocaleDateString('en-IN', { month:'short', year:'numeric' }) : 'present';
+  return from + ' – ' + to;
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

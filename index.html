@@ -155,6 +155,98 @@
     .admin-link a:hover { text-decoration: underline; }
     .hidden { display: none !important; }
 
+    /* ---- Overlay Modals (Change Password / First Login Profile) ---- */
+    .overlay-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,12,41,0.72); backdrop-filter: blur(6px);
+      z-index: 900; align-items: center; justify-content: center;
+    }
+    .overlay-modal.open { display: flex; }
+    .overlay-box {
+      background: white; border-radius: 20px; padding: 36px 40px 30px;
+      width: 96%; max-width: 440px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      animation: fadeUp 0.25s ease-out;
+    }
+    @keyframes fadeUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .overlay-icon  { font-size: 40px; text-align: center; margin-bottom: 10px; }
+    .overlay-title { text-align: center; font-size: 22px; font-weight: 800; color: #1e1b4b; margin-bottom: 4px; }
+    .overlay-desc  { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 22px; line-height: 1.55; }
+    .overlay-field { margin-bottom: 14px; }
+    .overlay-field label { display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+    .overlay-field input {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid #d1d5db; border-radius: 10px;
+      font-size: 14px; font-family: 'Inter', sans-serif; color: #111;
+      background: #f9fafb; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .overlay-field input:focus { border-color: #4338ca; background: #fff; box-shadow: 0 0 0 3px rgba(67,56,202,0.12); }
+    .overlay-hint  { font-size: 11.5px; color: #64748b; margin-top: 3px; }
+    .overlay-error { color: #dc2626; font-size: 13px; font-weight: 500; margin: 10px 0 0; text-align: center; min-height: 16px; }
+    .btn-overlay {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #1e1b4b, #4338ca);
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; font-family: 'Inter', sans-serif;
+      cursor: pointer; margin-top: 16px;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 14px rgba(67,56,202,0.4);
+    }
+    .btn-overlay:hover { opacity: 0.9; transform: translateY(-1px); }
+    .pw-strength { height: 4px; border-radius: 2px; margin-top: 6px; transition: all 0.3s; }
+
+    /* ---- Helper links below Sign In ---- */
+    .helper-links {
+      display: flex; justify-content: space-between; gap: 8px;
+      margin-top: 14px;
+    }
+    .helper-link {
+      flex: 1; padding: 9px 10px; border: 1.5px solid #c7d2fe;
+      border-radius: 10px; background: #f5f3ff; cursor: pointer;
+      font-size: 12px; font-weight: 600; color: #4338ca;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      text-align: center; line-height: 1.4;
+    }
+    .helper-link:hover { background: #ede9fe; border-color: #818cf8; transform: translateY(-1px); }
+
+    /* ---- overlay-field select ---- */
+    .overlay-field select {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid #d1d5db; border-radius: 10px;
+      font-size: 14px; font-family: 'Inter', sans-serif; color: #111;
+      background: #f9fafb; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .overlay-field select:focus { border-color: #4338ca; background: #fff; box-shadow: 0 0 0 3px rgba(67,56,202,0.12); }
+
+    /* ---- Revealed password box ---- */
+    .pw-reveal-box {
+      background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px;
+      padding: 14px 16px; margin-top: 14px; text-align: center;
+    }
+    .pw-reveal-label { font-size: 11.5px; font-weight: 600; color: #92400e; margin-bottom: 6px; }
+    .pw-reveal-value {
+      font-family: monospace; font-size: 24px; font-weight: 900;
+      letter-spacing: 2px; color: #78350f;
+      background: white; border-radius: 8px; padding: 10px;
+      border: 1px dashed #f59e0b; margin-bottom: 8px;
+    }
+    .pw-reveal-note { font-size: 11px; color: #b45309; line-height: 1.5; }
+
+    /* ---- Reset request success box ---- */
+    .reset-success-box {
+      background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px;
+      padding: 16px; margin-top: 14px; text-align: center;
+    }
+    .reset-success-box .rs-icon { font-size: 32px; margin-bottom: 8px; }
+    .reset-success-box .rs-title { font-size: 15px; font-weight: 800; color: #15803d; margin-bottom: 6px; }
+    .reset-success-box .rs-msg   { font-size: 12.5px; color: #166534; line-height: 1.6; }
+
     footer {
       width: 100%; text-align: center; font-size: 13px;
       padding: 18px; color: rgba(165,180,252,0.5);
@@ -182,8 +274,8 @@
     <div class="card-title">AIS Officers Dashboard</div>
     <div class="card-desc">Sign in with your authorised credentials</div>
     <div class="form-group">
-      <label for="email">User ID (Email)</label>
-      <input type="email" id="email" placeholder="you@example.gov.in" autocomplete="username">
+      <label for="email">User ID (Identity No)</label>
+      <input type="text" id="email" placeholder="Enter your Identity No" autocomplete="username" style="text-transform:uppercase;">
     </div>
     <div class="form-group">
       <label for="password">Password</label>
@@ -191,6 +283,10 @@
     </div>
     <button class="btn-login" onclick="login()">Sign In</button>
     <div id="error-msg"></div>
+    <div class="helper-links">
+      <button class="helper-link" onclick="openKnowPwModal()">&#128273; Know your initial<br>system password?</button>
+      <button class="helper-link" onclick="openForgotPwModal()">&#128274; Forgot<br>password?</button>
+    </div>
     <div class="divider"></div>
     <div class="admin-link">Admin? &nbsp;<a href="admin.html">Go to Admin Panel</a></div>
   </div>
@@ -201,18 +297,146 @@
     <div class="card-title">Welcome Back</div>
     <div class="welcome-text">You are signed in as</div>
     <div class="logged-in-email" id="userEmail"></div>
-    <button class="btn-dashboard" onclick="window.location.href='table.html?service=IAS'">Go to Dashboard</button>
+    <button class="btn-dashboard" id="btnDashboard" onclick="window.location.href='landing.html'">Go to Dashboard</button>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
     <div class="divider"></div>
     <div class="admin-link">Admin? &nbsp;<a href="admin.html">Go to Admin Panel</a></div>
   </div>
 </main>
 
+<!-- ============================================================
+     KNOW YOUR INITIAL PASSWORD MODAL
+     ============================================================ -->
+<div class="overlay-modal" id="knowPwModal">
+  <div class="overlay-box">
+    <div class="overlay-icon">&#128273;</div>
+    <div class="overlay-title">Know Your Initial Password</div>
+    <div class="overlay-desc">Enter your details exactly as recorded. Your system-generated password will be shown if you have not logged in yet.</div>
+    <div id="kp-form">
+      <div class="overlay-field">
+        <label>Identity No</label>
+        <input type="text" id="kp-id" placeholder="e.g. AP/2000/01" style="text-transform:uppercase;">
+      </div>
+      <div class="overlay-field">
+        <label>Service</label>
+        <select id="kp-service">
+          <option value="">— Select Service —</option>
+          <option value="IAS">IAS</option>
+          <option value="IPS">IPS</option>
+          <option value="IFS">IFS</option>
+        </select>
+      </div>
+      <div class="overlay-field">
+        <label>Batch / Allotment Year</label>
+        <input type="text" id="kp-batch" placeholder="e.g. 1995" maxlength="4">
+      </div>
+      <div class="overlay-field">
+        <label>Date of Birth</label>
+        <input type="date" id="kp-dob">
+      </div>
+      <div class="overlay-error" id="kp-error"></div>
+      <button class="btn-overlay" id="kp-btn" onclick="submitKnowPw()">&#128270; Show My Password</button>
+      <button style="width:100%;margin-top:10px;padding:10px;border:none;background:none;color:#64748b;font-size:13px;cursor:pointer;" onclick="closeOverlay('knowPwModal')">Cancel</button>
+    </div>
+    <div id="kp-result" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FORGOT PASSWORD MODAL
+     ============================================================ -->
+<div class="overlay-modal" id="forgotPwModal">
+  <div class="overlay-box">
+    <div class="overlay-icon">&#128274;</div>
+    <div class="overlay-title" id="fp-title">Forgot Password?</div>
+    <div class="overlay-desc" id="fp-desc">Enter your Identity No. We will check your account status.</div>
+    <div id="fp-form">
+      <div class="overlay-field">
+        <label>Identity No</label>
+        <input type="text" id="fp-id" placeholder="e.g. AP/2000/01" style="text-transform:uppercase;">
+      </div>
+      <div class="overlay-error" id="fp-error"></div>
+      <button class="btn-overlay" id="fp-btn" onclick="submitForgotPw()">&#128270; Check Status</button>
+      <button style="width:100%;margin-top:10px;padding:10px;border:none;background:none;color:#64748b;font-size:13px;cursor:pointer;" onclick="closeOverlay('forgotPwModal')">Cancel</button>
+    </div>
+    <div id="fp-result" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CHANGE PASSWORD MODAL  (shown after first-time login)
+     ============================================================ -->
+<div class="overlay-modal" id="changePwModal">
+  <div class="overlay-box">
+    <div class="overlay-icon">&#128274;</div>
+    <div class="overlay-title">Set Your Password</div>
+    <div class="overlay-desc">Your account requires a password change before you can continue. Please choose a strong new password.</div>
+    <div class="overlay-field">
+      <label>New Password</label>
+      <input type="password" id="cp-new" placeholder="Min. 8 characters" oninput="cpStrength()">
+      <div class="pw-strength" id="cp-strength-bar" style="background:#e5e7eb;width:0%;"></div>
+    </div>
+    <div class="overlay-field">
+      <label>Confirm New Password</label>
+      <input type="password" id="cp-confirm" placeholder="Re-enter new password">
+    </div>
+    <div class="overlay-error" id="cp-error"></div>
+    <button class="btn-overlay" id="cp-btn" onclick="submitPasswordChange()">&#10003; Set Password &amp; Continue</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     FIRST LOGIN PROFILE MODAL  (shown after password is set)
+     ============================================================ -->
+<div class="overlay-modal" id="profileModal">
+  <div class="overlay-box">
+    <div class="overlay-icon">&#128100;</div>
+    <div class="overlay-title">Complete Your Profile</div>
+    <div class="overlay-desc">Please provide your personal contact details. All official communications will be sent to these.</div>
+    <div class="overlay-field">
+      <label>Personal Mobile Number</label>
+      <input type="tel" id="pr-mobile" placeholder="+91 98765 43210" maxlength="15">
+      <div class="overlay-hint">10-digit mobile number (Indian format)</div>
+    </div>
+    <div class="overlay-field">
+      <label>Personal Email Address</label>
+      <input type="email" id="pr-email" placeholder="your.name@gmail.com">
+    </div>
+    <div class="overlay-error" id="pr-error"></div>
+    <button class="btn-overlay" id="pr-btn" onclick="submitProfileUpdate()">&#10003; Save &amp; Go to Dashboard</button>
+  </div>
+</div>
+
 <footer>&copy; 2025 Chief Minister's Office, Andhra Pradesh. All rights reserved.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase_config.js"></script>
 <script>
+  // ----------------------------------------------------------------
+  // Role → destination mapping (single source of truth)
+  // ----------------------------------------------------------------
+  function getRoleDest(role) {
+    var map = {
+      'eoffice':    'entry_eoffice.html',
+      'swarna':     'entry_swarna.html',
+      'gsdp':       'entry_gsdp.html',
+      'goifunds':   'entry_goifunds.html',
+      'perception': 'entry_perception.html',
+      'integrity':  'entry_integrity.html',
+      'party':      'entry_party.html',
+      'media':      'entry_media.html',
+      'ias':        'officer_home.html',
+      'ips':        'officer_home.html',
+      'ifs':        'officer_home.html'
+    };
+    return map[role] || 'landing.html';
+  }
+
+  // ----------------------------------------------------------------
+  // Login flow
+  // ----------------------------------------------------------------
+  let _pendingEmail = '';
+
   async function login() {
     const email    = document.getElementById('email').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
@@ -228,16 +452,24 @@
     loginBtn.textContent = 'Sign In';
     loginBtn.disabled = false;
 
-    if (error) {
-      errorEl.textContent = 'Error: ' + error.message;
+    if (error) { errorEl.textContent = 'Error: ' + error.message; return; }
+    if (!data || data.length === 0) { errorEl.textContent = 'Invalid email or password.'; return; }
+
+    const user = data[0];
+    saveSession(user);
+    _pendingEmail = user.email;
+
+    if (user.must_change_password) {
+      document.getElementById('changePwModal').classList.add('open');
+      document.getElementById('cp-new').focus();
       return;
     }
-    if (!data || data.length === 0) {
-      errorEl.textContent = 'Invalid email or password.';
+    if (user.is_first_login) {
+      document.getElementById('profileModal').classList.add('open');
+      document.getElementById('pr-mobile').focus();
       return;
     }
-    saveSession(data[0]);
-    window.location.href = 'table.html?service=IAS';
+    window.location.href = getRoleDest((user.role || '').toLowerCase());
   }
 
   function logout() {
@@ -249,15 +481,288 @@
     document.getElementById('error-msg').textContent = '';
   }
 
-  // Check existing session
+  // ----------------------------------------------------------------
+  // Password strength meter
+  // ----------------------------------------------------------------
+  function cpStrength() {
+    const pw  = document.getElementById('cp-new').value;
+    const bar = document.getElementById('cp-strength-bar');
+    let score = 0;
+    if (pw.length >= 8)          score++;
+    if (/[A-Z]/.test(pw))        score++;
+    if (/[0-9]/.test(pw))        score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const pct    = score * 25;
+    const colors = ['#e5e7eb','#ef4444','#f59e0b','#3b82f6','#22c55e'];
+    bar.style.width      = pct + '%';
+    bar.style.background = colors[score];
+  }
+
+  // ----------------------------------------------------------------
+  // Change Password modal
+  // ----------------------------------------------------------------
+  async function submitPasswordChange() {
+    const newPw  = document.getElementById('cp-new').value;
+    const confPw = document.getElementById('cp-confirm').value;
+    const errEl  = document.getElementById('cp-error');
+    errEl.textContent = '';
+
+    if (newPw.length < 8)    { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+    if (newPw !== confPw)    { errEl.textContent = 'Passwords do not match.'; return; }
+    if (!_pendingEmail)      { errEl.textContent = 'Session error — please log in again.'; return; }
+
+    const btn = document.getElementById('cp-btn');
+    btn.textContent = 'Saving…';
+    btn.disabled    = true;
+
+    const { data, error } = await _supabase.rpc('change_user_password', {
+      p_email:        _pendingEmail,
+      p_new_password: newPw
+    });
+    btn.textContent = '✓ Set Password & Continue';
+    btn.disabled    = false;
+
+    if (error || data === false) {
+      errEl.textContent = error ? ('Error: ' + error.message) : 'Failed to update password. Try again.';
+      return;
+    }
+
+    // Update session flag
+    const s = getSession();
+    if (s) { s.must_change_password = false; localStorage.setItem('ais_session', JSON.stringify(s)); }
+
+    document.getElementById('changePwModal').classList.remove('open');
+
+    // Check if first-login profile also needs completing
+    if (s && s.is_first_login) {
+      document.getElementById('profileModal').classList.add('open');
+      document.getElementById('pr-mobile').focus();
+    } else {
+      window.location.href = getRoleDest((s && s.role || '').toLowerCase());
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // First Login Profile modal
+  // ----------------------------------------------------------------
+  async function submitProfileUpdate() {
+    const mobile = document.getElementById('pr-mobile').value.trim();
+    const email  = document.getElementById('pr-email').value.trim().toLowerCase();
+    const errEl  = document.getElementById('pr-error');
+    errEl.textContent = '';
+
+    if (!mobile) { errEl.textContent = 'Mobile number is required.'; return; }
+    if (!email)  { errEl.textContent = 'Personal email is required.'; return; }
+    if (!_pendingEmail) { errEl.textContent = 'Session error — please log in again.'; return; }
+
+    const btn = document.getElementById('pr-btn');
+    btn.textContent = 'Saving…';
+    btn.disabled    = true;
+
+    const { data, error } = await _supabase.rpc('update_officer_profile', {
+      p_email:           _pendingEmail,
+      p_personal_email:  email,
+      p_personal_mobile: mobile
+    });
+    btn.textContent = '✓ Save & Go to Dashboard';
+    btn.disabled    = false;
+
+    if (error || data === false) {
+      errEl.textContent = error ? ('Error: ' + error.message) : 'Failed to save profile. Try again.';
+      return;
+    }
+
+    const s = getSession();
+    if (s) {
+      s.is_first_login   = false;
+      s.personal_email   = email;
+      s.personal_mobile  = mobile;
+      localStorage.setItem('ais_session', JSON.stringify(s));
+    }
+
+    document.getElementById('profileModal').classList.remove('open');
+    window.location.href = getRoleDest((s && s.role || '').toLowerCase());
+  }
+
+  // ----------------------------------------------------------------
+  // Check existing session on page load
+  // ----------------------------------------------------------------
   const _existingSession = getSession();
   if (_existingSession) {
     document.getElementById('loginDiv').classList.add('hidden');
     document.getElementById('homeDiv').classList.remove('hidden');
     document.getElementById('userEmail').textContent = _existingSession.email;
+    var _dest = getRoleDest((_existingSession.role || '').toLowerCase());
+    var _btnD = document.getElementById('btnDashboard');
+    _btnD.onclick = function() { window.location.href = _dest; };
+    var _ofRoles = ['ias','ips','ifs'];
+    _btnD.textContent = _ofRoles.includes((_existingSession.role||'').toLowerCase())
+      ? 'Go to My Dashboard' : 'Go to Entry Page';
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('changePwModal').classList.contains('open')) { submitPasswordChange(); return; }
+      if (document.getElementById('profileModal').classList.contains('open'))  { submitProfileUpdate();  return; }
+      if (document.getElementById('knowPwModal').classList.contains('open'))   { submitKnowPw();        return; }
+      if (document.getElementById('forgotPwModal').classList.contains('open')) { submitForgotPw();      return; }
+      login();
+    }
+  });
+
+  // ----------------------------------------------------------------
+  // Utility
+  // ----------------------------------------------------------------
+  function closeOverlay(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // ----------------------------------------------------------------
+  // Know Your Initial Password
+  // ----------------------------------------------------------------
+  function openKnowPwModal() {
+    document.getElementById('kp-id').value      = '';
+    document.getElementById('kp-service').value = '';
+    document.getElementById('kp-batch').value   = '';
+    document.getElementById('kp-dob').value     = '';
+    document.getElementById('kp-error').textContent = '';
+    document.getElementById('kp-form').style.display   = '';
+    document.getElementById('kp-result').style.display = 'none';
+    document.getElementById('knowPwModal').classList.add('open');
+    document.getElementById('kp-id').focus();
+  }
+
+  async function submitKnowPw() {
+    const idNo    = document.getElementById('kp-id').value.trim();
+    const service = document.getElementById('kp-service').value;
+    const batch   = document.getElementById('kp-batch').value.trim();
+    const dob     = document.getElementById('kp-dob').value;
+    const errEl   = document.getElementById('kp-error');
+    errEl.textContent = '';
+
+    if (!idNo || !service || !batch || !dob) { errEl.textContent = 'All fields are required.'; return; }
+    if (!/^\d{4}$/.test(batch))              { errEl.textContent = 'Batch must be a 4-digit year (e.g. 1995).'; return; }
+
+    const btn = document.getElementById('kp-btn');
+    btn.textContent = 'Checking…'; btn.disabled = true;
+
+    const { data, error } = await _supabase.rpc('get_initial_password', {
+      p_identity_no:  idNo,
+      p_service_type: service,
+      p_batch:        batch,
+      p_dob:          dob
+    });
+    btn.textContent = '🔍 Show My Password'; btn.disabled = false;
+
+    if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+
+    if (!data) {
+      errEl.textContent = 'Details do not match our records. Please verify and try again.';
+      return;
+    }
+    if (data === 'ALREADY_LOGGED_IN') {
+      errEl.textContent = 'You have already logged in. Use "Forgot Password" if you need help.';
+      return;
+    }
+
+    // Show the password
+    document.getElementById('kp-form').style.display = 'none';
+    document.getElementById('kp-result').style.display = '';
+    document.getElementById('kp-result').innerHTML = `
+      <div class="pw-reveal-box">
+        <div class="pw-reveal-label">&#9989; Details verified. Your system-generated password is:</div>
+        <div class="pw-reveal-value">${data}</div>
+        <div class="pw-reveal-note">
+          Use this password to sign in. You will be asked to change it immediately after your first login.<br>
+          Keep this password confidential.
+        </div>
+      </div>
+      <button style="width:100%;margin-top:14px;padding:11px;border:none;background:linear-gradient(135deg,#1e1b4b,#4338ca);
+              color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;"
+        onclick="closeOverlay('knowPwModal')">&#10003; Got it — Sign In</button>`;
+  }
+
+  // ----------------------------------------------------------------
+  // Forgot Password
+  // ----------------------------------------------------------------
+  function openForgotPwModal() {
+    document.getElementById('fp-id').value = '';
+    document.getElementById('fp-error').textContent = '';
+    document.getElementById('fp-title').textContent = 'Forgot Password?';
+    document.getElementById('fp-desc').textContent  = 'Enter your Identity No. We will check your account status.';
+    document.getElementById('fp-form').style.display   = '';
+    document.getElementById('fp-result').style.display = 'none';
+    document.getElementById('forgotPwModal').classList.add('open');
+    document.getElementById('fp-id').focus();
+  }
+
+  async function submitForgotPw() {
+    const idNo  = document.getElementById('fp-id').value.trim();
+    const errEl = document.getElementById('fp-error');
+    errEl.textContent = '';
+
+    if (!idNo) { errEl.textContent = 'Please enter your Identity No.'; return; }
+
+    const btn = document.getElementById('fp-btn');
+    btn.textContent = 'Checking…'; btn.disabled = true;
+
+    const { data, error } = await _supabase.rpc('request_password_reset', { p_identity_no: idNo });
+    btn.textContent = '🔍 Check Status'; btn.disabled = false;
+
+    if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+
+    const form   = document.getElementById('fp-form');
+    const result = document.getElementById('fp-result');
+
+    if (data === 'not_found') {
+      errEl.textContent = 'Identity No not found in our system. Please contact the Admin.';
+      return;
+    }
+
+    if (data === 'never_logged_in') {
+      // Redirect to Know Your Initial Password flow
+      closeOverlay('forgotPwModal');
+      openKnowPwModal();
+      document.getElementById('kp-id').value = idNo.toUpperCase();
+      document.getElementById('kp-error').textContent = 'You have not logged in yet. Please verify your details below to retrieve your initial password.';
+      return;
+    }
+
+    form.style.display = 'none';
+    result.style.display = '';
+
+    if (data === 'pending_exists') {
+      result.innerHTML = `
+        <div class="reset-success-box" style="background:#fefce8;border-color:#eab308;">
+          <div class="rs-icon">&#9203;</div>
+          <div class="rs-title" style="color:#854d0e;">Request Already Pending</div>
+          <div class="rs-msg" style="color:#713f12;">
+            A password reset request for <strong>${idNo.toUpperCase()}</strong> is already under review.<br>
+            Our team will validate and send your new password to your registered personal mobile (WhatsApp) and email ID.
+          </div>
+        </div>
+        <button style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #c7d2fe;background:#f5f3ff;
+                color:#4338ca;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;"
+          onclick="closeOverlay('forgotPwModal')">Close</button>`;
+      return;
+    }
+
+    // request_created
+    result.innerHTML = `
+      <div class="reset-success-box">
+        <div class="rs-icon">&#10004;</div>
+        <div class="rs-title">Reset Request Submitted</div>
+        <div class="rs-msg">
+          Your password reset request has been registered for <strong>${idNo.toUpperCase()}</strong>.<br><br>
+          Our team will validate your request and send a new temporary password to your registered
+          <strong>personal Mobile (WhatsApp)</strong> and <strong>personal Email ID</strong>.<br><br>
+          Please allow 1–2 working days for the request to be processed.
+        </div>
+      </div>
+      <button style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #c7d2fe;background:#f5f3ff;
+              color:#4338ca;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;"
+        onclick="closeOverlay('forgotPwModal')">Close</button>`;
+  }
 </script>
 </body>
 </html>

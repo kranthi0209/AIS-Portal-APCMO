@@ -15,8 +15,11 @@
 
 <header id="page-header">AIS Officer Service Summary Report</header>
 
-<div class="nav-bar">
+<div class="nav-bar" id="nav-bar">
   <div class="nav-bar-inner" id="nav-inner"></div>
+  <button id="nav-toggle-btn" onclick="toggleNav()" title="Collapse / Expand navigation">
+    <i data-lucide="chevron-up"></i><span id="nav-toggle-label">Hide</span>
+  </button>
 </div>
 
 <!-- Cadre legend (IAS only) -->
@@ -71,24 +74,55 @@
   }
 
   document.getElementById('nav-inner').innerHTML =
-    '<button onclick="location.href=\'graph.html?service=' + svc + '\'" class="animated-button blue">' +
-      '<i data-lucide="bar-chart-3"></i>Graphical View</button>' +
-    '<button onclick="location.href=\'photo.html?service=' + svc + '\'" class="animated-button pink">' +
-      '<i data-lucide="image"></i>Photo View</button>' +
-    '<button onclick="location.href=\'table.html?service=IAS\'" class="animated-button mustard">' +
-      '<i data-lucide="circle-user-round"></i>IAS Data</button>' +
-    '<button onclick="location.href=\'table.html?service=IPS\'" class="animated-button red">' +
-      '<i data-lucide="shield-user"></i>IPS Data</button>' +
-    '<button onclick="location.href=\'table.html?service=IFS\'" class="animated-button green">' +
-      '<i data-lucide="tree-deciduous"></i>IFS Data</button>' +
-    '<button id="hcmFilterBtn" class="animated-button purple">' +
-      '<i data-lucide="user-check"></i>Select Chief Minister</button>' +
-    '<button id="adminNavBtn" onclick="location.href=\'admin.html\'" class="animated-button teal" style="display:none">' +
-      '<i data-lucide="settings"></i>Admin</button>' +
-    '<button onclick="signOut()" class="animated-button darkred">' +
-      '<i data-lucide="log-out"></i>Logout</button>' +
-    '<button id="fsBtn" onclick="toggleFullscreen()" class="animated-button yellow">' +
-      '<i data-lucide="maximize"></i>Fullscreen</button>';
+    '<div class="nav-sections">' +
+    '<div class="nav-section">' +
+      '<div class="nav-section-label">Officer Type</div>' +
+      '<div class="nav-section-buttons">' +
+        '<button onclick="location.href=\'table.html?service=IAS\'" class="animated-button mustard' + (svc === 'IAS' ? ' nav-active' : '') + '">' +
+          '<i data-lucide="circle-user-round"></i>IAS</button>' +
+        '<button onclick="location.href=\'table.html?service=IPS\'" class="animated-button red' + (svc === 'IPS' ? ' nav-active' : '') + '">' +
+          '<i data-lucide="shield-user"></i>IPS</button>' +
+        '<button onclick="location.href=\'table.html?service=IFS\'" class="animated-button green' + (svc === 'IFS' ? ' nav-active' : '') + '">' +
+          '<i data-lucide="tree-deciduous"></i>IFS</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="nav-section">' +
+      '<div class="nav-section-label">View Type</div>' +
+      '<div class="nav-section-buttons">' +
+        '<button class="animated-button black nav-active"><i data-lucide="table"></i>Tabular</button>' +
+        '<button onclick="location.href=\'graph.html?service=' + svc + '\'" class="animated-button blue">' +
+          '<i data-lucide="bar-chart-3"></i>Graphical</button>' +
+        '<button onclick="location.href=\'photo.html?service=' + svc + '\'" class="animated-button pink">' +
+          '<i data-lucide="image"></i>Photo</button>' +
+        '<button onclick="location.href=\'360.html?service=' + svc + '\'" class="animated-button orange">' +
+          '<i data-lucide="rotate-3d"></i>360°</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="nav-section">' +
+      '<div class="nav-section-label">Others</div>' +
+      '<div class="nav-section-buttons">' +
+        '<button onclick="location.href=\'landing.html\'" class="animated-button blue">' +
+          '<i data-lucide="house"></i>Home</button>' +
+        '<button id="hcmFilterBtn" class="animated-button purple">' +
+          '<i data-lucide="user-check"></i>Chief Minister</button>' +
+        '<button id="adminNavBtn" onclick="location.href=\'admin.html\'" class="animated-button teal" style="display:none">' +
+          '<i data-lucide="settings"></i>Admin</button>' +
+        '<button id="fsBtn" onclick="toggleFullscreen()" class="animated-button yellow">' +
+          '<i data-lucide="maximize"></i>Full Screen</button>' +
+        '<button onclick="signOut()" class="animated-button darkred">' +
+          '<i data-lucide="log-out"></i>Logout</button>' +
+      '</div>' +
+    '</div>' +
+    '</div>';
+
+  // Patch every nav button that does location.href to use navTo() instead,
+  // so fullscreen is entered before the navigation (user-gesture is still live).
+  document.querySelectorAll('#nav-inner button[onclick]').forEach(function (btn) {
+    if (btn.id === 'adminNavBtn') return;
+    var oc = btn.getAttribute('onclick') || '';
+    var m  = oc.match(/location\.href=['"]([^'"]+)['"]/);
+    if (m) btn.setAttribute('onclick', 'navTo("' + m[1] + '")');
+  });
 })();
 isAdmin().then(function(admin) {
   if (admin) {
@@ -99,11 +133,44 @@ isAdmin().then(function(admin) {
 </script>
 
 <script>
+// ---- Nav collapse/expand ----
+function toggleNav() {
+  var bar   = document.getElementById('nav-bar');
+  var label = document.getElementById('nav-toggle-label');
+  var collapsed = bar.classList.toggle('nav-collapsed');
+  if (label) label.textContent = collapsed ? 'Show' : 'Hide';
+  try { sessionStorage.setItem('ais_nav_collapsed', collapsed ? '1' : '0'); } catch(e) {}
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Restore collapse state across navigation
+(function () {
+  try {
+    if (sessionStorage.getItem('ais_nav_collapsed') === '1') {
+      var bar   = document.getElementById('nav-bar');
+      var label = document.getElementById('nav-toggle-label');
+      if (bar)   bar.classList.add('nav-collapsed');
+      if (label) label.textContent = 'Show';
+    }
+  } catch(e) {}
+})();
+
 // ---- Fullscreen helpers ----
+function navTo(url) {
+  try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+  function go() { location.href = url; }
+  if (document.fullscreenElement) { go(); return; }
+  var el = document.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) { Promise.resolve(req.call(el)).then(go).catch(go); } else { go(); }
+}
+
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
+    try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
     document.documentElement.requestFullscreen().catch(function () {});
   } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
     document.exitFullscreen();
   }
 }
@@ -114,16 +181,21 @@ document.addEventListener('fullscreenchange', function () {
   if (document.fullscreenElement) {
     btn.innerHTML = '<i data-lucide="minimize"></i>Exit Full';
   } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
     btn.innerHTML = '<i data-lucide="maximize"></i>Fullscreen';
   }
   if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
-// Auto-enter fullscreen — works when page is opened via a user gesture (e.g. login button)
 document.addEventListener('DOMContentLoaded', function () {
-  document.documentElement.requestFullscreen().catch(function () {
-    // Browser blocked auto-fullscreen; user can click the button manually
-  });
+  var btn = document.getElementById('fsBtn');
+  var wantFs = false;
+  try { wantFs = !!sessionStorage.getItem('ais_fs_mode'); } catch(e) {}
+  if (document.fullscreenElement) {
+    if (btn) { btn.innerHTML = '<i data-lucide="minimize"></i>Exit Full'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+  } else if (wantFs) {
+    document.documentElement.requestFullscreen().catch(function () {});
+  }
 });
 </script>
 

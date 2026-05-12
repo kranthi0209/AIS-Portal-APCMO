@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIS 360° Officers View</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0; padding: 0;
+      background: #eef0fb;
+      font-family: 'Inter', Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ================================================================
+       TOP FILTER BAR
+    ================================================================ */
+    #bar360 {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 54px;
+      background: linear-gradient(135deg, #0f0c29 0%, #1e1b4b 40%, #312e81 70%, #4338ca 100%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      z-index: 200;
+      box-shadow: 0 3px 18px rgba(15, 12, 41, 0.7);
+      border-bottom: 1px solid rgba(165, 180, 252, 0.25);
+    }
+
+    /* Title badge */
+    .b360-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(165,180,252,0.3);
+      border-radius: 22px;
+      padding: 3px 10px 3px 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .b360-badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1c0a00;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+    .b360-title-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e0e7ff;
+      letter-spacing: -0.2px;
+    }
+
+    /* Service type switcher */
+    .b360-svc-group {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .b360-svc-btn {
+      height: 28px;
+      padding: 0 11px;
+      border: 1.5px solid rgba(165,180,252,0.35);
+      border-radius: 18px;
+      background: transparent;
+      color: #a5b4fc;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: 'Inter', Arial, sans-serif;
+      white-space: nowrap;
+    }
+    .b360-svc-btn:hover { background: rgba(255,255,255,0.12); color: white; border-color: rgba(165,180,252,0.6); }
+    .b360-svc-btn.active {
+      background: white;
+      color: #1e1b4b;
+      border-color: white;
+      box-shadow: 0 2px 10px rgba(255,255,255,0.28);
+    }
+
+    /* Divider */
+    .b360-div {
+      width: 1px; height: 30px;
+      background: rgba(165,180,252,0.25);
+      flex-shrink: 0;
+    }
+
+    /* Filter label */
+    .b360-fl {
+      font-size: 8.5px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #818cf8;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Select */
+    .b360-select {
+      height: 28px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(165,180,252,0.28);
+      border-radius: 6px;
+      color: #e0e7ff;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 0 8px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.2s;
+      min-width: 100px;
+      max-width: 160px;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-select:focus { background: rgba(255,255,255,0.16); border-color: rgba(165,180,252,0.6); }
+    .b360-select option { background: #1e1b4b; color: white; }
+
+    /* Search */
+    .b360-search {
+      height: 28px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(165,180,252,0.28);
+      border-radius: 6px;
+      color: #e0e7ff;
+      font-size: 11.5px;
+      padding: 0 10px;
+      outline: none;
+      width: 145px;
+      transition: background 0.2s, width 0.28s;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-search::placeholder { color: rgba(165,180,252,0.45); font-size: 11px; }
+    .b360-search:focus { background: rgba(255,255,255,0.16); border-color: rgba(165,180,252,0.6); width: 175px; }
+
+    /* Spacer */
+    .b360-spacer { flex: 1; min-width: 4px; }
+
+    /* Count pill */
+    .b360-count {
+      font-size: 11px;
+      font-weight: 800;
+      color: #e0e7ff;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(165,180,252,0.22);
+      padding: 3px 13px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Exit fullscreen button */
+    .b360-exit {
+      height: 30px;
+      padding: 0 13px;
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(220,38,38,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-exit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(220,38,38,0.55); }
+    .b360-exit i { width: 14px; height: 14px; }
+
+    /* Home button */
+    .b360-home {
+      height: 30px;
+      padding: 0 13px;
+      background: linear-gradient(135deg, #4f46e5, #3730a3);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(79,70,229,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-home:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,70,229,0.55); }
+    .b360-home i { width: 14px; height: 14px; }
+
+    /* Reset button */
+    .b360-reset {
+      height: 30px;
+      padding: 0 13px;
+      background: linear-gradient(135deg, #ca8a04, #713f12);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(202,138,4,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-reset:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(202,138,4,0.55); }
+    .b360-reset i { width: 14px; height: 14px; }
+
+    /* ================================================================
+       GRID AREA
+    ================================================================ */
+    #grid360wrap {
+      position: fixed;
+      top: 54px; left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      background: #eef0fb;
+      padding: 10px;
+    }
+
+    #grid360 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 7px;
+    }
+
+    /* ================================================================
+       OFFICER CARD (360° compact)
+    ================================================================ */
+    .c360 {
+      background: #ffffff;
+      border: 1px solid #c7d2fe;
+      border-top: 3px solid #818cf8;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.16s, box-shadow 0.16s, border-top-color 0.16s;
+      text-align: center;
+      position: relative;
+    }
+    .c360:hover {
+      transform: translateY(-4px) scale(1.04);
+      box-shadow: 0 8px 22px rgba(67, 56, 202, 0.28);
+      z-index: 2;
+    }
+    .c360 img {
+      width: 100%;
+      height: 86px;
+      object-fit: cover;
+      display: block;
+      background: #ede9fe;
+    }
+    .c360-body { padding: 3px 5px 6px; }
+    .c360-sno  {
+      font-size: 8px; font-weight: 800;
+      color: #a5b4fc; letter-spacing: 0.3px; line-height: 1.5;
+    }
+    .c360-name {
+      font-size: 9.5px; font-weight: 700;
+      color: #1e1b4b; line-height: 1.25;
+      word-break: break-word; margin: 1px 0;
+    }
+    .c360-batch {
+      font-size: 10.5px; font-weight: 800;
+      color: #4338ca; letter-spacing: 0.2px;
+    }
+
+    /* ================================================================
+       PHOTO POPUP — override z-index for fullscreen context
+    ================================================================ */
+    .photo-popup-overlay { z-index: 500; }
+    .photo-popup-box     { max-width: 540px; }
+
+    /* ================================================================
+       OFFICER DETAIL POPUP
+    ================================================================ */
+    #detailOverlay {
+      position: fixed; inset: 0;
+      background: rgba(60,30,0,0.75);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      z-index: 700;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #detailOverlay.open { opacity: 1; pointer-events: all; }
+
+    .detail-box {
+      position: relative;
+      background: linear-gradient(160deg, #fffbeb 0%, #fef3c7 60%, #fde68a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 22px;
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.18), 0 40px 90px rgba(60,30,0,0.55),
+                  inset 0 1px 0 rgba(255,255,255,0.7);
+      width: min(94vw, 880px);
+      max-height: 87vh;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.78) translateY(30px);
+      transition: transform 0.42s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    #detailOverlay.open .detail-box { transform: scale(1) translateY(0); }
+
+    .detail-close {
+      position: absolute; top: 11px; right: 13px;
+      width: 28px; height: 28px;
+      background: rgba(245,158,11,0.18); border: 1.5px solid #f59e0b;
+      border-radius: 50%; color: #92400e; font-size: 15px; line-height: 26px;
+      text-align: center; cursor: pointer; z-index: 10;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .detail-close:hover { background: rgba(220,38,38,0.18); color:#b91c1c; transform:rotate(90deg); }
+
+    /* Header: photo + info */
+    .detail-header {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 16px 20px 12px; flex-shrink: 0;
+      border-bottom: 1.5px solid rgba(245,158,11,0.35);
+    }
+    .detail-photo-wrap {
+      flex-shrink: 0; width: 86px; height: 86px; border-radius: 50%;
+      border: 3px solid #d97706; overflow: hidden;
+      box-shadow: 0 4px 18px rgba(120,53,15,0.35); background: #fef3c7;
+    }
+    .detail-photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .detail-basic { flex: 1; min-width: 0; padding-right: 30px; }
+    .detail-name {
+      font-size: 17px; font-weight: 900; color: #78350f;
+      margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .detail-cadre { font-size: 11px; font-weight: 700; color: #b45309; margin-bottom: 8px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 3px 14px; }
+    .dfield { font-size: 10.5px; color: #78350f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dfield strong { color: #451a03; }
+
+    /* Tabs */
+    .detail-tabs { display: flex; border-bottom: 1.5px solid rgba(245,158,11,0.35); flex-shrink: 0; }
+    .detail-tab {
+      flex: 1; padding: 9px 6px;
+      background: transparent; border: none; cursor: pointer;
+      font-size: 11.5px; font-weight: 700; color: #92400e;
+      border-bottom: 2.5px solid transparent;
+      transition: background 0.18s, border-color 0.18s;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .detail-tab:hover { background: rgba(245,158,11,0.1); }
+    .detail-tab.active { color: #78350f; border-bottom-color: #f59e0b; background: rgba(245,158,11,0.14); }
+
+    /* Panel area */
+    .detail-tab-content { flex: 1; overflow-y: auto; padding: 14px 20px; min-height: 0; }
+    .detail-tab-panel { display: none; }
+    .detail-tab-panel.active { display: block; }
+    .dno-data { font-size: 12px; color: #92400e; padding: 10px 0; }
+
+    /* Bar rows for dept/category */
+    .dsvc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+    .dsvc-label {
+      width: 160px; flex-shrink: 0; font-size: 11px; font-weight: 700;
+      color: #78350f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dsvc-track { flex: 1; height: 14px; background: rgba(245,158,11,0.18); border-radius: 7px; overflow: hidden; }
+    .dsvc-bar { height: 100%; border-radius: 7px; background: linear-gradient(90deg, #f59e0b, #b45309); }
+    .dsvc-yrs { width: 60px; text-align: right; font-size: 10.5px; font-weight: 800; color: #92400e; flex-shrink: 0; }
+
+    /* HCM grid */
+    .dhcm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .dhcm-card {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 14px; padding: 12px 6px 8px; cursor: default;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .dhcm-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(120,53,15,0.22); }
+    .dhcm-avatar {
+      width: 54px; height: 54px; border-radius: 50%;
+      border: 2.5px solid #d97706; overflow: hidden; margin-bottom: 7px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .dhcm-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dhcm-name { font-size: 9.5px; font-weight: 700; color: #78350f; line-height: 1.3; margin-bottom: 4px; }
+    .dhcm-yrs { font-size: 12px; font-weight: 900; color: #b45309; }
+
+    /* Footer */
+    .detail-footer {
+      padding: 10px 20px; flex-shrink: 0;
+      border-top: 1.5px solid rgba(245,158,11,0.35);
+      display: flex; justify-content: center; gap: 12px;
+    }
+    .detail-btn-wheel {
+      padding: 9px 28px;
+      background: linear-gradient(135deg, #78350f, #b45309);
+      color: #fde68a; font-size: 13px; font-weight: 800;
+      border: 1.5px solid #f59e0b; border-radius: 24px;
+      cursor: pointer; font-family: 'Inter', Arial, sans-serif;
+      box-shadow: 0 3px 14px rgba(120,53,15,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .detail-btn-wheel:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(120,53,15,0.55); }
+
+    /* Service Record tab — timeline rows */
+    .dsvc-timeline { display: flex; flex-direction: column; gap: 6px; }
+    .dsvc-record {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(245,158,11,0.09);
+      border: 1px solid rgba(245,158,11,0.28);
+      border-radius: 11px; padding: 8px 12px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .dsvc-record:hover { background: rgba(245,158,11,0.2); transform: translateX(3px); }
+    .dsvc-rec-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 2px solid #d97706; overflow: hidden;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dsvc-rec-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dsvc-rec-period { flex-shrink: 0; width: 168px; }
+    .dsvc-rec-from { font-size: 11px; font-weight: 800; color: #78350f; line-height: 1.4; }
+    .dsvc-rec-dur  { font-size: 9.5px; color: #b45309; font-weight: 700; margin-top: 1px; }
+    .dsvc-rec-info { flex: 1; min-width: 0; }
+    .dsvc-rec-post {
+      font-size: 11px; font-weight: 700; color: #451a03;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dsvc-rec-tags { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+    .dsvc-rec-tag {
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 9px;
+      background: rgba(245,158,11,0.22); color: #78350f;
+      border: 1px solid rgba(245,158,11,0.4); white-space: nowrap;
+    }
+    .dsvc-rec-cm { font-size: 9px; color: #92400e; margin-top: 2px; font-style: italic; }
+
+    /* ================================================================
+       360° WHEEL POPUP — Light Yellow Theme
+    ================================================================ */
+    #wheelOverlay {
+      position: fixed; inset: 0;
+      background: rgba(60, 30, 0, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 800;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #wheelOverlay.open { opacity: 1; pointer-events: all; }
+
+    .wheel-box {
+      position: relative;
+      background: linear-gradient(160deg, #fffbeb 0%, #fef3c7 55%, #fde68a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 22px;
+      box-shadow:
+        0 0 0 4px rgba(245,158,11,0.18),
+        0 40px 90px rgba(60,30,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.7);
+      padding: 14px 14px 8px;
+      display: flex; flex-direction: column; align-items: center;
+      transform: scale(0.72) translateY(30px);
+      transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #wheelOverlay.open .wheel-box { transform: scale(1) translateY(0); }
+
+    .wheel-officer-name {
+      font-size: 16px; font-weight: 900; color: #78350f;
+      text-align: center; letter-spacing: 0.2px; margin-bottom: 2px;
+    }
+    .wheel-batch {
+      font-size: 13px; font-weight: 700; color: #92400e; margin-left: 4px;
+    }
+    .wheel-rank-bar {
+      display: flex; gap: 8px; align-items: center;
+      justify-content: center; margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .rank-badge {
+      background: linear-gradient(135deg, #78350f 0%, #b45309 100%);
+      color: #fde68a; font-size: 15px; font-weight: 900;
+      padding: 5px 18px; border-radius: 22px;
+      border: 1.5px solid #f59e0b;
+      box-shadow: 0 2px 12px rgba(120,53,15,0.55);
+      letter-spacing: 0.4px; white-space: nowrap;
+    }
+    .avg-badge {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #451a03; font-size: 14px; font-weight: 800;
+      padding: 5px 18px; border-radius: 22px;
+      border: 1.5px solid #fbbf24;
+      box-shadow: 0 2px 12px rgba(245,158,11,0.45);
+      white-space: nowrap;
+    }
+    .wheel-close {
+      position: absolute; top: 11px; right: 13px;
+      width: 28px; height: 28px;
+      background: rgba(245,158,11,0.18);
+      border: 1.5px solid #f59e0b; border-radius: 50%;
+      color: #92400e; font-size: 15px; line-height: 26px;
+      text-align: center; cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.2s; z-index: 10;
+    }
+    .wheel-close:hover { background: rgba(220,38,38,0.18); color: #b91c1c; transform: rotate(90deg); }
+    #wheelSvg {
+      display: block; overflow: visible;
+      width: min(88vmin, 640px); height: min(88vmin, 640px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================================
+     TOP FILTER BAR
+================================================================ -->
+<div id="bar360">
+
+  <!-- Title badge -->
+  <div class="b360-title">
+    <span class="b360-badge">360°</span>
+    <span class="b360-title-text" id="b360TitleText">AIS Officers</span>
+  </div>
+
+  <!-- Service Type switcher -->
+  <div class="b360-svc-group">
+    <button id="svcIAS" class="b360-svc-btn" onclick="switchSvc('IAS')">IAS</button>
+    <button id="svcIPS" class="b360-svc-btn" onclick="switchSvc('IPS')">IPS</button>
+    <button id="svcIFS" class="b360-svc-btn" onclick="switchSvc('IFS')">IFS</button>
+  </div>
+
+  <div class="b360-div"></div>
+
+  <!-- Cadre filter -->
+  <span class="b360-fl">Cadre</span>
+  <select class="b360-select" id="fCadre" onchange="applyFilters360()">
+    <option value="">All Cadres</option>
+  </select>
+
+  <!-- Source of Recruitment filter -->
+  <span class="b360-fl">Source</span>
+  <select class="b360-select" id="fSource" onchange="applyFilters360()">
+    <option value="">All Sources</option>
+  </select>
+
+  <!-- Domicile filter -->
+  <span class="b360-fl">Domicile</span>
+  <select class="b360-select" id="fDomicile" onchange="applyFilters360()">
+    <option value="">All Domiciles</option>
+  </select>
+
+  <!-- Name search -->
+  <input type="text" class="b360-search" id="searchName360"
+         placeholder="&#128269; Search name..." oninput="applyFilters360()">
+
+  <div class="b360-spacer"></div>
+
+  <!-- Officer count -->
+  <div class="b360-count" id="count360">Loading&hellip;</div>
+
+  <!-- Reset filters -->
+  <button class="b360-reset" onclick="reset360()">
+    <i data-lucide="rotate-ccw"></i>Reset
+  </button>
+
+  <!-- Home -->
+  <button class="b360-home" onclick="navTo('landing.html')">
+    <i data-lucide="house"></i>Home
+  </button>
+
+  <!-- Exit / Enter Fullscreen -->
+  <button class="b360-exit" id="fsBtn360" onclick="toggleFullscreen360()">
+    <i data-lucide="minimize-2"></i>Exit Fullscreen
+  </button>
+
+</div>
+
+<!-- ================================================================
+     GRID AREA
+================================================================ -->
+<div id="grid360wrap">
+  <div id="grid360">
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-size:15px;color:#6366f1;">
+      &#8987; Loading officers&hellip;
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     OFFICER DETAIL POPUP  (reuses .photo-popup-* from style_dashboard.css)
+================================================================ -->
+<div id="photo-popup" class="photo-popup-overlay">
+  <div class="photo-popup-box">
+    <span class="photo-popup-close"
+          onclick="document.getElementById('photo-popup').classList.remove('open')">&#10006;</span>
+    <div id="photo-popup-details"></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     OFFICER DETAIL POPUP
+================================================================ -->
+<div id="detailOverlay">
+  <div class="detail-box">
+    <button class="detail-close" id="detailClose">&#10006;</button>
+
+    <!-- Header: photo + basic info -->
+    <div class="detail-header">
+      <div class="detail-photo-wrap">
+        <img id="detailPhoto" src="" alt="Officer Photo">
+      </div>
+      <div class="detail-basic">
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-cadre" id="detailCadre"></div>
+        <div class="detail-grid" id="detailGrid"></div>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="detail-tabs">
+      <button class="detail-tab active" onclick="switchDetailTab('dept')">&#128200; Department-wise</button>
+      <button class="detail-tab" onclick="switchDetailTab('cat')">&#127991; Category-wise</button>
+      <button class="detail-tab" onclick="switchDetailTab('hcm')">&#128081; Chief Minister-wise</button>
+      <button class="detail-tab" onclick="switchDetailTab('svc')">&#128203; Service Record</button>
+    </div>
+
+    <!-- Tab panels -->
+    <div class="detail-tab-content">
+      <div class="detail-tab-panel active" id="detailPanelDept"></div>
+      <div class="detail-tab-panel"        id="detailPanelCat"></div>
+      <div class="detail-tab-panel"        id="detailPanelHcm"></div>
+      <div class="detail-tab-panel"        id="detailPanelSvc"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="detail-footer">
+      <button class="detail-btn-wheel" id="detailBtnWheel">&#9899; View 360° Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     360° WHEEL POPUP
+================================================================ -->
+<div id="wheelOverlay">
+  <div class="wheel-box">
+    <button class="wheel-close" id="wheelClose">&#10006;</button>
+    <div class="wheel-officer-name" id="wheelName"></div>
+    <div class="wheel-rank-bar" id="wheelRankBar">
+      <span class="rank-badge" id="wheelRankBadge">Overall Rank #—</span>
+      <span class="avg-badge"  id="wheelAvgBadge">Weighted Avg: —/10</span>
+    </div>
+    <svg id="wheelSvg" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<!-- ================================================================
+     INLINE BOOTSTRAP — service init + fullscreen
+================================================================ -->
+<script>
+(function () {
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var labels = { IAS: 'IAS Officers', IPS: 'IPS Officers', IFS: 'IFS Officers' };
+  document.getElementById('b360TitleText').textContent = labels[svc] || 'AIS Officers';
+  document.title = 'AIS 360° — ' + svc;
+  var btn = document.getElementById('svc' + svc);
+  if (btn) btn.classList.add('active');
+})();
+
+window.navTo = function (url) {
+  try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+  function go() { location.href = url; }
+  if (document.fullscreenElement) { go(); return; }
+  var el = document.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) { Promise.resolve(req.call(el)).then(go).catch(go); } else { go(); }
+};
+
+window.switchSvc = function (s) {
+  window.navTo('360.html?service=' + s);
+};
+
+window.reset360 = function () {
+  ['fCadre', 'fSource', 'fDomicile'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var search = document.getElementById('searchName360');
+  if (search) search.value = '';
+  if (typeof applyFilters360 === 'function') applyFilters360();
+};
+
+window.toggleFullscreen360 = function () {
+  if (!document.fullscreenElement) {
+    try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+    document.documentElement.requestFullscreen().catch(function () {});
+  } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+    document.exitFullscreen().catch(function () {});
+  }
+};
+
+document.addEventListener('fullscreenchange', function () {
+  var btn = document.getElementById('fsBtn360');
+  if (!btn) return;
+  if (document.fullscreenElement) {
+    btn.innerHTML = '<i data-lucide="minimize-2"></i>Exit Fullscreen';
+  } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+    btn.innerHTML = '<i data-lucide="maximize-2"></i>Enter Fullscreen';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  var btn = document.getElementById('fsBtn360');
+  var wantFs = false;
+  try { wantFs = !!sessionStorage.getItem('ais_fs_mode'); } catch(e) {}
+  if (document.fullscreenElement) {
+    if (btn) btn.innerHTML = '<i data-lucide="minimize-2"></i>Exit Fullscreen';
+  } else if (wantFs) {
+    document.documentElement.requestFullscreen().catch(function () {});
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+</script>
+
+<script src="script_360.js"></script>
+</body>
+</html>

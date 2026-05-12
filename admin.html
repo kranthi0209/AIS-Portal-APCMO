@@ -155,6 +155,17 @@
     .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .badge.admin { background: #ede9fe; color: #4c1d95; }
     .badge.user  { background: #ecfdf5; color: #065f46; }
+    .badge.ias        { background: #fef3c7; color: #92400e; }
+    .badge.ips        { background: #fee2e2; color: #991b1b; }
+    .badge.ifs        { background: #dcfce7; color: #166534; }
+    .badge.eoffice    { background: #e0f2fe; color: #075985; }
+    .badge.swarna     { background: #fdf4ff; color: #7e22ce; }
+    .badge.gsdp       { background: #fff7ed; color: #c2410c; }
+    .badge.goifunds   { background: #f0fdf4; color: #15803d; }
+    .badge.perception { background: #fef9c3; color: #854d0e; }
+    .badge.integrity  { background: #f0fdfa; color: #0f766e; }
+    .badge.party      { background: #fdf2f8; color: #9d174d; }
+    .badge.media      { background: #eff6ff; color: #1d4ed8; }
 
     /* ---- Toast ---- */
     /* ---- Dual-range retirement date slider ---- */
@@ -258,7 +269,8 @@
   <div class="brand">AIS Dashboard <span>Admin Panel</span></div>
   <div class="nav-actions">
     <span class="nav-user" id="nav-user-email"></span>
-    <button class="btn-nav" onclick="location.href='table.html?service=IAS'">&#8592; Dashboard</button>
+    <button class="btn-nav" onclick="location.href='landing.html'">&#127968; Home</button>
+    <button class="btn-nav" onclick="location.href='table.html?service=IAS'">&#128202; Dashboard</button>
     <button class="btn-nav" onclick="doSignOut()">Logout</button>
   </div>
 </div>
@@ -267,6 +279,7 @@
   <button class="tab-btn active" onclick="showTab('dashboard',this)">&#128202; Dashboard</button>
   <button class="tab-btn" onclick="showTab('data',this)">&#128196; Data Management</button>
   <button class="tab-btn" onclick="showTab('users',this)">&#128101; Users</button>
+  <button class="tab-btn" onclick="showTab('control',this)">&#9881; Module Control</button>
 </div>
 
 <div class="content">
@@ -438,29 +451,154 @@
        TAB 3: Users
        ============================================================ -->
   <div class="tab-panel" id="tab-users">
-    <div class="section-card">
+
+    <!-- Generate Officer Logins -->
+    <div class="section-card" style="margin-bottom:20px;">
       <div class="section-header">
-        <h3>&#128101; All Users</h3>
+        <h3>&#9881; Generate Officer Logins</h3>
         <div class="toolbar">
-          <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+          <select id="genSvcSelect">
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+          <button class="btn btn-success" onclick="generateOfficerLogins()">&#9889; Generate / Refresh Logins</button>
+          <span id="gen-status" style="font-size:12.5px;color:#2563eb;font-weight:600;"></span>
+        </div>
+      </div>
+      <div class="section-body" style="font-size:13px;color:#64748b;line-height:1.7;">
+        Creates login accounts for all active officers of the selected service type. Existing accounts are refreshed with a new temporary password.
+        Each officer receives a login in the format <code>firstname.identity_no@ais.ap.gov.in</code> with role matching their service type.
+        The generated temp passwords are shown in the results popup &amp; stored (visible in the Users table below).
+        Officers will be forced to change their password on first login.
+      </div>
+    </div>
+
+    <!-- Password Reset Requests -->
+    <div class="section-card" style="margin-bottom:20px;">
+      <div class="section-header">
+        <h3>&#128274; Password Reset Requests <span id="reset-req-badge" style="display:none;background:#dc2626;color:white;font-size:11px;font-weight:800;padding:2px 9px;border-radius:12px;margin-left:8px;"></span></h3>
+        <div class="toolbar">
+          <button class="btn btn-ghost btn-sm" onclick="loadResetRequests()">&#8635; Refresh</button>
         </div>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
             <tr>
-              <th style="width:40px;">Sl No</th>
-              <th>Email</th>
-              <th style="width:150px;">Password</th>
+              <th style="width:36px;">#</th>
+              <th>Identity No</th>
+              <th>Officer Name</th>
+              <th style="width:70px;">Service</th>
+              <th>Personal Email</th>
+              <th style="width:120px;">Personal Mobile</th>
+              <th style="width:130px;">Requested On</th>
+              <th style="width:90px;">Status</th>
+              <th style="width:180px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reset-req-tbody">
+            <tr><td colspan="9" style="text-align:center;padding:16px;color:#94a3b8;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- All Users table -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128101; All Users</h3>
+        <div class="toolbar">
+          <input type="text" id="userSearch" placeholder="Search email…" oninput="filterUsers()" style="width:200px;">
+          <select id="userRoleFilter" onchange="filterUsers()">
+            <option value="">All Roles</option>
+            <option value="ias">IAS Officer</option>
+            <option value="ips">IPS Officer</option>
+            <option value="ifs">IFS Officer</option>
+            <option value="eoffice">e-Office Data Entry</option>
+            <option value="swarna">Swarna AP KPI Entry</option>
+            <option value="gsdp">GSDP Data Entry</option>
+            <option value="goifunds">GoI Funds Utilization</option>
+            <option value="perception">Public Perception</option>
+            <option value="integrity">Integrity Data Entry</option>
+            <option value="party">Party Feedback</option>
+            <option value="media">Media Feedback</option>
+            <option value="user">General User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadUsers()">&#8635; Refresh</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th style="min-width:160px;">Login ID</th>
+              <th style="min-width:180px;">Officer Name</th>
               <th style="width:90px;">Role</th>
-              <th style="width:160px;">Actions</th>
+              <th style="width:140px;">Temp Password</th>
+              <th style="width:74px;text-align:center;">Logins</th>
+              <th style="width:130px;">Last Login</th>
+              <th style="width:150px;">Personal Email</th>
+              <th style="width:120px;">Personal Mobile</th>
+              <th style="width:210px;">Actions</th>
             </tr>
           </thead>
           <tbody id="users-tbody"></tbody>
         </table>
       </div>
+      <div class="pagination" id="users-pagination"></div>
     </div>
   </div>
+
+  <!-- ============================================================
+       TAB 4: Module Control
+       ============================================================ -->
+  <div class="tab-panel" id="tab-control">
+
+    <!-- ── Global actions ── -->
+    <div class="section-card" style="margin-bottom:20px;">
+      <div class="section-header">
+        <h3>&#9881; Module Control Panel</h3>
+        <div class="toolbar">
+          <button class="btn btn-danger" onclick="pauseAllModules()">&#9208; Pause ALL Modules</button>
+          <button class="btn btn-success" onclick="resumeAllModules()">&#9654; Resume ALL Modules</button>
+          <span id="ctrl-global-msg" style="font-size:12px;font-weight:600;color:#4f46e5;"></span>
+        </div>
+      </div>
+      <div class="section-body" style="font-size:13px;color:#64748b;">
+        Set deadlines and pause/resume data entry for each module independently.
+        Paused or expired modules show a blocking screen to the operator/officer immediately on page load.
+        Extend a deadline by updating the date and clicking <strong>Save</strong>.
+      </div>
+    </div>
+
+    <!-- ── Per-module control table ── -->
+    <div class="section-card" style="margin-bottom:20px;">
+      <div class="section-header"><h3>&#128197; Deadlines &amp; Pause Controls</h3></div>
+      <div class="section-body">
+        <div id="ctrl-table-wrap">
+          <div style="text-align:center;padding:28px;color:#94a3b8;">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Reports ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128202; Entry Status Reports</h3>
+        <button class="btn btn-primary btn-sm" onclick="loadModuleControl()">&#8635; Refresh</button>
+      </div>
+      <div class="section-body">
+        <div id="ctrl-reports-wrap">
+          <div style="text-align:center;padding:28px;color:#94a3b8;">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #tab-control -->
 
 </div><!-- .content -->
 
@@ -636,14 +774,105 @@
       </div>
       <div class="form-group full"><label>Role</label>
         <select id="usr-role">
-          <option value="user">user</option>
-          <option value="admin">admin</option>
+          <optgroup label="Officers">
+            <option value="ias">IAS Officer</option>
+            <option value="ips">IPS Officer</option>
+            <option value="ifs">IFS Officer</option>
+          </optgroup>
+          <optgroup label="Data Entry Operators">
+            <option value="eoffice">e-Office Data Entry</option>
+            <option value="swarna">Swarna AP KPI Entry</option>
+            <option value="gsdp">GSDP Data Entry</option>
+            <option value="goifunds">GoI Funds Utilization</option>
+            <option value="perception">Public Perception</option>
+            <option value="integrity">Integrity Data Entry</option>
+            <option value="party">Party Feedback</option>
+            <option value="media">Media Feedback</option>
+          </optgroup>
+          <optgroup label="System">
+            <option value="user">General User</option>
+            <option value="admin">Admin</option>
+          </optgroup>
         </select>
       </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
       <button class="btn btn-success" onclick="saveUserRole()">&#10003; Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5a. Generate Officer Logins Results Modal -->
+<div class="modal-overlay" id="gen-results-modal">
+  <div class="modal" style="max-width:820px;">
+    <h2 id="gen-results-title">Generated Officer Logins</h2>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="btn btn-success btn-sm" onclick="downloadGenCsv()">&#11015; Download CSV</button>
+      <span id="gen-results-summary" style="font-size:13px;color:#374151;font-weight:600;"></span>
+    </div>
+    <div class="data-table-wrap" style="max-height:55vh;overflow-y:auto;">
+      <table class="data-table" id="gen-results-table">
+        <thead><tr>
+          <th style="width:32px;">#</th>
+          <th>Officer Name</th>
+          <th>Login Email</th>
+          <th style="width:150px;">Temp Password</th>
+          <th style="width:90px;">Action</th>
+        </tr></thead>
+        <tbody id="gen-results-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('gen-results-modal');loadUsers();">Close &amp; Refresh</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5c. Reset Request Complete Info Modal -->
+<div class="modal-overlay" id="reset-complete-modal">
+  <div class="modal" style="max-width:500px;text-align:center;">
+    <h2>&#10004; Password Reset Completed</h2>
+    <div style="font-size:14px;color:#374151;margin-bottom:4px;">Officer:</div>
+    <div id="rc-officer" style="font-size:16px;font-weight:800;color:#1e1b4b;margin-bottom:16px;"></div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:6px;">New Temporary Password</div>
+    <div id="rc-pw" style="font-family:monospace;font-size:26px;font-weight:900;letter-spacing:2px;
+         background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:14px;color:#92400e;margin-bottom:14px;"></div>
+    <div style="background:#f0f9ff;border:1.5px solid #7dd3fc;border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:10px;">&#128241; Send to Officer via WhatsApp &amp; Email</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <div style="text-align:left;">
+          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:2px;">PERSONAL MOBILE</div>
+          <div id="rc-mobile" style="font-size:15px;font-weight:700;color:#1e1b4b;"></div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:2px;">PERSONAL EMAIL</div>
+          <div id="rc-email" style="font-size:15px;font-weight:700;color:#1e1b4b;word-break:break-all;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6;">
+      Please manually send the above temporary password to the officer via WhatsApp and Email.<br>
+      The officer will be prompted to change it on next login.
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-ghost" onclick="closeModal('reset-complete-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5b. Reset Password Result Modal -->
+<div class="modal-overlay" id="reset-pw-modal">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <h2>&#128274; Password Reset</h2>
+    <div style="margin:10px 0 6px;font-size:14px;color:#374151;">New temporary password for:</div>
+    <div id="reset-pw-email" style="font-size:15px;font-weight:700;color:#4338ca;margin-bottom:18px;word-break:break-all;"></div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:8px;">Temporary Password</div>
+    <div id="reset-pw-value" style="font-family:monospace;font-size:22px;font-weight:800;letter-spacing:2px;
+         background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:14px;color:#92400e;margin-bottom:6px;"></div>
+    <div style="font-size:12px;color:#64748b;">Share this password with the officer. They will be required to change it on next login.</div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-ghost" onclick="closeModal('reset-pw-modal')">Close</button>
     </div>
   </div>
 </div>
@@ -732,8 +961,9 @@ function showTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'data')  loadOfficers();
-  if (name === 'users') loadUsers();
+  if (name === 'data')    loadOfficers();
+  if (name === 'users')   { loadResetRequests(); loadUsers(); }
+  if (name === 'control') loadModuleControl();
 }
 
 // ================================================================
@@ -1193,39 +1423,117 @@ function deletePosting(id) {
 // ================================================================
 // Users
 // ================================================================
+let _allUsers        = [];
+let _usersPage       = 1;
+const _USERS_PER_PAGE = 25;
+
 async function loadUsers() {
   const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading users…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading users…</td></tr>';
 
   const { data, error } = await _supabase
     .from('user_roles')
-    .select('id, email, password, role')
+    .select('id, email, password, role, officer_id, temp_password, login_count, last_login_at, personal_email, personal_mobile, must_change_password, is_first_login, officers(name_of_officer)')
+    .order('role')
     .order('email');
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(error.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(error.message)}</td></tr>`;
     return;
   }
 
-  const users = data || [];
-  if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#64748b;">No users found. Click <strong>+ Add User</strong> to create one.</td></tr>';
+  _allUsers  = data || [];
+  _usersPage = 1;
+  filterUsers();
+}
+
+function filterUsers(page) {
+  if (page !== undefined) _usersPage = page;
+  const search     = (document.getElementById('userSearch')?.value    || '').trim().toLowerCase();
+  const roleFilter = (document.getElementById('userRoleFilter')?.value || '').toLowerCase();
+  const tbody      = document.getElementById('users-tbody');
+
+  const filtered = _allUsers.filter(u => {
+    const name       = ((u.officers && u.officers.name_of_officer) || '').toLowerCase();
+    const matchText  = !search || (u.email || '').toLowerCase().includes(search) || name.includes(search);
+    const matchRole  = !roleFilter || (u.role || '').toLowerCase() === roleFilter;
+    return matchText && matchRole;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#64748b;">No users found. Click <strong>+ Add User</strong> to create one.</td></tr>';
+    renderUsersPagination(0);
     return;
   }
 
-  tbody.innerHTML = users.map((u, idx) => {
-    const roleBadge = `<span class="badge ${u.role}">${u.role}</span>`;
+  const totalPages = Math.ceil(filtered.length / _USERS_PER_PAGE);
+  if (_usersPage > totalPages) _usersPage = totalPages;
+  const pageData  = filtered.slice((_usersPage - 1) * _USERS_PER_PAGE, _usersPage * _USERS_PER_PAGE);
+  const startIdx  = (_usersPage - 1) * _USERS_PER_PAGE;
+
+  tbody.innerHTML = pageData.map((u, i) => {
+    const role        = (u.role || 'user').toLowerCase();
+    const _knownRoles = ['admin','ias','ips','ifs','eoffice','swarna','gsdp','goifunds','perception','integrity','party','media'];
+    const roleClass   = _knownRoles.includes(role) ? role : 'user';
+    const _roleLabels = {
+      ias:'IAS', ips:'IPS', ifs:'IFS', admin:'Admin', user:'User',
+      eoffice:'e-Office', swarna:'Swarna AP', gsdp:'GSDP',
+      goifunds:'GoI Funds', perception:'Perception',
+      integrity:'Integrity', party:'Party', media:'Media'
+    };
+    const roleBadge   = `<span class="badge ${roleClass}">${esc(_roleLabels[role] || u.role || '')}</span>`;
+    const officerName = (u.officers && u.officers.name_of_officer) || '—';
+    const tempPw      = u.temp_password || u.password || '';
+    const lastLog     = u.last_login_at
+      ? new Date(u.last_login_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    const flags = [];
+    if (u.must_change_password) flags.push('<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:700;">PW CHANGE</span>');
+    if (u.is_first_login)       flags.push('<span style="font-size:10px;background:#e0f2fe;color:#075985;padding:1px 6px;border-radius:8px;font-weight:700;">FIRST LOGIN</span>');
+
     return `<tr>
-      <td style="text-align:center;color:#94a3b8;">${idx + 1}</td>
-      <td style="font-weight:500;">${esc(u.email)}</td>
-      <td style="font-size:12px;font-family:monospace;">${esc(u.password || '')}</td>
+      <td style="text-align:center;color:#94a3b8;">${startIdx + i + 1}</td>
+      <td style="font-weight:600;font-size:13px;">${esc(u.email)}<br><span style="font-weight:400;">${flags.join(' ')}</span></td>
+      <td style="font-size:13px;color:#1e1b4b;">${esc(officerName)}</td>
       <td>${roleBadge}</td>
+      <td style="font-family:monospace;font-size:12px;letter-spacing:0.5px;">${esc(tempPw)}</td>
+      <td style="text-align:center;font-weight:700;color:#4338ca;">${u.login_count ?? 0}</td>
+      <td style="font-size:11.5px;">${lastLog}</td>
+      <td style="font-size:12px;word-break:break-all;">${esc(u.personal_email || '—')}</td>
+      <td style="font-size:12px;">${esc(u.personal_mobile || '—')}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-amber btn-sm" onclick='openEditUserModal(${JSON.stringify(u)})'>&#9998; Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${esc(u.email)}')">&#128465; Delete</button>
+        <button class="btn btn-teal btn-sm" onclick="resetUserPassword('${esc(u.email)}')">&#128274; Reset PW</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${esc(u.email)}')">&#128465;</button>
       </td>
     </tr>`;
   }).join('');
+
+  renderUsersPagination(filtered.length);
+}
+
+function renderUsersPagination(total) {
+  const pg  = document.getElementById('users-pagination');
+  if (!pg) return;
+  const totalPages = Math.ceil(total / _USERS_PER_PAGE);
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  const from = (_usersPage - 1) * _USERS_PER_PAGE + 1;
+  const to   = Math.min(_usersPage * _USERS_PER_PAGE, total);
+
+  let btns = `<span class="info">Showing ${from}–${to} of ${total} users</span>`;
+  btns += `<button ${_usersPage === 1 ? 'disabled' : ''} onclick="filterUsers(1)">&#171; First</button>`;
+  btns += `<button ${_usersPage === 1 ? 'disabled' : ''} onclick="filterUsers(${_usersPage - 1})">&#8249; Prev</button>`;
+
+  const start = Math.max(1, _usersPage - 2);
+  const end   = Math.min(totalPages, _usersPage + 2);
+  for (let p = start; p <= end; p++) {
+    btns += `<button class="${p === _usersPage ? 'active' : ''}" onclick="filterUsers(${p})">${p}</button>`;
+  }
+
+  btns += `<button ${_usersPage === totalPages ? 'disabled' : ''} onclick="filterUsers(${_usersPage + 1})">Next &#8250;</button>`;
+  btns += `<button ${_usersPage === totalPages ? 'disabled' : ''} onclick="filterUsers(${totalPages})">Last &#187;</button>`;
+  pg.innerHTML = btns;
 }
 
 // _editingUserId: null = new user, number = editing existing
@@ -1246,10 +1554,10 @@ function openEditUserModal(u) {
   _editingUserId = u.id;
   document.getElementById('user-modal-title').textContent = 'Edit User';
   document.getElementById('usr-email').value    = u.email;
-  document.getElementById('usr-password').value = u.password || '';
+  document.getElementById('usr-password').value = u.temp_password || u.password || '';
   document.getElementById('usr-role').value     = u.role;
   document.getElementById('usr-email').disabled = true;
-  document.getElementById('usr-pw-hint').textContent = '';
+  document.getElementById('usr-pw-hint').textContent = '(temp password shown)';
   document.getElementById('user-modal').classList.add('open');
 }
 
@@ -1301,6 +1609,168 @@ function deleteUser(id, email) {
     },
     'danger'
   );
+}
+
+// ================================================================
+// Password Reset Requests
+// ================================================================
+async function loadResetRequests() {
+  const tbody = document.getElementById('reset-req-tbody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:14px;color:#6366f1;">&#8987; Loading…</td></tr>';
+
+  const { data, error } = await _supabase.rpc('get_password_reset_requests');
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="9" style="color:#dc2626;text-align:center;padding:14px;">&#10060; ${esc(error.message)}</td></tr>`;
+    return;
+  }
+
+  const rows = data || [];
+  const pending = rows.filter(r => r.status === 'pending').length;
+  const badge   = document.getElementById('reset-req-badge');
+  if (pending > 0) { badge.textContent = pending + ' pending'; badge.style.display = ''; }
+  else             { badge.style.display = 'none'; }
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:16px;color:#64748b;">No reset requests yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const reqDate = new Date(r.requested_at).toLocaleString('en-IN',
+      { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+    const statusBadge = r.status === 'pending'
+      ? '<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">PENDING</span>'
+      : r.status === 'completed'
+      ? '<span style="background:#dcfce7;color:#166534;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">DONE</span>'
+      : '<span style="background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">REJECTED</span>';
+
+    const actions = r.status === 'pending'
+      ? `<button class="btn btn-success btn-sm" onclick="validateReset(${r.id})">&#10004; Validate &amp; Reset</button>
+         <button class="btn btn-danger btn-sm"  onclick="rejectReset(${r.id},'${esc(r.identity_no)}')">&#10006; Reject</button>`
+      : '<span style="font-size:12px;color:#94a3b8;">—</span>';
+
+    return `<tr>
+      <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+      <td style="font-weight:700;">${esc(r.identity_no)}</td>
+      <td>${esc(r.officer_name || '—')}</td>
+      <td><span class="badge ${(r.service_type||'user').toLowerCase()}">${esc(r.service_type || '—')}</span></td>
+      <td style="font-size:12px;">${esc(r.personal_email || '—')}</td>
+      <td style="font-size:12px;">${esc(r.personal_mobile || '—')}</td>
+      <td style="font-size:12px;">${reqDate}</td>
+      <td>${statusBadge}</td>
+      <td style="white-space:nowrap;">${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function validateReset(requestId) {
+  showConfirm(
+    'Validate & Reset Password',
+    'Generate a new temporary password for this officer and mark the request as completed?',
+    async function () {
+      const { data, error } = await _supabase.rpc('admin_complete_reset', { p_request_id: requestId });
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      const row = (data || [])[0];
+      if (!row) { showToast('Reset failed — request not found.', true); return; }
+
+      document.getElementById('rc-officer').textContent = row.officer_name || '—';
+      document.getElementById('rc-pw').textContent      = row.new_password || '—';
+      document.getElementById('rc-mobile').textContent  = row.personal_mobile || 'Not provided';
+      document.getElementById('rc-email').textContent   = row.personal_email  || 'Not provided';
+      document.getElementById('reset-complete-modal').classList.add('open');
+      loadResetRequests();
+    },
+    'save'
+  );
+}
+
+async function rejectReset(requestId, identityNo) {
+  showConfirm(
+    'Reject Reset Request',
+    `Reject the password reset request for <strong>${esc(identityNo)}</strong>?`,
+    async function () {
+      const { error } = await _supabase.rpc('admin_reject_reset', { p_request_id: requestId });
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      showToast('Reset request rejected.');
+      loadResetRequests();
+    },
+    'danger'
+  );
+}
+
+// ================================================================
+// Reset Password (admin action — generates new temp password via RPC)
+// ================================================================
+async function resetUserPassword(email) {
+  showConfirm(
+    'Reset Password',
+    `Generate a new temporary password for <strong>${esc(email)}</strong>?<br>The officer will be required to change it on next login.`,
+    async function () {
+      const { data, error } = await _supabase.rpc('reset_user_password', { p_email: email });
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      const newPw = data;
+      document.getElementById('reset-pw-email').textContent  = email;
+      document.getElementById('reset-pw-value').textContent  = newPw || '—';
+      document.getElementById('reset-pw-modal').classList.add('open');
+      loadUsers();
+    },
+    'save'
+  );
+}
+
+// ================================================================
+// Generate Officer Logins
+// ================================================================
+let _genData = [];
+
+async function generateOfficerLogins() {
+  const svc    = document.getElementById('genSvcSelect').value;
+  const status = document.getElementById('gen-status');
+  status.textContent = '⏳ Generating logins…';
+
+  try {
+    const { data, error } = await _supabase.rpc('generate_officer_users', { p_service_type: svc });
+    if (error) throw error;
+
+    _genData = data || [];
+    const created = _genData.filter(r => r.action_taken === 'created').length;
+    const updated = _genData.filter(r => r.action_taken === 'updated').length;
+
+    status.textContent = `✓ Done — ${created} created, ${updated} refreshed`;
+    document.getElementById('gen-results-title').textContent = `Generated Logins — ${svc} Officers`;
+    document.getElementById('gen-results-summary').textContent =
+      `${_genData.length} officers total · ${created} new accounts · ${updated} refreshed`;
+
+    const tbody = document.getElementById('gen-results-tbody');
+    tbody.innerHTML = _genData.map((r, i) => `<tr>
+      <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+      <td style="font-weight:500;">${esc(r.officer_name || '')}</td>
+      <td style="font-family:monospace;font-size:12px;">${esc(r.login_email || '')}</td>
+      <td style="font-family:monospace;font-size:13px;font-weight:700;letter-spacing:1px;color:#92400e;background:#fef3c7;">${esc(r.temp_pw || '')}</td>
+      <td><span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;
+           background:${r.action_taken === 'created' ? '#dcfce7' : '#e0f2fe'};
+           color:${r.action_taken === 'created' ? '#166534' : '#075985'};">${esc(r.action_taken)}</span></td>
+    </tr>`).join('');
+
+    document.getElementById('gen-results-modal').classList.add('open');
+  } catch (err) {
+    status.textContent = '✗ Error: ' + err.message;
+    showToast('Generate failed: ' + err.message, true);
+  }
+}
+
+function downloadGenCsv() {
+  if (!_genData.length) return;
+  const header = 'Officer Name,Login Email,Temp Password,Action\n';
+  const rows   = _genData.map(r =>
+    `"${(r.officer_name||'').replace(/"/g,'""')}","${r.login_email||''}","${r.temp_pw||''}","${r.action_taken||''}"`
+  ).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'officer_logins_' + (document.getElementById('genSvcSelect').value) + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
 }
 
 // ================================================================
@@ -1905,6 +2375,300 @@ async function _fetchAllRows(tableName) {
     from += PAGE;
   }
   return all;
+}
+
+// ================================================================
+// Module Control
+// ================================================================
+
+const MC_MODULES = [
+  { name: 'self_appraisal', label: 'Self Appraisal (Officers)',  table: 'self_appraisal',  icon: '📝' },
+  { name: 'eoffice',        label: 'E-Office Performance',       table: 'eoffice_data',    icon: '🖥' },
+  { name: 'goifunds',       label: 'GoI Funds Utilisation',      table: 'goifunds_data',   icon: '💰' },
+  { name: 'perception',     label: 'Perception Score',           table: 'perception_data', icon: '🔭' },
+  { name: 'integrity',      label: 'Integrity Index',            table: 'integrity_data',  icon: '🔍' },
+  { name: 'party',          label: 'Party Feedback',             table: 'party_data',      icon: '🎭' },
+  { name: 'media',          label: 'Media Feedback',             table: 'media_data',      icon: '📰' },
+  { name: 'swarna',         label: 'Swarna AP KPI',             table: 'swarna_data',     icon: '⭐' },
+  { name: 'gsdp',           label: 'GSDP Contribution',         table: 'gsdp_data',       icon: '📊' }
+];
+
+let _mcData = []; // cached module_control rows
+
+async function loadModuleControl() {
+  document.getElementById('ctrl-table-wrap').innerHTML   = '<div style="text-align:center;padding:24px;color:#94a3b8;">Loading…</div>';
+  document.getElementById('ctrl-reports-wrap').innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;">Loading…</div>';
+  try {
+    const { data, error } = await _supabase.from('module_control').select('*').order('id');
+    if (error) throw error;
+    _mcData = data || [];
+    renderControlTable(_mcData);
+    await renderReports();
+  } catch(e) {
+    document.getElementById('ctrl-table-wrap').innerHTML =
+      '<div style="color:#dc2626;padding:16px;">Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderControlTable(rows) {
+  const now = new Date();
+  let html =
+    '<div style="overflow-x:auto;">' +
+    '<table class="data-table">' +
+    '<thead><tr>' +
+      '<th>Module</th>' +
+      '<th style="width:210px;">Deadline</th>' +
+      '<th style="width:130px;text-align:center;">Status</th>' +
+      '<th style="width:90px;text-align:center;">Paused?</th>' +
+      '<th style="width:280px;">Admin Notes</th>' +
+      '<th style="width:180px;text-align:center;">Actions</th>' +
+    '</tr></thead><tbody>';
+
+  MC_MODULES.forEach(mod => {
+    const row = rows.find(r => r.module_name === mod.name) || {};
+    const isPaused   = !!row.is_paused;
+    const hasDeadline = !!row.deadline;
+    const expired    = hasDeadline && now > new Date(row.deadline);
+    const statusLabel = isPaused  ? '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">⏸ Paused</span>'
+      : expired ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">⏰ Expired</span>'
+      : '<span style="background:#dcfce7;color:#14532d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ Open</span>';
+
+    const deadlineVal = row.deadline ? new Date(row.deadline).toISOString().slice(0,16) : '';
+
+    html +=
+      '<tr id="mc-row-' + mod.name + '">' +
+        '<td><strong>' + mod.icon + ' ' + esc(mod.label) + '</strong></td>' +
+        '<td>' +
+          '<input type="datetime-local" id="mc-dl-' + mod.name + '" value="' + deadlineVal + '" ' +
+                 'style="width:100%;padding:6px 8px;border:1.5px solid #c7d2fe;border-radius:7px;font-size:12px;">' +
+        '</td>' +
+        '<td style="text-align:center;">' + statusLabel + '</td>' +
+        '<td style="text-align:center;">' +
+          '<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">' +
+            '<input type="checkbox" id="mc-pause-' + mod.name + '" ' + (isPaused ? 'checked' : '') + ' ' +
+                   'style="width:16px;height:16px;accent-color:#dc2626;">' +
+            '<span style="font-size:12px;color:#64748b;">Pause</span>' +
+          '</label>' +
+        '</td>' +
+        '<td>' +
+          '<input type="text" id="mc-notes-' + mod.name + '" value="' + esc(row.notes || '') + '" ' +
+                 'placeholder="Optional note shown to users…" ' +
+                 'style="width:100%;padding:6px 8px;border:1.5px solid #c7d2fe;border-radius:7px;font-size:12px;">' +
+        '</td>' +
+        '<td style="text-align:center;">' +
+          '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">' +
+            '<button class="btn btn-primary btn-sm" onclick="saveModuleControl(\'' + mod.name + '\')">&#10003; Save</button>' +
+            '<button class="btn btn-ghost btn-sm" onclick="clearDeadline(\'' + mod.name + '\')">&#215; Clear DL</button>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('ctrl-table-wrap').innerHTML = html;
+}
+
+async function saveModuleControl(moduleName) {
+  const session = getSession();
+  const deadline = document.getElementById('mc-dl-'    + moduleName).value;
+  const isPaused = document.getElementById('mc-pause-' + moduleName).checked;
+  const notes    = document.getElementById('mc-notes-' + moduleName).value.trim();
+
+  try {
+    const { error } = await _supabase.from('module_control').upsert({
+      module_name: moduleName,
+      label:       MC_MODULES.find(m => m.name === moduleName)?.label || moduleName,
+      deadline:    deadline || null,
+      is_paused:   isPaused,
+      notes:       notes || null,
+      updated_by:  session?.email || 'admin',
+      updated_at:  new Date().toISOString()
+    }, { onConflict: 'module_name' });
+    if (error) throw error;
+    showToast('✓ ' + moduleName + ' settings saved.', false);
+    await loadModuleControl();
+  } catch(e) {
+    showToast('Save failed: ' + e.message, true);
+  }
+}
+
+function clearDeadline(moduleName) {
+  document.getElementById('mc-dl-' + moduleName).value = '';
+  saveModuleControl(moduleName);
+}
+
+async function pauseAllModules() {
+  if (!confirm('Pause ALL modules? Data entry and uploads will be blocked for everyone immediately.')) return;
+  const session = getSession();
+  const now = new Date().toISOString();
+  try {
+    const { error } = await _supabase.from('module_control')
+      .update({ is_paused: true, updated_by: session?.email || 'admin', updated_at: now })
+      .neq('id', 0);
+    if (error) throw error;
+    showToast('⏸ All modules paused.', false);
+    document.getElementById('ctrl-global-msg').textContent = 'All paused at ' + new Date().toLocaleTimeString('en-IN');
+    await loadModuleControl();
+  } catch(e) {
+    showToast('Error: ' + e.message, true);
+  }
+}
+
+async function resumeAllModules() {
+  if (!confirm('Resume ALL modules? Data entry will reopen for all operators and officers.')) return;
+  const session = getSession();
+  const now = new Date().toISOString();
+  try {
+    const { error } = await _supabase.from('module_control')
+      .update({ is_paused: false, updated_by: session?.email || 'admin', updated_at: now })
+      .neq('id', 0);
+    if (error) throw error;
+    showToast('✅ All modules resumed.', false);
+    document.getElementById('ctrl-global-msg').textContent = 'All resumed at ' + new Date().toLocaleTimeString('en-IN');
+    await loadModuleControl();
+  } catch(e) {
+    showToast('Error: ' + e.message, true);
+  }
+}
+
+// ── Reports ──────────────────────────────────────────────────────
+async function renderReports() {
+  const wrap = document.getElementById('ctrl-reports-wrap');
+  wrap.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;">Fetching report data…</div>';
+
+  try {
+    // Fetch all rows (service_type, identity_no, entered_at) from each module table in parallel
+    const results = await Promise.all(MC_MODULES.map(async mod => {
+      try {
+        const { data, error } = await _supabase
+          .from(mod.table)
+          .select('service_type, identity_no, entered_at');
+        if (error) throw error;
+        const rows = data || [];
+
+        // Group by service type
+        const svcData = {
+          IAS: { records: 0, officers: new Set(), last: null },
+          IPS: { records: 0, officers: new Set(), last: null },
+          IFS: { records: 0, officers: new Set(), last: null }
+        };
+        let globalLast = null;
+
+        rows.forEach(r => {
+          const svc = (r.service_type || '').toUpperCase().trim();
+          const bucket = svcData[svc];
+          if (bucket) {
+            bucket.records++;
+            if (r.identity_no) bucket.officers.add(r.identity_no);
+            if (r.entered_at && (!bucket.last || r.entered_at > bucket.last)) bucket.last = r.entered_at;
+          }
+          if (r.entered_at && (!globalLast || r.entered_at > globalLast)) globalLast = r.entered_at;
+        });
+
+        return { mod, svcData, total: rows.length, lastDate: globalLast, error: null };
+      } catch(e) {
+        return { mod, svcData: null, total: 0, lastDate: null, error: e.message };
+      }
+    }));
+
+    const ctrl = _mcData;
+    const now  = new Date();
+
+    // Service type colour scheme
+    const svcStyle = {
+      IAS: { bg: '#dbeafe', color: '#1e40af', badge: '👤 IAS' },
+      IPS: { bg: '#fce7f3', color: '#9d174d', badge: '🛡 IPS' },
+      IFS: { bg: '#dcfce7', color: '#14532d', badge: '🌲 IFS' }
+    };
+
+    let html = '<div style="display:flex;flex-direction:column;gap:18px;">';
+
+    results.forEach(({ mod, svcData, total, lastDate, error }) => {
+      const row      = ctrl.find(r => r.module_name === mod.name) || {};
+      const isPaused = !!row.is_paused;
+      const expired  = row.deadline && now > new Date(row.deadline);
+      const daysLeft = row.deadline
+        ? Math.ceil((new Date(row.deadline) - now) / 86400000)
+        : null;
+      const statusColor = isPaused ? '#dc2626' : (expired ? '#d97706' : '#059669');
+      const statusText  = isPaused ? '⏸ Paused' : (expired ? '⏰ Deadline Passed' : '✅ Open');
+      const dlText = row.deadline
+        ? (expired
+            ? '⏰ Deadline expired on ' + fmtDate(row.deadline)
+            : daysLeft + ' day' + (Math.abs(daysLeft) === 1 ? '' : 's') + ' remaining · closes ' + fmtDate(row.deadline))
+        : '📅 No deadline set';
+
+      // Per-service breakdown rows
+      const svcRows = error
+        ? '<td colspan="5" style="color:#dc2626;font-size:12px;">⚠ ' + esc(error) + '</td>'
+        : ['IAS','IPS','IFS'].map(svc => {
+            const d   = svcData[svc];
+            const off = d.officers.size;
+            const rec = d.records;
+            const st  = svcStyle[svc];
+            return '<tr style="border-top:1px solid #f1f5f9;">' +
+              '<td style="padding:8px 12px;">' +
+                '<span style="background:' + st.bg + ';color:' + st.color + ';padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">' + st.badge + '</span>' +
+              '</td>' +
+              '<td style="padding:8px 12px;text-align:center;font-size:18px;font-weight:800;color:#1e1b4b;">' + rec.toLocaleString() + '</td>' +
+              '<td style="padding:8px 12px;text-align:center;font-size:18px;font-weight:800;color:#4f46e5;">' + off.toLocaleString() + '</td>' +
+              '<td style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">' +
+                (d.last ? fmtDate(d.last) : '<span style="color:#cbd5e1;">—</span>') +
+              '</td>' +
+              '<td style="padding:8px 12px;text-align:center;">' +
+                (rec === 0
+                  ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">No Data</span>'
+                  : '<span style="background:#dcfce7;color:#14532d;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">Entered</span>') +
+              '</td>' +
+            '</tr>';
+          }).join('');
+
+      html +=
+        '<div style="background:#fff;border-radius:14px;border:1.5px solid #e0e7ff;overflow:hidden;box-shadow:0 2px 8px rgba(79,70,229,0.07);">' +
+          // Card header
+          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;' +
+                       'padding:12px 18px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-bottom:1px solid #c7d2fe;">' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+              '<span style="font-size:22px;">' + mod.icon + '</span>' +
+              '<div>' +
+                '<div style="font-size:14px;font-weight:800;color:#1e1b4b;">' + esc(mod.label) + '</div>' +
+                '<div style="font-size:11px;color:#64748b;margin-top:1px;">' + total.toLocaleString() + ' total record' + (total===1?'':'s') +
+                  (lastDate ? ' · last entry ' + fmtDate(lastDate) : '') + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+              '<span style="font-size:11px;color:' + statusColor + ';font-weight:700;background:' +
+                (isPaused ? '#fee2e2' : (expired ? '#fef3c7' : '#dcfce7')) + ';padding:3px 10px;border-radius:20px;">' +
+                statusText + '</span>' +
+              '<span style="font-size:11px;color:#64748b;">' + dlText + '</span>' +
+            '</div>' +
+          '</div>' +
+          // Table
+          '<table style="width:100%;border-collapse:collapse;">' +
+            '<thead>' +
+              '<tr style="background:#f8fafc;">' +
+                '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Service</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Records</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Officers</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Last Entry</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Status</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' + svcRows + '</tbody>' +
+          '</table>' +
+        '</div>';
+    });
+
+    html += '</div>';
+    wrap.innerHTML = html;
+  } catch(e) {
+    wrap.innerHTML = '<div style="color:#dc2626;padding:16px;">Report error: ' + esc(e.message) + '</div>';
+  }
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
 }
 
 async function exportTable(tableName) {

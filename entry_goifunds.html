@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoI Funds Utilization | AIS Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #eef0fb; min-height: 100vh; }
+
+    /* ── Header ── */
+    .top-header {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #dc2626 100%);
+      padding: 13px 24px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 16px rgba(127,29,29,0.45);
+    }
+    .btn-back {
+      padding: 8px 16px; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(252,165,165,0.4); border-radius: 8px;
+      color: #fecaca; font-size: 13px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.22); }
+    .header-title-group { flex: 1; }
+    .header-mod-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #fca5a5; }
+    .header-mod-title { font-size: clamp(14px,1.6vw,20px); font-weight: 800; color: #fff; }
+    .btn-logout-h {
+      padding: 9px 16px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(252,165,165,0.35); border-radius: 8px;
+      color: #fecaca; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-logout-h:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Welcome bar ── */
+    .welcome-bar {
+      background: #fff; padding: 7px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #fecaca; font-size: 12px; color: #475569;
+    }
+    .welcome-bar strong { color: #7f1d1d; }
+
+    /* ── Main tab bar ── */
+    .tab-bar {
+      background: #fff; border-bottom: 2px solid #e2e8f0;
+      display: flex; padding: 0 24px;
+    }
+    .tab-btn {
+      padding: 11px 20px; background: none; border: none;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+    }
+    .tab-btn:hover  { color: #dc2626; }
+    .tab-btn.active { color: #dc2626; border-bottom-color: #dc2626; }
+
+    /* ── Page ── */
+    .page-content { padding: 20px 24px 52px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 14px rgba(30,27,75,0.08);
+      padding: 22px 26px; margin-bottom: 18px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; color: #1e1b4b;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 2px solid #eef0fb;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    /* ── Form elements ── */
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label {
+      font-size: 11px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .form-group label .req { color: #ef4444; }
+    .form-control {
+      padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 9px;
+      font-family: 'Inter', sans-serif; font-size: 14px; color: #1e1b4b;
+      transition: border-color 0.18s; background: #fff;
+    }
+    .form-control:focus { outline: none; border-color: #dc2626; }
+
+    /* ── Period card ── */
+    .period-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: flex-end; }
+    .btn-proceed {
+      padding: 11px 28px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(220,38,38,0.3); white-space: nowrap;
+    }
+    .btn-proceed:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(220,38,38,0.45); }
+    .period-error { font-size: 12px; color: #dc2626; margin-top: 8px; font-weight: 600; }
+
+    /* ── Period bar ── */
+    .period-bar {
+      background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+      border: 1.5px solid #fecaca; border-radius: 12px;
+      padding: 10px 18px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .period-bar-label { font-size: 11px; font-weight: 700; color: #dc2626; text-transform: uppercase; letter-spacing: 0.8px; }
+    .period-bar-dates { font-size: 15px; font-weight: 800; color: #1e1b4b; }
+    .btn-edit-period {
+      margin-left: auto; padding: 5px 14px;
+      background: none; border: 1.5px solid #fca5a5; border-radius: 7px;
+      color: #dc2626; font-size: 12px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-edit-period:hover { background: #fee2e2; }
+
+    /* ── Service tabs ── */
+    .svc-tab-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .svc-tab {
+      padding: 10px 22px; border-radius: 10px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .svc-tab:hover { border-color: #fca5a5; color: #dc2626; background: #fff1f2; }
+    .svc-tab.ias.active { background: linear-gradient(135deg,#d97706,#92400e); border-color: #d97706; color: #fff; }
+    .svc-tab.ips.active { background: linear-gradient(135deg,#dc2626,#991b1b); border-color: #dc2626; color: #fff; }
+    .svc-tab.ifs.active { background: linear-gradient(135deg,#059669,#065f46); border-color: #059669; color: #fff; }
+    .svc-count-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.25); min-width: 28px; text-align: center;
+    }
+    .svc-tab:not(.active) .svc-count-pill { background: #e2e8f0; color: #64748b; }
+
+    /* ── Upload card internals ── */
+    .step-label {
+      font-size: 12px; font-weight: 700; color: #dc2626; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 5px;
+    }
+    .step-desc { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+    hr.divider { border: none; border-top: 1.5px solid #eef0fb; margin: 18px 0; }
+    .actions-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-template {
+      padding: 10px 22px; background: none; border: 2px solid #dc2626; border-radius: 9px;
+      color: #dc2626; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: background 0.18s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-template:hover { background: #fff1f2; }
+    .btn-template:disabled { opacity: 0.45; cursor: not-allowed; }
+    .officer-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 20px;
+      padding: 5px 14px; font-size: 12px; font-weight: 700; color: #15803d;
+    }
+
+    /* ── Drop zone ── */
+    .upload-drop {
+      border: 2.5px dashed #fca5a5; border-radius: 14px;
+      padding: 34px 28px; text-align: center; background: #fff5f5;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-drop:hover, .upload-drop.over { border-color: #dc2626; background: #fee2e2; }
+    .upload-drop.loaded { border-color: #22c55e; background: #f0fdf4; border-style: solid; }
+    .upload-drop-icon  { font-size: 36px; margin-bottom: 10px; }
+    .upload-drop-title { font-size: 14px; font-weight: 700; color: #1e1b4b; margin-bottom: 4px; }
+    .upload-drop-sub   { font-size: 12px; color: #64748b; }
+    .file-input-hidden { display: none; }
+
+    /* ── Summary stats ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+    .summary-stat { border-radius: 12px; padding: 14px 16px; text-align: center; border-left: 4px solid #e2e8f0; background: #f8fafc; }
+    .summary-stat.ok    { border-left-color: #22c55e; background: #f0fdf4; }
+    .summary-stat.warn  { border-left-color: #f59e0b; background: #fffbeb; }
+    .summary-stat.error { border-left-color: #ef4444; background: #fef2f2; }
+    .summary-stat.info  { border-left-color: #3b82f6; background: #eff6ff; }
+    .stat-num { font-size: 28px; font-weight: 800; color: #1e1b4b; line-height: 1; }
+    .stat-lbl { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Distribution table ── */
+    .dist-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .dist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dist-table th { background: #f1f5f9; padding: 8px 14px; text-align: left; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; }
+    .dist-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+    .dist-table tr:last-child td { border-bottom: none; }
+    .dist-bar { display: inline-block; height: 10px; border-radius: 5px; background: #dc2626; margin-left: 6px; vertical-align: middle; min-width: 4px; }
+    .dist-bar.c2 { background: #d97706; }
+    .dist-bar.c3 { background: #7c3aed; }
+    .dist-bar.cx { background: #64748b; }
+
+    /* ── Issues ── */
+    .issue-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 380px; overflow-y: auto; }
+    .issue-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;
+      padding: 9px 14px; font-size: 12px;
+    }
+    .issue-item-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .issue-row-ref   { font-weight: 700; color: #dc2626; margin-right: 6px; }
+    .issue-text      { color: #991b1b; }
+    .more-msg        { font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; }
+
+    /* ── Submit bar ── */
+    .submit-bar {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 16px 22px; background: #f8fafc; border-radius: 12px; border: 2px solid #e2e8f0;
+    }
+    .submit-bar.ready   { background: #f0fdf4; border-color: #86efac; }
+    .submit-bar.blocked { background: #fef2f2; border-color: #fca5a5; }
+    .submit-status-text         { font-size: 13px; font-weight: 600; color: #64748b; flex: 1; line-height: 1.5; }
+    .submit-status-text.ready   { color: #15803d; }
+    .submit-status-text.blocked { color: #dc2626; }
+    .btn-submit {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(5,150,105,0.35); white-space: nowrap;
+    }
+    .btn-submit:hover    { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(5,150,105,0.5); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── Alert ── */
+    .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 12px; }
+    .alert.success { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
+    .alert.error   { background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626; }
+
+    /* ── Records table ── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      background: #7f1d1d; color: #fecaca; padding: 10px 12px; text-align: left;
+      font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fff5f5; }
+    tbody td { padding: 9px 12px; color: #374151; vertical-align: middle; }
+    .td-num   { text-align: right; font-weight: 700; color: #1e1b4b; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .td-green { color: #059669; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .td-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .td-badge.ias { background: #fef3c7; color: #d97706; }
+    .td-badge.ips { background: #fee2e2; color: #dc2626; }
+    .td-badge.ifs { background: #d1fae5; color: #059669; }
+    .td-badge.svc { background: #ffe4e6; color: #dc2626; }
+    .btn-del {
+      padding: 4px 12px; background: #fef2f2; border: 1.5px solid #fca5a5;
+      color: #dc2626; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .empty-icon  { font-size: 40px; margin-bottom: 10px; }
+    .empty-text  { font-size: 14px; font-weight: 600; }
+    .empty-sub   { font-size: 12px; margin-top: 4px; }
+
+    /* ── Dashboard ── */
+    .capsule-bar-wrap {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 16px 22px; margin-bottom: 18px;
+    }
+    .capsule-bar-label {
+      font-size: 10px; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+    }
+    .period-capsules-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; flex-wrap: wrap; }
+    .period-capsule {
+      padding: 7px 18px; border-radius: 20px; white-space: nowrap;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-size: 12px; font-weight: 700; color: #64748b;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.18s; flex-shrink: 0;
+    }
+    .period-capsule:hover  { border-color: #fca5a5; color: #dc2626; background: #fff1f2; }
+    .period-capsule.active { background: linear-gradient(135deg,#dc2626,#b91c1c); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+    .period-capsule.all    { border-style: dashed; }
+    .period-capsule.all.active { background: linear-gradient(135deg,#475569,#334155); }
+
+    .dash-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+    .dash-stat-card {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 18px 20px; border-left: 5px solid #e2e8f0; position: relative; overflow: hidden;
+    }
+    .dash-stat-card::after {
+      content: ''; position: absolute; top: -16px; right: -16px;
+      width: 70px; height: 70px; border-radius: 50%; opacity: 0.07;
+      background: var(--accent, #dc2626);
+    }
+    .dash-stat-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+    .dash-stat-num  { font-size: 22px; font-weight: 800; color: #1e1b4b; line-height: 1.2; margin-bottom: 5px; }
+    .dash-stat-lbl  { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Funds flow bars ── */
+    .flow-bar-item { margin-bottom: 20px; }
+    .flow-bar-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 7px; flex-wrap: wrap; gap: 6px;
+    }
+    .flow-bar-label { font-size: 13px; font-weight: 600; color: #374151; }
+    .flow-bar-value { font-size: 15px; font-weight: 800; }
+    .flow-bar-pct   { font-size: 11px; font-weight: 600; color: #94a3b8; margin-left: 6px; }
+    .flow-bar-track { height: 14px; background: #f1f5f9; border-radius: 7px; overflow: hidden; }
+    .flow-bar-fill  { height: 100%; border-radius: 7px; transition: width 0.6s ease; }
+
+    .dist-pills-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .dist-pill {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 24px; border-radius: 14px; border: 2px solid; min-width: 110px;
+    }
+    .dist-pill-num { font-size: 36px; font-weight: 800; line-height: 1; }
+    .dist-pill-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; opacity: 0.85; }
+
+    /* ── Filter row ── */
+    .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-row .form-group { min-width: 140px; flex: 1; }
+    .btn-clear-filter {
+      padding: 8px 16px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 9px;
+      color: #475569; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.18s;
+    }
+    .btn-clear-filter:hover { background: #e2e8f0; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; gap: 6px; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
+    .pg-btn {
+      padding: 6px 12px; border: 1.5px solid #e2e8f0; border-radius: 7px;
+      background: #fff; font-size: 12px; font-weight: 600; color: #475569;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .pg-btn:hover  { border-color: #dc2626; color: #dc2626; background: #fff1f2; }
+    .pg-btn.active { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Column guide ── */
+    .col-guide { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 12px; }
+    .col-guide-key  { font-weight: 700; color: #dc2626; font-family: monospace; white-space: nowrap; }
+    .col-guide-desc { color: #374151; padding: 2px 0; }
+    .col-guide-req  { color: #ef4444; font-size: 10px; font-weight: 700; }
+
+    @media (max-width: 768px) {
+      .period-form { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .dash-stat-grid { grid-template-columns: 1fr 1fr; }
+      .page-content { padding: 14px 14px 52px; }
+    }
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .dash-stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="top-header">
+  <button class="btn-back" onclick="location.href='index.html'">&#8592; Home</button>
+  <div class="header-title-group">
+    <div class="header-mod-label">GoI Funds Module</div>
+    <div class="header-mod-title">GoI Funds Utilization Data Entry</div>
+  </div>
+  <button class="btn-logout-h" onclick="signOut()">⏻ Logout</button>
+</div>
+
+<div class="welcome-bar">
+  <span>Operator: <strong id="welcomeName">—</strong></span>
+  <span id="welcomeDate" style="font-size:11px;color:#94a3b8;"></span>
+</div>
+
+<!-- ── Main tabs ── -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="mainTab-dashboard" onclick="showMainTab('dashboard')">📊 Dashboard</button>
+  <button class="tab-btn"        id="mainTab-upload"    onclick="showMainTab('upload')">📥 Upload Data</button>
+  <button class="tab-btn"        id="mainTab-records"   onclick="showMainTab('records')">📋 View Records</button>
+</div>
+
+<div class="page-content">
+
+  <!-- ════════════════ DASHBOARD TAB ════════════════ -->
+  <div id="mainPane-dashboard">
+
+    <div class="capsule-bar-wrap">
+      <div class="capsule-bar-label">📅 Select Period to View Analytics</div>
+      <div class="period-capsules-bar" id="dashCapsules">
+        <span style="font-size:12px;color:#94a3b8;">Loading…</span>
+      </div>
+    </div>
+
+    <div id="dashNoData" class="empty-state" style="display:none;">
+      <div class="empty-icon">💰</div>
+      <div class="empty-text">No data uploaded yet</div>
+      <div class="empty-sub">Upload GoI Funds utilization data using the Upload Data tab to see analytics here.</div>
+    </div>
+
+    <div id="dashContent" style="display:none;">
+
+      <!-- Stat cards -->
+      <div class="dash-stat-grid" id="dashSummaryGrid"></div>
+
+      <!-- Funds flow bars -->
+      <div class="card">
+        <div class="card-title">📈 Funds Flow Overview</div>
+        <div id="dashFlowBars"></div>
+      </div>
+
+      <!-- Service breakdown -->
+      <div class="card">
+        <div class="card-title">📊 Service-wise Breakdown</div>
+        <div class="table-wrap" id="dashServiceTableWrap"></div>
+      </div>
+
+      <!-- Scheme distribution -->
+      <div class="card">
+        <div class="card-title">🗂️ Scheme Distribution — Entries per Officer in Selected Period</div>
+        <div id="dashDistGrid" class="dist-pills-row"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════ UPLOAD TAB ════════════════ -->
+  <div id="mainPane-upload" style="display:none;">
+
+    <!-- STEP 1 ── Period selection ── -->
+    <div class="card" id="step1Card">
+      <div class="card-title">📅 Step 1 — Set the Data Entry Period</div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:18px;line-height:1.6;">
+        Select the period for which GoI Funds utilization data is being uploaded.
+        The same period applies to all three services (IAS, IPS, IFS).
+        The template will be pre-filled with these dates.
+      </p>
+      <div class="period-form">
+        <div class="form-group">
+          <label>Period From <span class="req">*</span></label>
+          <input type="date" id="periodFrom" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Period To <span class="req">*</span></label>
+          <input type="date" id="periodTo" class="form-control">
+        </div>
+        <button class="btn-proceed" onclick="setPeriod()">Proceed &#8594;</button>
+      </div>
+      <div class="period-error" id="periodError"></div>
+    </div>
+
+    <!-- STEP 2 ── Service tabs + upload ── -->
+    <div id="step2Wrap" style="display:none;">
+
+      <div class="period-bar">
+        <span class="period-bar-label">📅 Period</span>
+        <span class="period-bar-dates" id="periodBarDates">—</span>
+        <button class="btn-edit-period" onclick="editPeriod()">✎ Change Period</button>
+      </div>
+
+      <!-- Service tabs -->
+      <div class="svc-tab-bar">
+        <button class="svc-tab ias active" id="svcTab-IAS" onclick="showSvcTab('IAS')">
+          👤 IAS <span class="svc-count-pill" id="svcCount-IAS">…</span>
+        </button>
+        <button class="svc-tab ips" id="svcTab-IPS" onclick="showSvcTab('IPS')">
+          🛡 IPS <span class="svc-count-pill" id="svcCount-IPS">…</span>
+        </button>
+        <button class="svc-tab ifs" id="svcTab-IFS" onclick="showSvcTab('IFS')">
+          🌲 IFS <span class="svc-count-pill" id="svcCount-IFS">…</span>
+        </button>
+      </div>
+
+      <!-- Upload card -->
+      <div class="card">
+        <div class="card-title" id="uploadCardTitle">📤 Upload GoI Funds Data for IAS Officers</div>
+
+        <div class="step-label">Step A — Download Pre-filled Template</div>
+        <div class="step-desc">
+          The template is pre-filled with all active officers and the selected period dates.
+          Fill in <strong>Department Name</strong>, <strong>Scheme Name</strong>, and the four fund columns.
+          <strong>Add a separate row for each scheme an officer handles.</strong>
+          Officers with no GoI scheme activity can be removed from the CSV — they are not mandatory.
+          Enter 0 for all fund fields where there is no activity; blank is not accepted.
+        </div>
+        <div class="actions-row">
+          <button class="btn-template" id="btnTemplate" onclick="downloadTemplate()">
+            ⬇ Download Template
+          </button>
+          <span class="officer-pill">
+            👥 <span id="officerCountText">Loading…</span>
+          </span>
+        </div>
+
+        <hr class="divider">
+
+        <div class="step-label">Step B — Upload Completed CSV</div>
+        <div class="step-desc">
+          Officers not present in the CSV are treated as having no GoI scheme activity for this period.
+          All fund fields must have a numeric value ≥ 0 — enter 0 if there was no activity.
+        </div>
+
+        <div class="upload-drop" id="uploadDropZone"
+          onclick="document.getElementById('csvFileInput').click()"
+          ondragover="handleDragOver(event)"
+          ondrop="handleDrop(event)"
+          ondragleave="handleDragLeave(event)">
+          <div class="upload-drop-icon">💰</div>
+          <div class="upload-drop-title" id="uploadDropTitle">Click or drag-and-drop CSV file here</div>
+          <div class="upload-drop-sub">Accepted: .csv — Max 2,000 rows per upload</div>
+        </div>
+        <input type="file" id="csvFileInput" class="file-input-hidden" accept=".csv" onchange="handleFileSelect(event)">
+
+        <!-- Column guide -->
+        <div style="margin-top:16px;">
+          <div style="font-size:12px;font-weight:700;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="toggleColGuide()">
+            <span id="colGuideArrow">▶</span> CSV Column Reference
+          </div>
+          <div id="colGuide" style="display:none;margin-top:10px;padding:14px 18px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+            <div class="col-guide">
+              <span class="col-guide-key">identity_no <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Officer's identity number — pre-filled in template, do not change</span>
+              <span class="col-guide-key">officer_name <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Full name — pre-filled in template</span>
+              <span class="col-guide-key">department_name <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Name of the department / ministry handling the scheme (e.g. "Rural Development — MGNREGS")</span>
+              <span class="col-guide-key">scheme_name <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Name of the GoI / Central scheme (e.g. "PM Awas Yojana — Gramin")</span>
+              <span class="col-guide-key">period_from <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Period start date — pre-filled (YYYY-MM-DD), do not change</span>
+              <span class="col-guide-key">period_to <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Period end date — pre-filled (YYYY-MM-DD), do not change</span>
+              <span class="col-guide-key">funds_allotted <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Funds allotted to AP in the Union Budget for this scheme (₹) — enter 0 if nil</span>
+              <span class="col-guide-key">funds_received <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Funds released / received by AP from GoI till period end (₹) — enter 0 if nil</span>
+              <span class="col-guide-key">funds_utilized <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Funds actually utilized / spent by the department till period end (₹) — enter 0 if nil</span>
+              <span class="col-guide-key">ucs_submitted <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Value of Utilization Certificates submitted to GoI till period end (₹) — enter 0 if nil</span>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:#94a3b8;">
+              All amounts are in Indian Rupees (₹). Enter plain numbers without commas or ₹ symbol (e.g. 50000000 for ₹5 Cr). &nbsp;|&nbsp;
+              Add one row per scheme. Duplicate the officer's row if they handle multiple schemes.
+            </div>
+          </div>
+        </div>
+      </div><!-- /upload card -->
+
+      <!-- Summary area -->
+      <div id="summaryArea" style="display:none;">
+
+        <div class="card">
+          <div class="card-title">
+            📊 Upload Summary —
+            <span id="summaryServiceLabel" style="color:#dc2626;">IAS Officers</span>
+          </div>
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <!-- Scheme distribution -->
+          <div style="margin-top:4px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">
+              Scheme Distribution — Entries per Officer
+            </div>
+            <div class="dist-wrap">
+              <table class="dist-table">
+                <thead>
+                  <tr>
+                    <th>Schemes per Officer</th>
+                    <th style="text-align:right;">Officers</th>
+                    <th>Bar</th>
+                  </tr>
+                </thead>
+                <tbody id="distTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issues -->
+        <div class="card" id="issuesCard" style="display:none;">
+          <div class="card-title" style="color:#dc2626;">
+            ❌ Issues Found — Fix and Re-upload
+            <span id="issueCountBadge" style="margin-left:auto;font-size:12px;background:#fca5a5;color:#7f1d1d;padding:2px 12px;border-radius:20px;"></span>
+          </div>
+          <ul class="issue-list" id="issueList"></ul>
+          <div class="more-msg" id="issueMoreMsg" style="display:none;"></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="card">
+          <div class="submit-bar" id="submitBar">
+            <span class="submit-status-text" id="submitStatusText">Checking…</span>
+            <button class="btn-submit" id="btnSubmit" onclick="submitData()" disabled>✓ Submit Data</button>
+          </div>
+          <div id="submitAlertWrap"></div>
+        </div>
+
+      </div><!-- /summaryArea -->
+
+    </div><!-- /step2Wrap -->
+
+  </div><!-- /mainPane-upload -->
+
+  <!-- ════════════════ RECORDS TAB ════════════════ -->
+  <div id="mainPane-records" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 Submitted Records</div>
+      <div class="filter-row">
+        <div class="form-group">
+          <label>Service</label>
+          <select id="filterService" class="form-control" onchange="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+            <option value="">All Services</option>
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Officer / Scheme / Dept</label>
+          <input type="text" id="filterOfficer" class="form-control" placeholder="Name, identity, scheme…"
+            oninput="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+        </div>
+        <div class="form-group">
+          <label>Period</label>
+          <select id="filterPeriod" class="form-control" onchange="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+            <option value="">All Periods</option>
+          </select>
+        </div>
+        <button class="btn-clear-filter" onclick="clearFilters()">✕ Clear</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Svc</th>
+              <th>Officer</th>
+              <th>Identity No</th>
+              <th>Department</th>
+              <th>Scheme</th>
+              <th>Period From</th>
+              <th>Period To</th>
+              <th style="text-align:right;">Allotted (₹)</th>
+              <th style="text-align:right;">Received (₹)</th>
+              <th style="text-align:right;">Utilized (₹)</th>
+              <th style="text-align:right;">UCs Submitted (₹)</th>
+              <th style="text-align:right;">Util %</th>
+              <th>Entered At</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+      <div id="recordsEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon">💰</div>
+        <div class="empty-text">No records found</div>
+        <div class="empty-sub">Upload data using the Upload tab.</div>
+      </div>
+      <div class="pagination" id="recordsPagination"></div>
+    </div>
+  </div>
+
+</div><!-- /page-content -->
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+var _session       = null;
+var _period        = { from: '', to: '' };
+var _officers      = { IAS: null, IPS: null, IFS: null };
+var _activeService = 'IAS';
+var _uploadState   = { IAS: null, IPS: null, IFS: null };
+var _recordsPage   = 1;
+var RECORDS_PER_PAGE = 20;
+var MAX_SHOW_ISSUES  = 30;
+
+var CSV_KEYS = [
+  'identity_no','officer_name','department_name','scheme_name',
+  'period_from','period_to',
+  'funds_allotted','funds_received','funds_utilized','ucs_submitted'
+];
+
+// ================================================================
+// INIT
+// ================================================================
+(async function init() {
+  _session = await requireAuth();
+  if (!_session) return;
+
+  var role = (_session.role || '').toLowerCase();
+  if (role !== 'goifunds') { location.href = 'index.html'; return; }
+  if (!await enforceModuleGate('goifunds')) return;
+
+  document.getElementById('welcomeName').textContent = _session.email || '—';
+  var now = new Date();
+  document.getElementById('welcomeDate').textContent =
+    now.toLocaleDateString('en-IN', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    loadOfficersForService(svc).then(function() {
+      document.getElementById('svcCount-' + svc).textContent = (_officers[svc] || []).length;
+    });
+  });
+
+  loadDashboard();
+})();
+
+// ================================================================
+// OFFICER FETCH
+// ================================================================
+async function loadOfficersForService(svc) {
+  if (_officers[svc]) return;
+  var { data, error } = await _supabase
+    .from('officers')
+    .select('id, identity_no, name_of_officer, cadre, allotment_year, service_type')
+    .eq('service_type', svc)
+    .eq('is_retired', false)
+    .order('allotment_year', { ascending: true })
+    .order('name_of_officer', { ascending: true });
+  if (error) { console.error('officers load error', svc, error); return; }
+  _officers[svc] = data || [];
+}
+
+// ================================================================
+// PERIOD MANAGEMENT
+// ================================================================
+function setPeriod() {
+  var from  = document.getElementById('periodFrom').value;
+  var to    = document.getElementById('periodTo').value;
+  var errEl = document.getElementById('periodError');
+
+  if (!from) { errEl.textContent = 'Period From is required.'; return; }
+  if (!to)   { errEl.textContent = 'Period To is required.'; return; }
+  if (to < from) { errEl.textContent = 'Period To cannot be before Period From.'; return; }
+  errEl.textContent = '';
+
+  _period = { from: from, to: to };
+  document.getElementById('step1Card').style.display = 'none';
+  document.getElementById('step2Wrap').style.display = '';
+  document.getElementById('periodBarDates').textContent = fmtDate(from) + ' → ' + fmtDate(to);
+
+  showSvcTab('IAS');
+}
+
+function editPeriod() {
+  _period      = { from: '', to: '' };
+  _uploadState = { IAS: null, IPS: null, IFS: null };
+  document.getElementById('step2Wrap').style.display = 'none';
+  document.getElementById('step1Card').style.display = '';
+  document.getElementById('summaryArea').style.display = 'none';
+  resetDropZone();
+}
+
+// ================================================================
+// SERVICE TABS
+// ================================================================
+function showSvcTab(svc) {
+  _activeService = svc;
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    document.getElementById('svcTab-' + s).classList.toggle('active', s === svc);
+  });
+  refreshUploadCard();
+}
+
+function resetDropZone() {
+  document.getElementById('uploadDropZone').className = 'upload-drop';
+  document.getElementById('uploadDropTitle').textContent = 'Click or drag-and-drop CSV file here';
+}
+
+function refreshUploadCard() {
+  var svc = _activeService;
+  var st  = _uploadState[svc];
+
+  document.getElementById('uploadCardTitle').textContent =
+    '📤 Upload GoI Funds Data for ' + svc + ' Officers';
+
+  if (_officers[svc]) {
+    document.getElementById('officerCountText').textContent =
+      _officers[svc].length + ' ' + svc + ' Officers';
+  } else {
+    document.getElementById('officerCountText').textContent = 'Loading…';
+    loadOfficersForService(svc).then(function() {
+      document.getElementById('officerCountText').textContent =
+        (_officers[svc] || []).length + ' ' + svc + ' Officers';
+    });
+  }
+
+  if (st) {
+    document.getElementById('uploadDropZone').className = 'upload-drop loaded';
+    document.getElementById('uploadDropTitle').textContent =
+      '✓ ' + st.filename + ' — ' + st.rows.length + ' rows loaded';
+    document.getElementById('summaryArea').style.display = '';
+    document.getElementById('submitAlertWrap').innerHTML = '';
+    renderSummary(svc);
+  } else {
+    resetDropZone();
+    document.getElementById('summaryArea').style.display = 'none';
+    document.getElementById('submitAlertWrap').innerHTML = '';
+  }
+}
+
+// ================================================================
+// TEMPLATE DOWNLOAD
+// ================================================================
+async function downloadTemplate() {
+  var svc = _activeService;
+  var btn = document.getElementById('btnTemplate');
+
+  if (!_officers[svc]) {
+    btn.textContent = '⏳ Loading officers…';
+    btn.disabled    = true;
+    await loadOfficersForService(svc);
+    btn.textContent = '⬇ Download Template';
+    btn.disabled    = false;
+    document.getElementById('officerCountText').textContent =
+      (_officers[svc] || []).length + ' ' + svc + ' Officers';
+  }
+
+  var officers = _officers[svc] || [];
+  if (!officers.length) { alert('No active officers found for ' + svc + '.'); return; }
+
+  var rows = [CSV_KEYS.join(',')];
+
+  officers.forEach(function(o) {
+    rows.push([
+      csvQ(o.identity_no     || ''),
+      csvQ(o.name_of_officer || ''),
+      '',             // department_name — blank
+      '',             // scheme_name — blank
+      _period.from,   // period_from — pre-filled
+      _period.to,     // period_to — pre-filled
+      '',             // funds_allotted
+      '',             // funds_received
+      '',             // funds_utilized
+      ''              // ucs_submitted
+    ].join(','));
+  });
+
+  var csvText = '﻿' + rows.join('\r\n');
+  var blob    = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+  var a       = document.createElement('a');
+  a.href      = URL.createObjectURL(blob);
+  a.download  = 'goifunds_' + svc + '_' + _period.from + '_to_' + _period.to + '.csv';
+  a.click();
+}
+
+function csvQ(v) {
+  v = String(v);
+  return (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0)
+    ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+// ================================================================
+// FILE UPLOAD & PARSING
+// ================================================================
+function handleDragOver(e)  { e.preventDefault(); document.getElementById('uploadDropZone').classList.add('over'); }
+function handleDragLeave()  { document.getElementById('uploadDropZone').classList.remove('over'); }
+function handleDrop(e)      { e.preventDefault(); handleDragLeave(); processFile(e.dataTransfer.files[0]); }
+function handleFileSelect(e){ processFile(e.target.files[0]); e.target.value = ''; }
+
+async function processFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showSubmitAlert('error', 'Please upload a .csv file.'); return;
+  }
+  var svc = _activeService;
+  if (!_officers[svc]) {
+    document.getElementById('uploadDropTitle').textContent = '⏳ Loading officer list…';
+    await loadOfficersForService(svc);
+    document.getElementById('officerCountText').textContent =
+      (_officers[svc] || []).length + ' ' + svc + ' Officers';
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) { parseAndValidate(svc, e.target.result, file.name); };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseAndValidate(svc, text, filename) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+  var lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) {
+    showSubmitAlert('error', 'CSV has no data rows — make sure your file is not empty.'); return;
+  }
+
+  var rawHeaders = splitCSVLine(lines[0]).map(function(h) {
+    return h.trim().toLowerCase().replace(/\s+/g,'_');
+  });
+
+  var colIdx = {};
+  var ALIASES = {
+    identity_no:     ['identity_no','identity_number','id_no'],
+    officer_name:    ['officer_name','name_of_officer','name','officer'],
+    department_name: ['department_name','department','dept_name','dept','ministry'],
+    scheme_name:     ['scheme_name','scheme','scheme/programme','programme','central_scheme'],
+    period_from:     ['period_from','period_from_(yyyy-mm-dd)','from_date','from'],
+    period_to:       ['period_to','period_to_(yyyy-mm-dd)','to_date','to'],
+    funds_allotted:  ['funds_allotted','allotted','allotted_(rs)','union_budget_allocation','budget_allocation','budget'],
+    funds_received:  ['funds_received','received','received_(rs)','goi_releases','releases','released'],
+    funds_utilized:  ['funds_utilized','utilized','utilized_(rs)','expenditure','expenditure_(rs)','spent'],
+    ucs_submitted:   ['ucs_submitted','uc_submitted','ucs','ucs_(rs)','utilization_certificates','uc_value']
+  };
+
+  CSV_KEYS.forEach(function(key) {
+    var idx = -1;
+    rawHeaders.forEach(function(h, i) {
+      if (idx === -1 && (ALIASES[key] || [key]).indexOf(h) !== -1) idx = i;
+    });
+    colIdx[key] = idx;
+  });
+
+  var missingCols = CSV_KEYS.filter(function(k) { return colIdx[k] === -1; });
+  if (missingCols.length) {
+    showSubmitAlert('error',
+      'CSV is missing required column(s): ' + missingCols.join(', ') + '. ' +
+      'Please download the template and fill it in.');
+    return;
+  }
+
+  var officerMap = {};
+  (_officers[svc] || []).forEach(function(o) {
+    officerMap[normId(o.identity_no)] = o;
+  });
+
+  var rows   = [];
+  var issues = [];
+
+  for (var i = 1; i < lines.length && i <= 2001; i++) {
+    if (!lines[i].trim()) continue;
+
+    var vals = splitCSVLine(lines[i]);
+    var row  = {};
+    CSV_KEYS.forEach(function(k) {
+      row[k] = colIdx[k] >= 0 ? (vals[colIdx[k]] || '').trim() : '';
+    });
+    row._line   = i + 1;
+    row._errors = [];
+
+    // identity_no
+    if (!row.identity_no) {
+      row._errors.push('identity_no is blank');
+    } else {
+      var matched = officerMap[normId(row.identity_no)];
+      if (!matched) {
+        row._errors.push('identity_no "' + row.identity_no + '" not found in ' + svc + ' officers database');
+      } else {
+        row._officer = matched;
+      }
+    }
+
+    // department_name
+    if (!row.department_name.trim()) {
+      row._errors.push('department_name is blank — enter the department / ministry name');
+    }
+
+    // scheme_name
+    if (!row.scheme_name.trim()) {
+      row._errors.push('scheme_name is blank — enter the name of the GoI / Central scheme');
+    }
+
+    // period dates
+    if (row.period_from && row.period_from !== _period.from) {
+      row._errors.push('period_from "' + row.period_from + '" does not match selected period ' + _period.from + ' — use the template');
+    }
+    if (row.period_to && row.period_to !== _period.to) {
+      row._errors.push('period_to "' + row.period_to + '" does not match selected period ' + _period.to + ' — use the template');
+    }
+
+    // fund fields — all mandatory, numeric, ≥ 0
+    ['funds_allotted','funds_received','funds_utilized','ucs_submitted'].forEach(function(fld) {
+      var v = row[fld];
+      var label = fld.replace(/_/g,' ');
+      if (v === '' || v === null || v === undefined) {
+        row._errors.push(label + ' is blank — enter 0 if nil');
+      } else if (isNaN(Number(v)) || Number(v) < 0) {
+        row._errors.push(label + ' must be a number ≥ 0 (got: "' + v + '")');
+      }
+    });
+
+    row._valid = row._errors.length === 0;
+
+    if (!row._valid && issues.length < MAX_SHOW_ISSUES) {
+      row._errors.forEach(function(err) {
+        issues.push({ line: row._line, id: row.identity_no, name: row.officer_name, err: err });
+      });
+    } else if (!row._valid && issues.length === MAX_SHOW_ISSUES) {
+      issues.push({ line: '…', id: '', name: '', err: '(additional issues not shown — fix the above first)' });
+    }
+
+    rows.push(row);
+  }
+
+  // Scheme distribution (rows per officer)
+  var byOfficer = {};
+  rows.forEach(function(r) {
+    if (!r.identity_no) return;
+    var nid = normId(r.identity_no);
+    byOfficer[nid] = (byOfficer[nid] || 0) + 1;
+  });
+  var dist = {};
+  Object.keys(byOfficer).forEach(function(nid) {
+    var n = byOfficer[nid];
+    dist[n] = (dist[n] || 0) + 1;
+  });
+
+  // Coverage count (informational)
+  var coveredIds = {};
+  rows.forEach(function(r) { if (r.identity_no) coveredIds[normId(r.identity_no)] = true; });
+
+  // Distinct schemes
+  var schemeSet = {};
+  rows.forEach(function(r) { if (r.scheme_name) schemeSet[r.scheme_name.toLowerCase()] = true; });
+
+  var validRows = rows.filter(function(r) { return r._valid; });
+
+  _uploadState[svc] = {
+    filename:      filename,
+    rows:          rows,
+    issues:        issues,
+    byOfficer:     byOfficer,
+    dist:          dist,
+    coveredCount:  Object.keys(coveredIds).length,
+    distinctSchemes: Object.keys(schemeSet).length,
+    validRows:     validRows,
+    canSubmit:     issues.length === 0 && validRows.length > 0
+  };
+
+  document.getElementById('uploadDropZone').className = 'upload-drop loaded';
+  document.getElementById('uploadDropTitle').textContent =
+    '✓ ' + filename + ' — ' + rows.length + ' rows loaded';
+  document.getElementById('summaryArea').style.display = '';
+  document.getElementById('submitAlertWrap').innerHTML = '';
+  renderSummary(svc);
+}
+
+// ================================================================
+// SUMMARY RENDERING
+// ================================================================
+function renderSummary(svc) {
+  var st = _uploadState[svc];
+  if (!st) return;
+
+  var totalOfficers = (_officers[svc] || []).length;
+  document.getElementById('summaryServiceLabel').textContent = svc + ' Officers';
+
+  document.getElementById('summaryGrid').innerHTML =
+    makeStat('info',  st.rows.length,        'Total Rows') +
+    makeStat(st.coveredCount > 0 ? 'ok' : 'warn',
+             st.coveredCount + ' / ' + totalOfficers, 'Officers Covered') +
+    makeStat('info',  st.distinctSchemes,    'Distinct Schemes') +
+    makeStat(st.issues.length > 0 ? 'error' : 'ok',
+             st.issues.length, 'Data Issues');
+
+  // Distribution table
+  var maxOfficers = Math.max.apply(null, Object.values(st.dist).concat([1]));
+  var distHtml = Object.keys(st.dist).sort(function(a,b) { return a - b; }).map(function(n) {
+    var count  = st.dist[n];
+    var label  = n == 1 ? 'Single scheme (1 row)' : n + ' schemes (' + n + ' rows per officer)';
+    var barW   = Math.max(6, Math.round((count / maxOfficers) * 180));
+    var barCls = 'dist-bar' + (n == 2 ? ' c2' : n == 3 ? ' c3' : n > 3 ? ' cx' : '');
+    return '<tr>' +
+      '<td><strong>' + label + '</strong></td>' +
+      '<td class="td-num">' + count + ' officer(s)</td>' +
+      '<td><span class="' + barCls + '" style="width:' + barW + 'px"></span></td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('distTableBody').innerHTML =
+    distHtml || '<tr><td colspan="3" style="color:#94a3b8;font-style:italic;padding:10px 14px;">No rows parsed</td></tr>';
+
+  // Issues
+  var issuesCard = document.getElementById('issuesCard');
+  if (st.issues.length > 0) {
+    issuesCard.style.display = '';
+    document.getElementById('issueCountBadge').textContent = st.issues.length + ' issue(s)';
+    document.getElementById('issueList').innerHTML =
+      st.issues.slice(0, MAX_SHOW_ISSUES).map(function(iss) {
+        return '<li class="issue-item">' +
+          '<span class="issue-item-icon">❌</span>' +
+          '<span>' +
+            '<span class="issue-row-ref">Row ' + iss.line +
+              (iss.id ? ' [' + esc(iss.id) + ']' : '') +
+              (iss.name ? ' ' + esc(iss.name) : '') + ':</span>' +
+            '<span class="issue-text"> ' + esc(iss.err) + '</span>' +
+          '</span>' +
+        '</li>';
+      }).join('');
+    var moreEl = document.getElementById('issueMoreMsg');
+    if (st.issues.length > MAX_SHOW_ISSUES) {
+      moreEl.style.display = '';
+      moreEl.textContent   = '… and more issues. Fix the above first, then re-upload.';
+    } else {
+      moreEl.style.display = 'none';
+    }
+  } else {
+    issuesCard.style.display = 'none';
+  }
+
+  // Submit bar
+  var bar = document.getElementById('submitBar');
+  var txt = document.getElementById('submitStatusText');
+  var btn = document.getElementById('btnSubmit');
+
+  if (st.canSubmit) {
+    bar.className = 'submit-bar ready';
+    txt.className = 'submit-status-text ready';
+    var noteUncovered = totalOfficers - st.coveredCount;
+    txt.textContent = '✓ ' + st.validRows.length + ' row(s) valid across ' +
+      st.coveredCount + ' officer(s) and ' + st.distinctSchemes + ' scheme(s). Ready to submit.' +
+      (noteUncovered > 0
+        ? ' (' + noteUncovered + ' officer(s) not in CSV — recorded as no scheme activity.)'
+        : '');
+    btn.disabled = false;
+  } else {
+    bar.className = 'submit-bar blocked';
+    txt.className = 'submit-status-text blocked';
+    var blockers = [];
+    if (st.issues.length)    blockers.push(st.issues.length + ' data issue(s)');
+    if (!st.validRows.length) blockers.push('no valid rows to submit');
+    txt.textContent = '✗ Cannot submit — ' + blockers.join(' and ') + '. Fix and re-upload.';
+    btn.disabled = true;
+  }
+}
+
+function makeStat(cls, num, lbl) {
+  return '<div class="summary-stat ' + cls + '">' +
+    '<div class="stat-num">' + num + '</div>' +
+    '<div class="stat-lbl">' + lbl + '</div>' +
+  '</div>';
+}
+
+// ================================================================
+// SUBMIT
+// ================================================================
+async function submitData() {
+  var svc = _activeService;
+  var st  = _uploadState[svc];
+  if (!st || !st.canSubmit) return;
+
+  var btn = document.getElementById('btnSubmit');
+  btn.textContent = 'Submitting…';
+  btn.disabled    = true;
+
+  var enteredBy = (_session.email || '').toUpperCase();
+
+  var inserts = st.validRows.map(function(r) {
+    return {
+      officer_id:      r._officer ? r._officer.id : null,
+      identity_no:     (r.identity_no || '').toUpperCase().trim(),
+      officer_name:    r.officer_name,
+      service_type:    r._officer ? r._officer.service_type : svc,
+      department_name: r.department_name,
+      scheme_name:     r.scheme_name,
+      period_from:     r.period_from || _period.from,
+      period_to:       r.period_to   || _period.to,
+      funds_allotted:  parseFloat(r.funds_allotted)  || 0,
+      funds_received:  parseFloat(r.funds_received)  || 0,
+      funds_utilized:  parseFloat(r.funds_utilized)  || 0,
+      ucs_submitted:   parseFloat(r.ucs_submitted)   || 0,
+      entered_by:      enteredBy
+    };
+  });
+
+  var errors = [];
+  for (var i = 0; i < inserts.length; i += 200) {
+    var batch = inserts.slice(i, i + 200);
+    var { error } = await _supabase.from('goifunds_data').insert(batch);
+    if (error) errors.push(error.message);
+  }
+
+  btn.textContent = '✓ Submit Data';
+
+  var alertEl = document.getElementById('submitAlertWrap');
+  if (errors.length) {
+    alertEl.innerHTML = '<div class="alert error">❌ Error during submission: ' + esc(errors.join('; ')) + '</div>';
+    btn.disabled = false;
+  } else {
+    alertEl.innerHTML =
+      '<div class="alert success">✅ Successfully submitted ' + inserts.length + ' record(s) for ' + svc +
+      ' officers — ' + st.distinctSchemes + ' scheme(s) (Period: ' +
+      fmtDate(_period.from) + ' to ' + fmtDate(_period.to) + ').</div>';
+    _uploadState[svc] = null;
+    document.getElementById('summaryArea').style.display = 'none';
+    resetDropZone();
+    document.getElementById('svcCount-' + svc).textContent =
+      (_officers[svc] || []).length + ' ✓';
+    btn.disabled = true;
+  }
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+var _dashData   = null;
+var _dashPeriod = null;
+
+async function loadDashboard() {
+  var { data, error } = await _supabase
+    .from('goifunds_data')
+    .select('identity_no, officer_name, service_type, department_name, scheme_name, period_from, period_to, funds_allotted, funds_received, funds_utilized, ucs_submitted, entered_at')
+    .eq('entered_by', (_session.email || '').toUpperCase())
+    .order('period_from', { ascending: false });
+
+  if (error) { console.error(error); return; }
+  _dashData = data || [];
+
+  if (!_dashData.length) {
+    document.getElementById('dashCapsules').innerHTML = '';
+    document.getElementById('dashNoData').style.display  = '';
+    document.getElementById('dashContent').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('dashNoData').style.display = 'none';
+  buildCapsules();
+  renderDashboard(_dashPeriod);
+}
+
+function buildCapsules() {
+  var seen = {}, periods = [];
+  (_dashData || []).forEach(function(r) {
+    var key = (r.period_from || '') + '|' + (r.period_to || '');
+    if (!seen[key]) { seen[key] = true; periods.push({ key: key, from: r.period_from, to: r.period_to }); }
+  });
+  periods.sort(function(a, b) { return (b.from || '').localeCompare(a.from || ''); });
+
+  var html =
+    '<button class="period-capsule all' + (!_dashPeriod ? ' active' : '') + '" onclick="selectDashPeriod(null)">' +
+      'All Periods (' + periods.length + ')' +
+    '</button>';
+
+  periods.forEach(function(p) {
+    var active = _dashPeriod === p.key ? ' active' : '';
+    html += '<button class="period-capsule' + active + '" onclick="selectDashPeriod(\'' + p.key + '\')">' +
+      fmtDate(p.from) + ' &rarr; ' + fmtDate(p.to) + '</button>';
+  });
+
+  document.getElementById('dashCapsules').innerHTML = html;
+}
+
+function selectDashPeriod(key) {
+  _dashPeriod = key;
+  buildCapsules();
+  renderDashboard(key);
+}
+
+function renderDashboard(periodKey) {
+  var rows = _dashData || [];
+
+  if (periodKey) {
+    var pp = periodKey.split('|');
+    rows = rows.filter(function(r) { return r.period_from === pp[0] && r.period_to === pp[1]; });
+  }
+
+  if (!rows.length) { document.getElementById('dashContent').style.display = 'none'; return; }
+  document.getElementById('dashContent').style.display = '';
+
+  // Distinct periods
+  var periodSet = {};
+  rows.forEach(function(r) { periodSet[(r.period_from||'') + '|' + (r.period_to||'')] = true; });
+
+  // Distinct officers
+  var officerSet = {};
+  rows.forEach(function(r) { if (r.identity_no) officerSet[r.identity_no] = true; });
+
+  // Aggregate fund totals
+  var totAllotted = 0, totReceived = 0, totUtilized = 0, totUCs = 0;
+  rows.forEach(function(r) {
+    totAllotted  += Number(r.funds_allotted  || 0);
+    totReceived  += Number(r.funds_received  || 0);
+    totUtilized  += Number(r.funds_utilized  || 0);
+    totUCs       += Number(r.ucs_submitted   || 0);
+  });
+
+  // Stat cards
+  var PILL_DEFS = [
+    { icon: '📅', num: Object.keys(periodSet).length, lbl: 'Periods Uploaded',      accent: '#dc2626' },
+    { icon: '👥', num: Object.keys(officerSet).length, lbl: 'Officers Covered',      accent: '#059669' },
+    { icon: '🏛️', num: fmtINR(totAllotted),            lbl: 'Total Funds Allotted',  accent: '#1e40af' },
+    { icon: '📥', num: fmtINR(totReceived),            lbl: 'Total Funds Received',  accent: '#d97706' },
+    { icon: '✅', num: fmtINR(totUtilized),            lbl: 'Total Funds Utilized',  accent: '#15803d' },
+    { icon: '📋', num: fmtINR(totUCs),                 lbl: 'UCs Submitted to GoI',  accent: '#7c3aed' }
+  ];
+
+  document.getElementById('dashSummaryGrid').innerHTML = PILL_DEFS.map(function(d) {
+    return '<div class="dash-stat-card" style="border-left-color:' + d.accent + ';--accent:' + d.accent + ';">' +
+      '<span class="dash-stat-icon">' + d.icon + '</span>' +
+      '<div class="dash-stat-num" style="color:' + d.accent + ';">' + d.num + '</div>' +
+      '<div class="dash-stat-lbl">' + d.lbl + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Funds flow bars
+  function flowBar(label, value, color, pct) {
+    var pctWidth = (pct !== undefined) ? Math.max(0, Math.min(100, pct)) : 100;
+    var pctText  = (pct !== undefined) ? pct.toFixed(1) + '% of allotted' : '';
+    return '<div class="flow-bar-item">' +
+      '<div class="flow-bar-header">' +
+        '<span class="flow-bar-label">' + label + '</span>' +
+        '<span class="flow-bar-value" style="color:' + color + ';">' + fmtINRFull(value) +
+          (pctText ? '<span class="flow-bar-pct">(' + pctText + ')</span>' : '') +
+        '</span>' +
+      '</div>' +
+      '<div class="flow-bar-track">' +
+        '<div class="flow-bar-fill" style="width:' + pctWidth + '%;background:' + color + ';"></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var receivePct  = totAllotted > 0 ? totReceived  / totAllotted * 100 : 0;
+  var utilizePct  = totAllotted > 0 ? totUtilized  / totAllotted * 100 : 0;
+  var ucPct       = totAllotted > 0 ? totUCs       / totAllotted * 100 : 0;
+
+  document.getElementById('dashFlowBars').innerHTML =
+    flowBar('Funds Allotted (Union Budget to AP)', totAllotted, '#1e40af') +
+    flowBar('Funds Received from GoI', totReceived, '#d97706', Math.min(100, receivePct)) +
+    flowBar('Funds Utilized / Expenditure', totUtilized, '#15803d', Math.min(100, utilizePct)) +
+    flowBar('UCs Submitted to GoI', totUCs, '#7c3aed', Math.min(100, ucPct));
+
+  // Service breakdown
+  var svcMap = {};
+  rows.forEach(function(r) {
+    var s = r.service_type || '—';
+    if (!svcMap[s]) svcMap[s] = { ids: new Set(), allotted: 0, received: 0, utilized: 0, ucs: 0 };
+    svcMap[s].ids.add(r.identity_no);
+    svcMap[s].allotted  += Number(r.funds_allotted  || 0);
+    svcMap[s].received  += Number(r.funds_received  || 0);
+    svcMap[s].utilized  += Number(r.funds_utilized  || 0);
+    svcMap[s].ucs       += Number(r.ucs_submitted   || 0);
+  });
+
+  var svcRows = ['IAS','IPS','IFS'].filter(function(s) { return svcMap[s]; }).map(function(s) {
+    var d    = svcMap[s];
+    var upct = d.allotted > 0 ? (d.utilized / d.allotted * 100).toFixed(1) + '%' : '—';
+    return '<tr>' +
+      '<td><span class="td-badge ' + s.toLowerCase() + '">' + s + '</span></td>' +
+      '<td class="td-num">' + d.ids.size + '</td>' +
+      '<td class="td-num">' + fmtINR(d.allotted)  + '</td>' +
+      '<td class="td-num">' + fmtINR(d.received)  + '</td>' +
+      '<td class="td-green">' + fmtINR(d.utilized) + '</td>' +
+      '<td class="td-num">' + fmtINR(d.ucs)        + '</td>' +
+      '<td class="td-num">' + upct + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var totalUpct = totAllotted > 0 ? (totUtilized / totAllotted * 100).toFixed(1) + '%' : '—';
+  svcRows +=
+    '<tr style="background:#fff1f2;">' +
+    '<td style="font-weight:800;color:#7f1d1d;">Total</td>' +
+    '<td class="td-num" style="font-weight:800;">' + Object.keys(officerSet).length + '</td>' +
+    '<td class="td-num" style="font-weight:800;">' + fmtINR(totAllotted)  + '</td>' +
+    '<td class="td-num" style="font-weight:800;">' + fmtINR(totReceived)  + '</td>' +
+    '<td class="td-green" style="font-weight:800;">' + fmtINR(totUtilized) + '</td>' +
+    '<td class="td-num" style="font-weight:800;">' + fmtINR(totUCs)        + '</td>' +
+    '<td class="td-num" style="font-weight:800;">' + totalUpct + '</td>' +
+    '</tr>';
+
+  document.getElementById('dashServiceTableWrap').innerHTML =
+    '<table><thead><tr>' +
+      '<th>Service</th>' +
+      '<th style="text-align:right;">Officers</th>' +
+      '<th style="text-align:right;">Allotted</th>' +
+      '<th style="text-align:right;">Received</th>' +
+      '<th style="text-align:right;">Utilized</th>' +
+      '<th style="text-align:right;">UCs Submitted</th>' +
+      '<th style="text-align:right;">Utilization %</th>' +
+    '</tr></thead><tbody>' + svcRows + '</tbody></table>';
+
+  // Scheme distribution pills
+  var schemeCnt = {};
+  rows.forEach(function(r) {
+    if (!r.identity_no) return;
+    schemeCnt[r.identity_no] = (schemeCnt[r.identity_no] || 0) + 1;
+  });
+  var dist = {};
+  Object.values(schemeCnt).forEach(function(n) { dist[n] = (dist[n] || 0) + 1; });
+
+  var distColors = { 1: '#dc2626', 2: '#d97706', 3: '#7c3aed', 4: '#0891b2' };
+  document.getElementById('dashDistGrid').innerHTML =
+    Object.keys(dist).sort(function(a,b) { return a - b; }).map(function(n) {
+      var color = distColors[n] || '#64748b';
+      var label = n == 1 ? 'Single Scheme' : n + ' Schemes';
+      return '<div class="dist-pill" style="border-color:' + color + ';color:' + color + ';background:' + color + '18;">' +
+        '<div class="dist-pill-num">' + dist[n] + '</div>' +
+        '<div class="dist-pill-lbl">' + label + '</div>' +
+      '</div>';
+    }).join('') ||
+    '<span style="font-size:12px;color:#94a3b8;">No data</span>';
+}
+
+// ================================================================
+// RECORDS TAB
+// ================================================================
+async function loadPeriods() {
+  var sel = document.getElementById('filterPeriod');
+  var currentVal = sel.value;
+
+  var { data, error } = await _supabase
+    .from('goifunds_data')
+    .select('period_from, period_to')
+    .eq('entered_by', (_session.email || '').toUpperCase());
+
+  if (error || !data) return;
+
+  var seen = {}, pairs = [];
+  data.forEach(function(r) {
+    if (!r.period_from || !r.period_to) return;
+    var key = r.period_from + '|' + r.period_to;
+    if (!seen[key]) { seen[key] = true; pairs.push({ from: r.period_from, to: r.period_to, key: key }); }
+  });
+  pairs.sort(function(a, b) { return b.from.localeCompare(a.from); });
+
+  sel.innerHTML = '<option value="">All Periods</option>';
+  pairs.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value       = p.key;
+    opt.textContent = fmtDate(p.from) + ' → ' + fmtDate(p.to);
+    sel.appendChild(opt);
+  });
+  if (currentVal) sel.value = currentVal;
+}
+
+async function loadRecords(page) {
+  _recordsPage = page || 1;
+
+  var filterSvc     = document.getElementById('filterService').value  || '';
+  var filterOfficer = (document.getElementById('filterOfficer').value || '').trim().toLowerCase();
+  var periodVal     = document.getElementById('filterPeriod').value   || '';
+  var filterFrom    = '';
+  var filterTo      = '';
+  if (periodVal) { var pp = periodVal.split('|'); filterFrom = pp[0] || ''; filterTo = pp[1] || ''; }
+
+  var from = (_recordsPage - 1) * RECORDS_PER_PAGE;
+
+  var q = _supabase
+    .from('goifunds_data')
+    .select('*', { count: 'exact' })
+    .eq('entered_by', (_session.email || '').toUpperCase())
+    .order('entered_at', { ascending: false });
+
+  if (filterSvc)  q = q.eq('service_type', filterSvc);
+  if (filterFrom) q = q.gte('period_from',  filterFrom);
+  if (filterTo)   q = q.lte('period_to',    filterTo);
+
+  q = q.range(from, from + RECORDS_PER_PAGE - 1);
+
+  var { data, count, error } = await q;
+  if (error) { console.error(error); return; }
+
+  var rows = data || [];
+
+  if (filterOfficer) {
+    rows = rows.filter(function(r) {
+      return (r.officer_name    || '').toLowerCase().includes(filterOfficer) ||
+             (r.identity_no     || '').toLowerCase().includes(filterOfficer) ||
+             (r.scheme_name     || '').toLowerCase().includes(filterOfficer) ||
+             (r.department_name || '').toLowerCase().includes(filterOfficer);
+    });
+  }
+
+  var tbody = document.getElementById('recordsBody');
+  var empty = document.getElementById('recordsEmpty');
+
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    document.getElementById('recordsPagination').innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(function(r, i) {
+    var allotted  = Number(r.funds_allotted || 0);
+    var utilized  = Number(r.funds_utilized || 0);
+    var utilPct   = allotted > 0 ? (utilized / allotted * 100).toFixed(1) + '%' : '—';
+    var utilColor = allotted > 0
+      ? (utilized / allotted > 0.9 ? '#15803d' : utilized / allotted > 0.5 ? '#d97706' : '#dc2626')
+      : '#94a3b8';
+    var entAt = r.entered_at
+      ? new Date(r.entered_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    var svcLower = (r.service_type || '').toLowerCase();
+    return '<tr>' +
+      '<td>' + (from + i + 1) + '</td>' +
+      '<td><span class="td-badge ' + svcLower + '">' + esc(r.service_type || '—') + '</span></td>' +
+      '<td><strong>' + esc(r.officer_name || '—') + '</strong></td>' +
+      '<td><span class="td-badge svc">' + esc(r.identity_no || '—') + '</span></td>' +
+      '<td style="font-size:11px;max-width:140px;">' + esc(r.department_name || '—') + '</td>' +
+      '<td style="font-size:11px;font-weight:600;color:#1e1b4b;max-width:160px;">' + esc(r.scheme_name || '—') + '</td>' +
+      '<td style="white-space:nowrap;">' + fmtDate(r.period_from) + '</td>' +
+      '<td style="white-space:nowrap;">' + fmtDate(r.period_to)   + '</td>' +
+      '<td class="td-num">' + fmtINR(r.funds_allotted) + '</td>' +
+      '<td class="td-num">' + fmtINR(r.funds_received) + '</td>' +
+      '<td class="td-green">' + fmtINR(r.funds_utilized) + '</td>' +
+      '<td class="td-num">' + fmtINR(r.ucs_submitted)  + '</td>' +
+      '<td class="td-num" style="color:' + utilColor + ';">' + utilPct + '</td>' +
+      '<td style="font-size:11px;color:#94a3b8;white-space:nowrap;">' + entAt + '</td>' +
+      '<td><button class="btn-del" onclick="deleteRecord(' + r.id + ')">Delete</button></td>' +
+    '</tr>';
+  }).join('');
+
+  renderPagination(count, _recordsPage, RECORDS_PER_PAGE, 'loadRecords', 'recordsPagination');
+}
+
+async function deleteRecord(id) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  var { error } = await _supabase.from('goifunds_data').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadRecords(_recordsPage);
+}
+
+function clearFilters() {
+  document.getElementById('filterService').value = '';
+  document.getElementById('filterOfficer').value = '';
+  document.getElementById('filterPeriod').value  = '';
+  loadRecords(1);
+}
+
+// ================================================================
+// TAB SWITCHING
+// ================================================================
+function showMainTab(tab) {
+  ['dashboard','upload','records'].forEach(function(t) {
+    document.getElementById('mainPane-' + t).style.display = t === tab ? '' : 'none';
+    document.getElementById('mainTab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'records')   loadPeriods().then(function() { loadRecords(1); });
+}
+
+// ================================================================
+// COLLAPSIBLE COLUMN GUIDE
+// ================================================================
+function toggleColGuide() {
+  var el = document.getElementById('colGuide');
+  var ar = document.getElementById('colGuideArrow');
+  if (el.style.display === 'none') { el.style.display = ''; ar.textContent = '▼'; }
+  else                             { el.style.display = 'none'; ar.textContent = '▶'; }
+}
+
+// ================================================================
+// UTILITIES
+// ================================================================
+function normId(s) { return (s || '').trim().toUpperCase().replace(/\s+/g, ''); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  var p = ('' + d).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d;
+}
+
+function fmtINR(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  var num = Number(n);
+  if (isNaN(num)) return '—';
+  if (Math.abs(num) >= 1e7) return '₹' + (num / 1e7).toFixed(2) + ' Cr';
+  if (Math.abs(num) >= 1e5) return '₹' + (num / 1e5).toFixed(2) + ' L';
+  return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
+function fmtINRFull(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  var num = Number(n);
+  if (isNaN(num)) return '—';
+  return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function splitCSVLine(line) {
+  var res = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      res.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  res.push(cur);
+  return res;
+}
+
+function showSubmitAlert(type, msg) {
+  var el = document.getElementById('submitAlertWrap');
+  if (el) el.innerHTML = '<div class="alert ' + type + '">' + esc(msg) + '</div>';
+}
+
+function renderPagination(total, page, perPage, fnName, containerId) {
+  var pages = Math.ceil((total || 0) / perPage) || 1;
+  var el    = document.getElementById(containerId);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  var html = '';
+  html += '<button class="pg-btn" onclick="'+fnName+'(1)" '+(page===1?'disabled':'')+'>«</button>';
+  html += '<button class="pg-btn" onclick="'+fnName+'('+(page-1)+')" '+(page===1?'disabled':'')+'>‹</button>';
+  for (var p = Math.max(1,page-2); p <= Math.min(pages,page+2); p++) {
+    html += '<button class="pg-btn'+(p===page?' active':'')+'" onclick="'+fnName+'('+p+')">'+p+'</button>';
+  }
+  html += '<button class="pg-btn" onclick="'+fnName+'('+(page+1)+')" '+(page===pages?'disabled':'')+'>›</button>';
+  html += '<button class="pg-btn" onclick="'+fnName+'('+pages+')" '+(page===pages?'disabled':'')+'>»</button>';
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

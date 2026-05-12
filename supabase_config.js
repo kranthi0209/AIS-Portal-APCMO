@@ -30,10 +30,15 @@ function getSession() {
 
 function saveSession(user) {
   localStorage.setItem(_SESSION_KEY, JSON.stringify({
-    id:      user.id,
-    email:   user.email,
-    role:    user.role,
-    loginAt: Date.now()
+    id:                   user.id,
+    email:                user.email,
+    role:                 user.role,
+    officer_id:           user.officer_id           ?? null,
+    must_change_password: user.must_change_password  ?? false,
+    is_first_login:       user.is_first_login        ?? false,
+    personal_email:       user.personal_email        ?? null,
+    personal_mobile:      user.personal_mobile       ?? null,
+    loginAt:              Date.now()
   }));
 }
 
@@ -48,6 +53,7 @@ async function requireAuth() {
 
 function signOut() {
   localStorage.removeItem(_SESSION_KEY);
+  try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
   window.location.href = 'index.html';
 }
 
@@ -103,6 +109,7 @@ async function loadOfficerData(serviceType) {
   let allRows = [];
   let from    = 0;
 
+  // Step 1: fetch all postings joined with officers (inner join — officers WITH postings)
   while (true) {
     const { data, error } = await _supabase
       .from('officer_postings')
@@ -124,7 +131,28 @@ async function loadOfficerData(serviceType) {
     from += PAGE_SIZE;
   }
 
-  return allRows.map(mapRow);
+  const mapped = allRows.map(mapRow);
+
+  // Step 2: fetch ALL officers of this service type and append any who have no postings
+  // (inner join above silently drops officers with zero posting records)
+  const seenIds = new Set(mapped.map(r => r.OfficerId));
+  const { data: officers } = await _supabase
+    .from('officers')
+    .select(`
+      id, identity_no, cadre, name_of_officer,
+      current_posting, date_of_appointment, source_of_recruitment,
+      educational_qualification, date_of_birth, allotment_year,
+      domicile, email_id, phone_no, is_retired, is_transferred_from_ap
+    `)
+    .eq('service_type', serviceType);
+
+  (officers || []).forEach(o => {
+    if (!seenIds.has(o.id)) {
+      mapped.push(mapRow({ officers: o }));
+    }
+  });
+
+  return mapped;
 }
 
 // ----------------------------------------------------------------
@@ -160,4 +188,62 @@ async function loadPhotos(serviceType) {
 async function isAdmin() {
   const session = getSession();
   return session?.role === 'admin';
+}
+
+// ----------------------------------------------------------------
+// Module gate — checks module_control and, if blocked, overlays
+// a full-screen message and returns false.
+// Usage in entry pages (async init):
+//   if (!await enforceModuleGate('swarna')) return;
+// ----------------------------------------------------------------
+async function enforceModuleGate(moduleName) {
+  try {
+    const { data } = await _supabase
+      .from('module_control')
+      .select('label, deadline, is_paused, notes')
+      .eq('module_name', moduleName)
+      .maybeSingle();
+
+    if (!data) return true;
+
+    const isPaused  = !!data.is_paused;
+    const isExpired = data.deadline && new Date() > new Date(data.deadline);
+    if (!isPaused && !isExpired) return true;
+
+    const reason = isPaused
+      ? '&#9208; Data entry has been paused by the administrator.'
+      : '&#9200; The deadline for this module has passed (' +
+        new Date(data.deadline).toLocaleString('en-IN') + ').';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText =
+      'position:fixed;inset:0;background:rgba(15,12,41,0.92);z-index:99999;' +
+      'display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;';
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:40px 44px;max-width:480px;width:94%;' +
+             'box-shadow:0 24px 60px rgba(0,0,0,0.5);text-align:center;">' +
+        '<div style="font-size:52px;margin-bottom:16px;">' + (isPaused ? '&#9208;' : '&#128274;') + '</div>' +
+        '<div style="font-size:20px;font-weight:800;color:#1e1b4b;margin-bottom:10px;">' +
+          (data.label || moduleName) + ' &mdash; ' + (isPaused ? 'Paused' : 'Deadline Passed') +
+        '</div>' +
+        '<div style="font-size:14px;color:#64748b;margin-bottom:' + (data.notes ? '10px' : '24px') + ';line-height:1.6;">' +
+          reason +
+        '</div>' +
+        (data.notes
+          ? '<div style="font-size:13px;color:#475569;background:#f1f5f9;border-radius:10px;' +
+                        'padding:12px 16px;margin-bottom:24px;line-height:1.6;">' +
+              '<strong>Admin note:</strong> ' + data.notes +
+            '</div>'
+          : '') +
+        '<button onclick="window.location.href=\'index.html\'" ' +
+          'style="padding:11px 28px;background:linear-gradient(135deg,#1e1b4b,#4338ca);' +
+                 'color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">' +
+          '&larr; Back to Home' +
+        '</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    return false;
+  } catch (e) {
+    return true; // if table missing, allow access
+  }
 }

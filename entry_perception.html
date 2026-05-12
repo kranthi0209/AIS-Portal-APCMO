@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Perception Survey | AIS Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #eef0fb; min-height: 100vh; }
+
+    /* ── Header ── */
+    .top-header {
+      background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 55%, #7c3aed 100%);
+      padding: 13px 24px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 16px rgba(76,29,149,0.45);
+    }
+    .btn-back {
+      padding: 8px 16px; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(196,181,253,0.4); border-radius: 8px;
+      color: #ddd6fe; font-size: 13px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.22); }
+    .header-title-group { flex: 1; }
+    .header-mod-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #c4b5fd; }
+    .header-mod-title { font-size: clamp(14px,1.6vw,20px); font-weight: 800; color: #fff; }
+    .btn-logout-h {
+      padding: 9px 16px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(196,181,253,0.35); border-radius: 8px;
+      color: #ddd6fe; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-logout-h:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Welcome bar ── */
+    .welcome-bar {
+      background: #fff; padding: 7px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #ddd6fe; font-size: 12px; color: #475569;
+    }
+    .welcome-bar strong { color: #4c1d95; }
+
+    /* ── Main tab bar ── */
+    .tab-bar { background: #fff; border-bottom: 2px solid #e2e8f0; display: flex; padding: 0 24px; }
+    .tab-btn {
+      padding: 11px 20px; background: none; border: none;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+    }
+    .tab-btn:hover  { color: #7c3aed; }
+    .tab-btn.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+
+    /* ── Page ── */
+    .page-content { padding: 20px 24px 52px; max-width: 1060px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 14px rgba(30,27,75,0.08);
+      padding: 22px 26px; margin-bottom: 18px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; color: #1e1b4b;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 2px solid #eef0fb;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    /* ── Form elements ── */
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; }
+    .form-group label .req { color: #ef4444; }
+    .form-control {
+      padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 9px;
+      font-family: 'Inter', sans-serif; font-size: 14px; color: #1e1b4b;
+      transition: border-color 0.18s; background: #fff;
+    }
+    .form-control:focus { outline: none; border-color: #7c3aed; }
+
+    /* ── Period card ── */
+    .period-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: flex-end; }
+    .btn-proceed {
+      padding: 11px 28px; background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.3); white-space: nowrap;
+    }
+    .btn-proceed:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(124,58,237,0.45); }
+    .period-error { font-size: 12px; color: #dc2626; margin-top: 8px; font-weight: 600; }
+
+    /* ── Period bar ── */
+    .period-bar {
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+      border: 1.5px solid #ddd6fe; border-radius: 12px;
+      padding: 10px 18px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .period-bar-label { font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.8px; }
+    .period-bar-dates { font-size: 15px; font-weight: 800; color: #1e1b4b; }
+    .btn-edit-period {
+      margin-left: auto; padding: 5px 14px;
+      background: none; border: 1.5px solid #c4b5fd; border-radius: 7px;
+      color: #7c3aed; font-size: 12px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-edit-period:hover { background: #ede9fe; }
+
+    /* ── Service tabs ── */
+    .svc-tab-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .svc-tab {
+      padding: 10px 22px; border-radius: 10px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .svc-tab:hover { border-color: #c4b5fd; color: #7c3aed; background: #f5f3ff; }
+    .svc-tab.ias.active { background: linear-gradient(135deg,#d97706,#92400e); border-color: #d97706; color: #fff; }
+    .svc-tab.ips.active { background: linear-gradient(135deg,#dc2626,#991b1b); border-color: #dc2626; color: #fff; }
+    .svc-tab.ifs.active { background: linear-gradient(135deg,#059669,#065f46); border-color: #059669; color: #fff; }
+    .svc-count-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.25); min-width: 28px; text-align: center;
+    }
+    .svc-tab:not(.active) .svc-count-pill { background: #e2e8f0; color: #64748b; }
+
+    /* ── Upload type toggle ── */
+    .upload-type-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+    .type-btn {
+      padding: 9px 22px; border-radius: 10px; border: 2px solid #e2e8f0;
+      background: #f8fafc; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+    }
+    .type-btn:hover { border-color: #c4b5fd; color: #7c3aed; background: #f5f3ff; }
+    .type-btn.officer.active { background: #f5f3ff; border-color: #7c3aed; color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,0.18); }
+    .type-btn.office.active  { background: #f0fdf4; border-color: #059669; color: #059669; box-shadow: 0 2px 8px rgba(5,150,105,0.18); }
+    .type-desc { font-size: 12px; color: #94a3b8; flex: 1; min-width: 220px; line-height: 1.55; }
+
+    /* ── Upload card internals ── */
+    .step-label { font-size: 12px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+    .step-desc  { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+    hr.divider  { border: none; border-top: 1.5px solid #eef0fb; margin: 18px 0; }
+    .actions-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-template {
+      padding: 10px 22px; background: none; border: 2px solid #7c3aed; border-radius: 9px;
+      color: #7c3aed; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: background 0.18s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-template:hover    { background: #f5f3ff; }
+    .btn-template:disabled { opacity: 0.45; cursor: not-allowed; }
+    .officer-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 20px;
+      padding: 5px 14px; font-size: 12px; font-weight: 700; color: #15803d;
+    }
+
+    /* ── Drop zone ── */
+    .upload-drop {
+      border: 2.5px dashed #c4b5fd; border-radius: 14px;
+      padding: 34px 28px; text-align: center; background: #faf5ff;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-drop:hover, .upload-drop.over { border-color: #7c3aed; background: #f5f3ff; }
+    .upload-drop.loaded { border-color: #22c55e; background: #f0fdf4; border-style: solid; }
+    .upload-drop-icon  { font-size: 36px; margin-bottom: 10px; }
+    .upload-drop-title { font-size: 14px; font-weight: 700; color: #1e1b4b; margin-bottom: 4px; }
+    .upload-drop-sub   { font-size: 12px; color: #64748b; }
+    .file-input-hidden { display: none; }
+
+    /* ── Summary stats ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+    .summary-stat { border-radius: 12px; padding: 14px 16px; text-align: center; border-left: 4px solid #e2e8f0; background: #f8fafc; }
+    .summary-stat.ok    { border-left-color: #22c55e; background: #f0fdf4; }
+    .summary-stat.warn  { border-left-color: #f59e0b; background: #fffbeb; }
+    .summary-stat.error { border-left-color: #ef4444; background: #fef2f2; }
+    .summary-stat.info  { border-left-color: #3b82f6; background: #eff6ff; }
+    .stat-num { font-size: 28px; font-weight: 800; color: #1e1b4b; line-height: 1; }
+    .stat-lbl { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Distribution table ── */
+    .dist-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .dist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dist-table th { background: #f1f5f9; padding: 8px 14px; text-align: left; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; }
+    .dist-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+    .dist-table tr:last-child td { border-bottom: none; }
+    .dist-bar { display: inline-block; height: 10px; border-radius: 5px; background: #7c3aed; margin-left: 6px; vertical-align: middle; min-width: 4px; }
+    .dist-bar.c2 { background: #d97706; }
+    .dist-bar.c3 { background: #dc2626; }
+    .dist-bar.cx { background: #64748b; }
+
+    /* ── Issues ── */
+    .issue-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 380px; overflow-y: auto; }
+    .issue-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;
+      padding: 9px 14px; font-size: 12px;
+    }
+    .issue-item-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .issue-row-ref   { font-weight: 700; color: #dc2626; margin-right: 6px; }
+    .issue-text      { color: #991b1b; }
+    .more-msg        { font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; }
+
+    /* ── Missing officers ── */
+    .missing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 8px; max-height: 340px; overflow-y: auto; }
+    .missing-chip {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+      padding: 8px 12px; font-size: 12px;
+    }
+    .missing-chip-icon { color: #d97706; font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+    .missing-chip-name { font-weight: 700; color: #92400e; font-size: 11px; }
+    .missing-chip-id   { color: #b45309; font-size: 11px; margin-top: 1px; }
+
+    /* ── Submit bar ── */
+    .submit-bar {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 16px 22px; background: #f8fafc; border-radius: 12px; border: 2px solid #e2e8f0;
+    }
+    .submit-bar.ready   { background: #f0fdf4; border-color: #86efac; }
+    .submit-bar.blocked { background: #fef2f2; border-color: #fca5a5; }
+    .submit-status-text         { font-size: 13px; font-weight: 600; color: #64748b; flex: 1; }
+    .submit-status-text.ready   { color: #15803d; }
+    .submit-status-text.blocked { color: #dc2626; }
+    .btn-submit {
+      padding: 12px 30px; background: linear-gradient(135deg, #059669, #047857);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(5,150,105,0.35); white-space: nowrap;
+    }
+    .btn-submit:hover    { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(5,150,105,0.5); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── Alert ── */
+    .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 12px; }
+    .alert.success { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
+    .alert.error   { background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626; }
+
+    /* ── Records table ── */
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #4c1d95; color: #ddd6fe; padding: 10px 14px; text-align: left;
+      font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #faf5ff; }
+    tbody td { padding: 9px 14px; color: #374151; vertical-align: middle; }
+    .td-num   { text-align: right; font-weight: 700; color: #1e1b4b; font-variant-numeric: tabular-nums; }
+    .td-score { text-align: right; font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .td-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .td-badge.ias { background: #fef3c7; color: #d97706; }
+    .td-badge.ips { background: #fee2e2; color: #dc2626; }
+    .td-badge.ifs { background: #d1fae5; color: #059669; }
+    .td-badge.svc { background: #f5f3ff; color: #7c3aed; }
+    .td-badge.officer { background: #f5f3ff; color: #7c3aed; }
+    .td-badge.office  { background: #d1fae5; color: #059669; }
+    .btn-del {
+      padding: 4px 12px; background: #fef2f2; border: 1.5px solid #fca5a5;
+      color: #dc2626; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .empty-icon  { font-size: 40px; margin-bottom: 10px; }
+    .empty-text  { font-size: 14px; font-weight: 600; }
+    .empty-sub   { font-size: 12px; margin-top: 4px; }
+
+    /* ── Dashboard ── */
+    .capsule-bar-wrap {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 16px 22px; margin-bottom: 18px;
+    }
+    .capsule-bar-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .period-capsules-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; flex-wrap: wrap; }
+    .period-capsule {
+      padding: 7px 18px; border-radius: 20px; white-space: nowrap;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-size: 12px; font-weight: 700; color: #64748b;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.18s; flex-shrink: 0;
+    }
+    .period-capsule:hover  { border-color: #c4b5fd; color: #7c3aed; background: #f5f3ff; }
+    .period-capsule.active { background: linear-gradient(135deg,#7c3aed,#6d28d9); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+    .period-capsule.all    { border-style: dashed; }
+    .period-capsule.all.active { background: linear-gradient(135deg,#475569,#334155); }
+
+    .dash-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+    .dash-stat-card {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 18px 20px; border-left: 5px solid #e2e8f0; position: relative; overflow: hidden;
+    }
+    .dash-stat-card::after {
+      content: ''; position: absolute; top: -16px; right: -16px;
+      width: 70px; height: 70px; border-radius: 50%; opacity: 0.07;
+      background: var(--accent, #7c3aed);
+    }
+    .dash-stat-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+    .dash-stat-num  { font-size: 32px; font-weight: 800; color: #1e1b4b; line-height: 1; margin-bottom: 5px; }
+    .dash-stat-lbl  { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Score range pills ── */
+    .score-range-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .score-range-pill {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 24px; border-radius: 14px; border: 2px solid;
+      min-width: 130px;
+    }
+    .score-range-pill-num { font-size: 36px; font-weight: 800; line-height: 1; }
+    .score-range-pill-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+    .score-range-pill-range { font-size: 10px; opacity: 0.7; margin-top: 3px; }
+
+    /* ── Filter row ── */
+    .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-row .form-group { min-width: 140px; flex: 1; }
+    .btn-clear-filter {
+      padding: 8px 16px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 9px;
+      color: #475569; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.18s;
+    }
+    .btn-clear-filter:hover { background: #e2e8f0; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; gap: 6px; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
+    .pg-btn {
+      padding: 6px 12px; border: 1.5px solid #e2e8f0; border-radius: 7px;
+      background: #fff; font-size: 12px; font-weight: 600; color: #475569;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .pg-btn:hover  { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+    .pg-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Column guide ── */
+    .col-guide { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 12px; }
+    .col-guide-key  { font-weight: 700; color: #7c3aed; font-family: monospace; white-space: nowrap; }
+    .col-guide-desc { color: #374151; padding: 2px 0; }
+    .col-guide-req  { color: #ef4444; font-size: 10px; font-weight: 700; }
+
+    @media (max-width: 768px) {
+      .period-form { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .dash-stat-grid { grid-template-columns: 1fr 1fr; }
+      .page-content { padding: 14px 14px 52px; }
+    }
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .dash-stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="top-header">
+  <button class="btn-back" onclick="location.href='index.html'">&#8592; Home</button>
+  <div class="header-title-group">
+    <div class="header-mod-label">Perception Module</div>
+    <div class="header-mod-title">Public Perception Survey Data Entry</div>
+  </div>
+  <button class="btn-logout-h" onclick="signOut()">⏻ Logout</button>
+</div>
+
+<div class="welcome-bar">
+  <span>Operator: <strong id="welcomeName">—</strong></span>
+  <span id="welcomeDate" style="font-size:11px;color:#94a3b8;"></span>
+</div>
+
+<!-- ── Main tabs ── -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="mainTab-dashboard" onclick="showMainTab('dashboard')">📊 Dashboard</button>
+  <button class="tab-btn"        id="mainTab-upload"    onclick="showMainTab('upload')">📥 Upload Data</button>
+  <button class="tab-btn"        id="mainTab-records"   onclick="showMainTab('records')">📋 View Records</button>
+</div>
+
+<div class="page-content">
+
+  <!-- ════════════════ DASHBOARD TAB ════════════════ -->
+  <div id="mainPane-dashboard">
+
+    <div class="capsule-bar-wrap">
+      <div class="capsule-bar-label">📅 Select Period to View Analytics</div>
+      <div class="period-capsules-bar" id="dashCapsules">
+        <span style="font-size:12px;color:#94a3b8;">Loading…</span>
+      </div>
+      <div class="capsule-bar-label" style="margin-top:12px;">📋 Data Type</div>
+      <div class="period-capsules-bar">
+        <button class="period-capsule all active" id="dashTypeBtn-all"     onclick="selectDashType(null)">All Data</button>
+        <button class="period-capsule"            id="dashTypeBtn-officer" onclick="selectDashType('officer')">👤 Officer Perception</button>
+        <button class="period-capsule"            id="dashTypeBtn-office"  onclick="selectDashType('office')">🏢 Office / Dept Perception</button>
+      </div>
+    </div>
+
+    <div id="dashNoData" class="empty-state" style="display:none;">
+      <div class="empty-icon">📋</div>
+      <div class="empty-text">No data uploaded yet</div>
+      <div class="empty-sub">Upload Public Perception Survey data using the Upload Data tab to see analytics here.</div>
+    </div>
+
+    <div id="dashContent" style="display:none;">
+
+      <!-- Stat cards -->
+      <div class="dash-stat-grid" id="dashSummaryGrid"></div>
+
+      <!-- Score distribution -->
+      <div class="card">
+        <div class="card-title">🎯 Score Distribution — Positive Perception Ranges</div>
+        <div id="dashScoreRanges" class="score-range-row"></div>
+      </div>
+
+      <!-- Service breakdown -->
+      <div class="card">
+        <div class="card-title">📊 Service-wise Breakdown</div>
+        <div class="table-wrap" id="dashServiceTableWrap"></div>
+      </div>
+
+      <!-- Question distribution -->
+      <div class="card">
+        <div class="card-title">❓ Question Distribution — Survey Questions per Officer</div>
+        <div class="dist-wrap">
+          <table class="dist-table">
+            <thead><tr><th>Questions per Officer</th><th style="text-align:right;">Officers</th><th>Bar</th></tr></thead>
+            <tbody id="dashDistBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════ UPLOAD TAB ════════════════ -->
+  <div id="mainPane-upload" style="display:none;">
+
+    <!-- STEP 1 ── Period selection ── -->
+    <div class="card" id="step1Card">
+      <div class="card-title">📅 Step 1 — Set the Survey Period</div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:18px;line-height:1.6;">
+        Select the period for which Public Perception Survey data is being uploaded.
+        The same period applies to all three services (IAS, IPS, IFS).
+        The template will be pre-filled with these dates.
+      </p>
+      <div class="period-form">
+        <div class="form-group">
+          <label>Period From <span class="req">*</span></label>
+          <input type="date" id="periodFrom" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Period To <span class="req">*</span></label>
+          <input type="date" id="periodTo" class="form-control">
+        </div>
+        <button class="btn-proceed" onclick="setPeriod()">Proceed &#8594;</button>
+      </div>
+      <div class="period-error" id="periodError"></div>
+    </div>
+
+    <!-- STEP 2 ── Service tabs + upload ── -->
+    <div id="step2Wrap" style="display:none;">
+
+      <div class="period-bar">
+        <span class="period-bar-label">📅 Survey Period</span>
+        <span class="period-bar-dates" id="periodBarDates">—</span>
+        <button class="btn-edit-period" onclick="editPeriod()">✎ Change Period</button>
+      </div>
+
+      <!-- Service tabs -->
+      <div class="svc-tab-bar">
+        <button class="svc-tab ias active" id="svcTab-IAS" onclick="showSvcTab('IAS')">
+          👤 IAS <span class="svc-count-pill" id="svcCount-IAS">…</span>
+        </button>
+        <button class="svc-tab ips" id="svcTab-IPS" onclick="showSvcTab('IPS')">
+          🛡 IPS <span class="svc-count-pill" id="svcCount-IPS">…</span>
+        </button>
+        <button class="svc-tab ifs" id="svcTab-IFS" onclick="showSvcTab('IFS')">
+          🌲 IFS <span class="svc-count-pill" id="svcCount-IFS">…</span>
+        </button>
+      </div>
+
+      <!-- Upload type toggle -->
+      <div class="upload-type-bar">
+        <button class="type-btn officer active" id="typeBtn-officer" onclick="setUploadType('officer')">👤 Officer Perception</button>
+        <button class="type-btn office"         id="typeBtn-office"  onclick="setUploadType('office')">🏢 Office / Department</button>
+        <span class="type-desc" id="typeDesc">Records public perception scores for the individual officer's performance and interaction with the public.</span>
+      </div>
+
+      <!-- Upload card -->
+      <div class="card">
+        <div class="card-title" id="uploadCardTitle">📤 Upload Officer Perception Data for IAS Officers</div>
+
+        <div class="step-label">Step A — Download Pre-filled Template</div>
+        <div class="step-desc">
+          The template is pre-filled with all active officers and the selected period dates.
+          Fill in the <strong>Question</strong> and <strong>Positive Score</strong> (0–100%) for each survey question.
+          <strong>Every officer must appear at least once.</strong>
+          If an officer has multiple survey questions, add a separate row for each.
+          Enter 0 where the perception score is zero; blank is not accepted.
+        </div>
+        <div class="actions-row">
+          <button class="btn-template" id="btnTemplate" onclick="downloadTemplate()">
+            ⬇ Download Template
+          </button>
+          <span class="officer-pill">
+            👥 <span id="officerCountText">Loading…</span>
+          </span>
+        </div>
+
+        <hr class="divider">
+
+        <div class="step-label">Step B — Upload Completed CSV</div>
+        <div class="step-desc">
+          Every officer must appear at least once with at least one survey question.
+          The <strong>positive_score</strong> must be a number between 0 and 100 (percentage of positive responses).
+        </div>
+
+        <div class="upload-drop" id="uploadDropZone"
+          onclick="document.getElementById('csvFileInput').click()"
+          ondragover="handleDragOver(event)"
+          ondrop="handleDrop(event)"
+          ondragleave="handleDragLeave(event)">
+          <div class="upload-drop-icon">📋</div>
+          <div class="upload-drop-title" id="uploadDropTitle">Click or drag-and-drop CSV file here</div>
+          <div class="upload-drop-sub">Accepted: .csv — Max 2,000 rows per upload</div>
+        </div>
+        <input type="file" id="csvFileInput" class="file-input-hidden" accept=".csv" onchange="handleFileSelect(event)">
+
+        <!-- Column guide -->
+        <div style="margin-top:16px;">
+          <div style="font-size:12px;font-weight:700;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="toggleColGuide()">
+            <span id="colGuideArrow">▶</span> CSV Column Reference
+          </div>
+          <div id="colGuide" style="display:none;margin-top:10px;padding:14px 18px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+            <div class="col-guide">
+              <span class="col-guide-key">identity_no <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Officer's identity number — pre-filled in template, do not change</span>
+              <span class="col-guide-key">officer_name <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Full name — pre-filled in template</span>
+              <span class="col-guide-key">question <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">The survey question text (e.g. "Overall satisfaction with officer's services")</span>
+              <span class="col-guide-key">positive_score <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Positive Public Perception score as a percentage (0–100). Enter 0 if the score is zero; blank not accepted.</span>
+              <span class="col-guide-key">period_from <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Survey period start date — pre-filled (YYYY-MM-DD), do not change</span>
+              <span class="col-guide-key">period_to <span class="col-guide-req">REQ</span></span>
+              <span class="col-guide-desc">Survey period end date — pre-filled (YYYY-MM-DD), do not change</span>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:#94a3b8;">
+              One row per survey question per officer. Add multiple rows for the same officer if there are multiple questions. &nbsp;|&nbsp;
+              Positive score is a percentage (0–100); decimals are allowed (e.g. 78.5).
+            </div>
+          </div>
+        </div>
+      </div><!-- /upload card -->
+
+      <!-- Summary area -->
+      <div id="summaryArea" style="display:none;">
+
+        <div class="card">
+          <div class="card-title">
+            📊 Upload Summary —
+            <span id="summaryServiceLabel" style="color:#7c3aed;">IAS — Officer Perception</span>
+          </div>
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <!-- Question distribution -->
+          <div style="margin-top:4px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">
+              Question Distribution — Rows per Officer
+            </div>
+            <div class="dist-wrap">
+              <table class="dist-table">
+                <thead><tr><th>Questions per Officer</th><th style="text-align:right;">Officers</th><th>Bar</th></tr></thead>
+                <tbody id="distTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issues -->
+        <div class="card" id="issuesCard" style="display:none;">
+          <div class="card-title" style="color:#dc2626;">
+            ❌ Issues Found — Fix and Re-upload
+            <span id="issueCountBadge" style="margin-left:auto;font-size:12px;background:#fca5a5;color:#7f1d1d;padding:2px 12px;border-radius:20px;"></span>
+          </div>
+          <ul class="issue-list" id="issueList"></ul>
+          <div class="more-msg" id="issueMoreMsg" style="display:none;"></div>
+        </div>
+
+        <!-- Missing officers -->
+        <div class="card" id="missingCard" style="display:none;">
+          <div class="card-title" style="color:#d97706;">
+            ⚠ Officers Missing from Upload
+            <span id="missingCountBadge" style="margin-left:auto;font-size:12px;background:#fde68a;color:#92400e;padding:2px 12px;border-radius:20px;"></span>
+          </div>
+          <p style="font-size:12px;color:#92400e;margin-bottom:14px;line-height:1.55;">
+            These officers are in the database but not found in your CSV.
+            <strong>Every officer must appear at least once.</strong>
+            Add the missing rows and re-upload.
+          </p>
+          <div class="missing-grid" id="missingGrid"></div>
+          <div class="more-msg" id="missingMoreMsg" style="display:none;"></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="card">
+          <div class="submit-bar" id="submitBar">
+            <span class="submit-status-text" id="submitStatusText">Checking…</span>
+            <button class="btn-submit" id="btnSubmit" onclick="submitData()" disabled>✓ Submit Data</button>
+          </div>
+          <div id="submitAlertWrap"></div>
+        </div>
+
+      </div><!-- /summaryArea -->
+
+    </div><!-- /step2Wrap -->
+
+  </div><!-- /mainPane-upload -->
+
+  <!-- ════════════════ RECORDS TAB ════════════════ -->
+  <div id="mainPane-records" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 Submitted Records</div>
+      <div class="filter-row">
+        <div class="form-group">
+          <label>Service</label>
+          <select id="filterService" class="form-control" onchange="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+            <option value="">All Services</option>
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data Type</label>
+          <select id="filterType" class="form-control" onchange="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+            <option value="">All Types</option>
+            <option value="officer">👤 Officer Perception</option>
+            <option value="office">🏢 Office / Dept</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Officer / Question</label>
+          <input type="text" id="filterOfficer" class="form-control" placeholder="Name, identity, or question…"
+            oninput="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+        </div>
+        <div class="form-group">
+          <label>Period</label>
+          <select id="filterPeriod" class="form-control" onchange="loadRecords(1)" style="font-size:13px;padding:8px 12px;">
+            <option value="">All Periods</option>
+          </select>
+        </div>
+        <button class="btn-clear-filter" onclick="clearFilters()">✕ Clear</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Svc</th>
+              <th>Type</th>
+              <th>Officer</th>
+              <th>Identity No</th>
+              <th>Survey Question</th>
+              <th style="text-align:right;">Score (%)</th>
+              <th>Period From</th>
+              <th>Period To</th>
+              <th>Entered At</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+      <div id="recordsEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">No records found</div>
+        <div class="empty-sub">Upload data using the Upload tab.</div>
+      </div>
+      <div class="pagination" id="recordsPagination"></div>
+    </div>
+  </div>
+
+</div><!-- /page-content -->
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+var _session          = null;
+var _period           = { from: '', to: '' };
+var _officers         = { IAS: null, IPS: null, IFS: null };
+var _activeService    = 'IAS';
+var _activeUploadType = 'officer';
+var _uploadState      = {
+  IAS: { officer: null, office: null },
+  IPS: { officer: null, office: null },
+  IFS: { officer: null, office: null }
+};
+var TYPE_INFO = {
+  officer: {
+    label: 'Officer Perception',
+    short: 'Officer',
+    desc:  'Records public perception scores for the individual officer\'s performance and interaction with the public.'
+  },
+  office: {
+    label: 'Office / Department Perception',
+    short: 'Office',
+    desc:  'Records public perception scores for the entire office or department where the officer is posted — enables comparison of individual vs departmental perception.'
+  }
+};
+var _dashData   = null;
+var _dashPeriod = null;
+var _dashType   = null;
+var _recordsPage       = 1;
+var RECORDS_PER_PAGE   = 20;
+var MAX_SHOW_ISSUES    = 30;
+var MAX_SHOW_MISSING   = 60;
+
+var CSV_KEYS = ['identity_no','officer_name','question','positive_score','period_from','period_to'];
+
+// ================================================================
+// INIT
+// ================================================================
+(async function init() {
+  _session = await requireAuth();
+  if (!_session) return;
+
+  var role = (_session.role || '').toLowerCase();
+  if (role !== 'perception') { location.href = 'index.html'; return; }
+  if (!await enforceModuleGate('perception')) return;
+
+  document.getElementById('welcomeName').textContent = _session.email || '—';
+  var now = new Date();
+  document.getElementById('welcomeDate').textContent =
+    now.toLocaleDateString('en-IN', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    loadOfficersForService(svc).then(function() {
+      document.getElementById('svcCount-' + svc).textContent = (_officers[svc] || []).length;
+    });
+  });
+
+  loadDashboard();
+})();
+
+// ================================================================
+// OFFICER FETCH
+// ================================================================
+async function loadOfficersForService(svc) {
+  if (_officers[svc]) return;
+  var { data, error } = await _supabase
+    .from('officers')
+    .select('id, identity_no, name_of_officer, cadre, allotment_year, service_type')
+    .eq('service_type', svc)
+    .eq('is_retired', false)
+    .order('allotment_year', { ascending: true })
+    .order('name_of_officer', { ascending: true });
+  if (error) { console.error('officers load error', svc, error); return; }
+  _officers[svc] = data || [];
+}
+
+// ================================================================
+// PERIOD MANAGEMENT
+// ================================================================
+function setPeriod() {
+  var from  = document.getElementById('periodFrom').value;
+  var to    = document.getElementById('periodTo').value;
+  var errEl = document.getElementById('periodError');
+  if (!from) { errEl.textContent = 'Period From is required.'; return; }
+  if (!to)   { errEl.textContent = 'Period To is required.'; return; }
+  if (to < from) { errEl.textContent = 'Period To cannot be before Period From.'; return; }
+  errEl.textContent = '';
+  _period = { from: from, to: to };
+  document.getElementById('step1Card').style.display = 'none';
+  document.getElementById('step2Wrap').style.display = '';
+  document.getElementById('periodBarDates').textContent = fmtDate(from) + ' → ' + fmtDate(to);
+  showSvcTab('IAS');
+}
+
+function editPeriod() {
+  _period      = { from: '', to: '' };
+  _uploadState = {
+    IAS: { officer: null, office: null },
+    IPS: { officer: null, office: null },
+    IFS: { officer: null, office: null }
+  };
+  document.getElementById('step2Wrap').style.display = 'none';
+  document.getElementById('step1Card').style.display = '';
+  document.getElementById('summaryArea').style.display = 'none';
+  resetDropZone();
+}
+
+// ================================================================
+// SERVICE TABS & UPLOAD TYPE
+// ================================================================
+function showSvcTab(svc) {
+  _activeService = svc;
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    document.getElementById('svcTab-' + s).classList.toggle('active', s === svc);
+  });
+  refreshUploadCard();
+}
+
+function setUploadType(type) {
+  _activeUploadType = type;
+  ['officer','office'].forEach(function(t) {
+    document.getElementById('typeBtn-' + t).classList.toggle('active', t === type);
+  });
+  document.getElementById('typeDesc').textContent = TYPE_INFO[type].desc;
+  refreshUploadCard();
+}
+
+function resetDropZone() {
+  document.getElementById('uploadDropZone').className = 'upload-drop';
+  document.getElementById('uploadDropTitle').textContent = 'Click or drag-and-drop CSV file here';
+}
+
+function refreshUploadCard() {
+  var svc  = _activeService;
+  var type = _activeUploadType;
+  var st   = _uploadState[svc][type];
+
+  document.getElementById('uploadCardTitle').textContent =
+    '📤 Upload ' + TYPE_INFO[type].label + ' for ' + svc + ' Officers';
+
+  if (_officers[svc]) {
+    document.getElementById('officerCountText').textContent = _officers[svc].length + ' ' + svc + ' Officers';
+  } else {
+    document.getElementById('officerCountText').textContent = 'Loading…';
+    loadOfficersForService(svc).then(function() {
+      document.getElementById('officerCountText').textContent =
+        (_officers[svc] || []).length + ' ' + svc + ' Officers';
+    });
+  }
+
+  if (st) {
+    document.getElementById('uploadDropZone').className = 'upload-drop loaded';
+    document.getElementById('uploadDropTitle').textContent =
+      '✓ ' + st.filename + ' — ' + st.rows.length + ' rows loaded';
+    document.getElementById('summaryArea').style.display = '';
+    document.getElementById('submitAlertWrap').innerHTML = '';
+    renderSummary(svc, type);
+  } else {
+    resetDropZone();
+    document.getElementById('summaryArea').style.display = 'none';
+    document.getElementById('submitAlertWrap').innerHTML = '';
+  }
+}
+
+// ================================================================
+// TEMPLATE DOWNLOAD
+// ================================================================
+async function downloadTemplate() {
+  var svc = _activeService;
+  var btn = document.getElementById('btnTemplate');
+  if (!_officers[svc]) {
+    btn.textContent = '⏳ Loading officers…';
+    btn.disabled    = true;
+    await loadOfficersForService(svc);
+    btn.textContent = '⬇ Download Template';
+    btn.disabled    = false;
+    document.getElementById('officerCountText').textContent =
+      (_officers[svc] || []).length + ' ' + svc + ' Officers';
+  }
+  var officers = _officers[svc] || [];
+  if (!officers.length) { alert('No active officers found for ' + svc + '.'); return; }
+
+  var rows = [CSV_KEYS.join(',')];
+  officers.forEach(function(o) {
+    rows.push([
+      csvQ(o.identity_no     || ''),
+      csvQ(o.name_of_officer || ''),
+      '',             // question — blank
+      '',             // positive_score — blank
+      _period.from,   // period_from — pre-filled
+      _period.to      // period_to — pre-filled
+    ].join(','));
+  });
+
+  var csvText = '﻿' + rows.join('\r\n');
+  var blob    = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+  var a       = document.createElement('a');
+  a.href      = URL.createObjectURL(blob);
+  a.download  = 'perception_' + svc + '_' + _activeUploadType + '_' + _period.from + '_to_' + _period.to + '.csv';
+  a.click();
+}
+
+function csvQ(v) {
+  v = String(v);
+  return (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0)
+    ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+// ================================================================
+// FILE UPLOAD & PARSING
+// ================================================================
+function handleDragOver(e)  { e.preventDefault(); document.getElementById('uploadDropZone').classList.add('over'); }
+function handleDragLeave()  { document.getElementById('uploadDropZone').classList.remove('over'); }
+function handleDrop(e)      { e.preventDefault(); handleDragLeave(); processFile(e.dataTransfer.files[0]); }
+function handleFileSelect(e){ processFile(e.target.files[0]); e.target.value = ''; }
+
+async function processFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) { showSubmitAlert('error', 'Please upload a .csv file.'); return; }
+  var svc = _activeService;
+  if (!_officers[svc]) {
+    document.getElementById('uploadDropTitle').textContent = '⏳ Loading officer list…';
+    await loadOfficersForService(svc);
+    document.getElementById('officerCountText').textContent =
+      (_officers[svc] || []).length + ' ' + svc + ' Officers';
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) { parseAndValidate(svc, e.target.result, file.name); };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseAndValidate(svc, text, filename) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+  var lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) { showSubmitAlert('error', 'CSV has no data rows — make sure your file is not empty.'); return; }
+
+  var rawHeaders = splitCSVLine(lines[0]).map(function(h) { return h.trim().toLowerCase().replace(/\s+/g,'_'); });
+  var colIdx = {};
+  var ALIASES = {
+    identity_no:    ['identity_no','identity_number','id_no'],
+    officer_name:   ['officer_name','name_of_officer','name','officer'],
+    question:       ['question','survey_question','question_text','q'],
+    positive_score: ['positive_score','score','positive_%','perception_score','score_(%)','positive_perception'],
+    period_from:    ['period_from','period_from_(yyyy-mm-dd)','from_date','from'],
+    period_to:      ['period_to','period_to_(yyyy-mm-dd)','to_date','to']
+  };
+
+  CSV_KEYS.forEach(function(key) {
+    var idx = -1;
+    rawHeaders.forEach(function(h, i) {
+      if (idx === -1 && (ALIASES[key] || [key]).indexOf(h) !== -1) idx = i;
+    });
+    colIdx[key] = idx;
+  });
+
+  var missingCols = CSV_KEYS.filter(function(k) { return colIdx[k] === -1; });
+  if (missingCols.length) {
+    showSubmitAlert('error', 'CSV is missing required column(s): ' + missingCols.join(', ') + '. Please download the template.');
+    return;
+  }
+
+  var officerMap = {};
+  (_officers[svc] || []).forEach(function(o) { officerMap[normId(o.identity_no)] = o; });
+
+  var rows = [], issues = [];
+
+  for (var i = 1; i < lines.length && i <= 2001; i++) {
+    if (!lines[i].trim()) continue;
+
+    var vals = splitCSVLine(lines[i]);
+    var row  = {};
+    CSV_KEYS.forEach(function(k) {
+      row[k] = colIdx[k] >= 0 ? (vals[colIdx[k]] || '').trim() : '';
+    });
+    row._line   = i + 1;
+    row._errors = [];
+
+    // identity_no
+    if (!row.identity_no) {
+      row._errors.push('identity_no is blank');
+    } else {
+      var matched = officerMap[normId(row.identity_no)];
+      if (!matched) {
+        row._errors.push('identity_no "' + row.identity_no + '" not found in ' + svc + ' officers database');
+      } else {
+        row._officer = matched;
+      }
+    }
+
+    // question
+    if (!row.question.trim()) {
+      row._errors.push('question is blank — enter the survey question text');
+    }
+
+    // positive_score: mandatory, 0–100
+    var sc = row.positive_score;
+    if (sc === '' || sc === null || sc === undefined) {
+      row._errors.push('positive_score is blank — enter 0 if the score is zero');
+    } else if (isNaN(Number(sc)) || Number(sc) < 0) {
+      row._errors.push('positive_score must be a number ≥ 0 (got: "' + sc + '")');
+    } else if (Number(sc) > 100) {
+      row._errors.push('positive_score must be ≤ 100 — it is a percentage (got: "' + sc + '")');
+    }
+
+    // period dates
+    if (row.period_from && row.period_from !== _period.from) {
+      row._errors.push('period_from "' + row.period_from + '" does not match selected period ' + _period.from + ' — use the template');
+    }
+    if (row.period_to && row.period_to !== _period.to) {
+      row._errors.push('period_to "' + row.period_to + '" does not match selected period ' + _period.to + ' — use the template');
+    }
+
+    row._valid = row._errors.length === 0;
+
+    if (!row._valid && issues.length < MAX_SHOW_ISSUES) {
+      row._errors.forEach(function(err) {
+        issues.push({ line: row._line, id: row.identity_no, name: row.officer_name, err: err });
+      });
+    } else if (!row._valid && issues.length === MAX_SHOW_ISSUES) {
+      issues.push({ line: '…', id: '', name: '', err: '(additional issues — fix the above first)' });
+    }
+
+    rows.push(row);
+  }
+
+  // Question distribution (rows per officer)
+  var byOfficer = {};
+  rows.forEach(function(r) {
+    if (!r.identity_no) return;
+    var nid = normId(r.identity_no);
+    byOfficer[nid] = (byOfficer[nid] || 0) + 1;
+  });
+  var dist = {};
+  Object.keys(byOfficer).forEach(function(nid) {
+    var n = byOfficer[nid]; dist[n] = (dist[n] || 0) + 1;
+  });
+
+  // Missing officers check
+  var coveredIds = {};
+  rows.forEach(function(r) { if (r.identity_no) coveredIds[normId(r.identity_no)] = true; });
+  var missingOfficers = (_officers[svc] || []).filter(function(o) { return !coveredIds[normId(o.identity_no)]; });
+
+  var validRows = rows.filter(function(r) { return r._valid; });
+
+  _uploadState[svc][_activeUploadType] = {
+    filename:        filename,
+    rows:            rows,
+    issues:          issues,
+    byOfficer:       byOfficer,
+    dist:            dist,
+    missingOfficers: missingOfficers,
+    validRows:       validRows,
+    canSubmit:       issues.length === 0 && missingOfficers.length === 0
+  };
+
+  document.getElementById('uploadDropZone').className = 'upload-drop loaded';
+  document.getElementById('uploadDropTitle').textContent =
+    '✓ ' + filename + ' — ' + rows.length + ' rows loaded';
+  document.getElementById('summaryArea').style.display = '';
+  document.getElementById('submitAlertWrap').innerHTML = '';
+  renderSummary(svc, _activeUploadType);
+}
+
+// ================================================================
+// SUMMARY RENDERING
+// ================================================================
+function renderSummary(svc, type) {
+  var st = _uploadState[svc][type || _activeUploadType];
+  if (!st) return;
+
+  var totalOfficers   = (_officers[svc] || []).length;
+  var coveredOfficers = Object.keys(st.byOfficer).length;
+
+  document.getElementById('summaryServiceLabel').textContent =
+    svc + ' — ' + TYPE_INFO[type || _activeUploadType].label;
+
+  // Avg positive score
+  var validScores = st.validRows.map(function(r) { return Number(r.positive_score); });
+  var avgScore = validScores.length ? (validScores.reduce(function(a,b){return a+b;},0) / validScores.length).toFixed(1) : '—';
+
+  document.getElementById('summaryGrid').innerHTML =
+    makeStat('info',  st.rows.length, 'Total Rows') +
+    makeStat(coveredOfficers < totalOfficers ? 'warn' : 'ok',
+             coveredOfficers + ' / ' + totalOfficers, 'Officers Covered') +
+    makeStat(st.missingOfficers.length > 0 ? 'error' : 'ok',
+             st.missingOfficers.length, 'Officers Missing') +
+    makeStat(st.issues.length > 0 ? 'error' : 'ok', st.issues.length, 'Data Issues');
+
+  // Question distribution table
+  var maxOfficers = Math.max.apply(null, Object.values(st.dist).concat([1]));
+  var distHtml = Object.keys(st.dist).sort(function(a,b){return a-b;}).map(function(n) {
+    var count  = st.dist[n];
+    var label  = n == 1 ? 'Single question (1 row per officer)' : n + ' questions (' + n + ' rows per officer)';
+    var barW   = Math.max(6, Math.round((count / maxOfficers) * 180));
+    var barCls = 'dist-bar' + (n == 2 ? ' c2' : n == 3 ? ' c3' : n > 3 ? ' cx' : '');
+    return '<tr>' +
+      '<td><strong>' + label + '</strong></td>' +
+      '<td class="td-num">' + count + ' officers</td>' +
+      '<td><span class="' + barCls + '" style="width:' + barW + 'px"></span></td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('distTableBody').innerHTML =
+    distHtml || '<tr><td colspan="3" style="color:#94a3b8;font-style:italic;padding:10px 14px;">No rows parsed</td></tr>';
+
+  // Issues
+  var issuesCard = document.getElementById('issuesCard');
+  if (st.issues.length > 0) {
+    issuesCard.style.display = '';
+    document.getElementById('issueCountBadge').textContent = st.issues.length + ' issue(s)';
+    document.getElementById('issueList').innerHTML =
+      st.issues.slice(0, MAX_SHOW_ISSUES).map(function(iss) {
+        return '<li class="issue-item">' +
+          '<span class="issue-item-icon">❌</span>' +
+          '<span>' +
+            '<span class="issue-row-ref">Row ' + iss.line +
+              (iss.id ? ' [' + esc(iss.id) + ']' : '') +
+              (iss.name ? ' ' + esc(iss.name) : '') + ':</span>' +
+            '<span class="issue-text"> ' + esc(iss.err) + '</span>' +
+          '</span>' +
+        '</li>';
+      }).join('');
+    var moreEl = document.getElementById('issueMoreMsg');
+    if (st.issues.length > MAX_SHOW_ISSUES) {
+      moreEl.style.display = ''; moreEl.textContent = '… and more. Fix the above first, then re-upload.';
+    } else { moreEl.style.display = 'none'; }
+  } else {
+    issuesCard.style.display = 'none';
+  }
+
+  // Missing officers
+  var missingCard = document.getElementById('missingCard');
+  if (st.missingOfficers.length > 0) {
+    missingCard.style.display = '';
+    document.getElementById('missingCountBadge').textContent = st.missingOfficers.length + ' officer(s) missing';
+    document.getElementById('missingGrid').innerHTML =
+      st.missingOfficers.slice(0, MAX_SHOW_MISSING).map(function(o) {
+        return '<div class="missing-chip">' +
+          '<span class="missing-chip-icon">⚠</span>' +
+          '<div>' +
+            '<div class="missing-chip-name">' + esc(o.name_of_officer) + '</div>' +
+            '<div class="missing-chip-id">' + esc(o.identity_no || '—') +
+              (o.allotment_year ? ' &bull; Batch ' + o.allotment_year : '') + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    var moreMissEl = document.getElementById('missingMoreMsg');
+    if (st.missingOfficers.length > MAX_SHOW_MISSING) {
+      moreMissEl.style.display = '';
+      moreMissEl.textContent   = '… and ' + (st.missingOfficers.length - MAX_SHOW_MISSING) + ' more missing officers.';
+    } else { moreMissEl.style.display = 'none'; }
+  } else {
+    missingCard.style.display = 'none';
+  }
+
+  // Submit bar
+  var bar = document.getElementById('submitBar');
+  var txt = document.getElementById('submitStatusText');
+  var btn = document.getElementById('btnSubmit');
+  if (st.canSubmit) {
+    bar.className = 'submit-bar ready';
+    txt.className = 'submit-status-text ready';
+    txt.textContent = '✓ All ' + st.validRows.length + ' rows are valid and all ' +
+      totalOfficers + ' officers are covered. Ready to submit.';
+    btn.disabled = false;
+  } else {
+    bar.className = 'submit-bar blocked';
+    txt.className = 'submit-status-text blocked';
+    var blockers = [];
+    if (st.issues.length)          blockers.push(st.issues.length + ' data issue(s)');
+    if (st.missingOfficers.length) blockers.push(st.missingOfficers.length + ' missing officer(s)');
+    txt.textContent = '✗ Cannot submit — please resolve: ' + blockers.join(' and ') + '. Fix and re-upload.';
+    btn.disabled = true;
+  }
+}
+
+function makeStat(cls, num, lbl) {
+  return '<div class="summary-stat ' + cls + '">' +
+    '<div class="stat-num">' + num + '</div>' +
+    '<div class="stat-lbl">' + lbl + '</div>' +
+  '</div>';
+}
+
+// ================================================================
+// SUBMIT
+// ================================================================
+async function submitData() {
+  var svc  = _activeService;
+  var type = _activeUploadType;
+  var st   = _uploadState[svc][type];
+  if (!st || !st.canSubmit) return;
+
+  var btn = document.getElementById('btnSubmit');
+  btn.textContent = 'Submitting…';
+  btn.disabled    = true;
+
+  var enteredBy = (_session.email || '').toUpperCase();
+
+  var inserts = st.validRows.map(function(r) {
+    return {
+      officer_id:      r._officer ? r._officer.id : null,
+      identity_no:     (r.identity_no || '').toUpperCase().trim(),
+      officer_name:    r.officer_name,
+      service_type:    r._officer ? r._officer.service_type : svc,
+      question:        r.question,
+      positive_score:  parseFloat(r.positive_score) || 0,
+      period_from:     r.period_from || _period.from,
+      period_to:       r.period_to   || _period.to,
+      upload_type:     type,
+      entered_by:      enteredBy
+    };
+  });
+
+  var errors = [];
+  for (var i = 0; i < inserts.length; i += 200) {
+    var batch = inserts.slice(i, i + 200);
+    var { error } = await _supabase.from('perception_data').insert(batch);
+    if (error) errors.push(error.message);
+  }
+
+  btn.textContent = '✓ Submit Data';
+  var alertEl = document.getElementById('submitAlertWrap');
+
+  if (errors.length) {
+    alertEl.innerHTML = '<div class="alert error">❌ Error during submission: ' + esc(errors.join('; ')) + '</div>';
+    btn.disabled = false;
+  } else {
+    alertEl.innerHTML =
+      '<div class="alert success">✅ Successfully submitted ' + inserts.length + ' records for ' + svc +
+      ' — ' + TYPE_INFO[type].label + ' (Period: ' + fmtDate(_period.from) + ' to ' + fmtDate(_period.to) + ').</div>';
+    _uploadState[svc][type] = null;
+    document.getElementById('summaryArea').style.display = 'none';
+    resetDropZone();
+    document.getElementById('svcCount-' + svc).textContent = (_officers[svc] || []).length + ' ✓';
+    btn.disabled = true;
+  }
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+async function loadDashboard() {
+  var { data, error } = await _supabase
+    .from('perception_data')
+    .select('identity_no, officer_name, service_type, question, positive_score, period_from, period_to, upload_type, entered_at')
+    .eq('entered_by', (_session.email || '').toUpperCase())
+    .order('period_from', { ascending: false });
+
+  if (error) { console.error(error); return; }
+  _dashData = data || [];
+
+  if (!_dashData.length) {
+    document.getElementById('dashCapsules').innerHTML = '';
+    document.getElementById('dashNoData').style.display  = '';
+    document.getElementById('dashContent').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('dashNoData').style.display = 'none';
+  buildCapsules();
+  renderDashboard(_dashPeriod);
+}
+
+function buildCapsules() {
+  var seen = {}, periods = [];
+  (_dashData || []).forEach(function(r) {
+    var key = (r.period_from || '') + '|' + (r.period_to || '');
+    if (!seen[key]) { seen[key] = true; periods.push({ key: key, from: r.period_from, to: r.period_to }); }
+  });
+  periods.sort(function(a, b) { return (b.from || '').localeCompare(a.from || ''); });
+
+  var html =
+    '<button class="period-capsule all' + (!_dashPeriod ? ' active' : '') + '" onclick="selectDashPeriod(null)">' +
+      'All Periods (' + periods.length + ')' +
+    '</button>';
+  periods.forEach(function(p) {
+    var active = _dashPeriod === p.key ? ' active' : '';
+    html += '<button class="period-capsule' + active + '" onclick="selectDashPeriod(\'' + p.key + '\')">' +
+      fmtDate(p.from) + ' &rarr; ' + fmtDate(p.to) + '</button>';
+  });
+  document.getElementById('dashCapsules').innerHTML = html;
+}
+
+function selectDashPeriod(key) {
+  _dashPeriod = key;
+  buildCapsules();
+  renderDashboard(key);
+}
+
+function selectDashType(type) {
+  _dashType = type;
+  ['all','officer','office'].forEach(function(t) {
+    var btn = document.getElementById('dashTypeBtn-' + t);
+    if (btn) btn.classList.toggle('active', t === 'all' ? type === null : t === type);
+  });
+  renderDashboard(_dashPeriod);
+}
+
+function renderDashboard(periodKey) {
+  var rows = _dashData || [];
+
+  if (periodKey) {
+    var pp = periodKey.split('|');
+    rows = rows.filter(function(r) { return r.period_from === pp[0] && r.period_to === pp[1]; });
+  }
+  if (_dashType) {
+    rows = rows.filter(function(r) { return r.upload_type === _dashType; });
+  }
+
+  if (!rows.length) { document.getElementById('dashContent').style.display = 'none'; return; }
+  document.getElementById('dashContent').style.display = '';
+
+  var periodSet  = {};
+  rows.forEach(function(r) { periodSet[(r.period_from||'') + '|' + (r.period_to||'')] = true; });
+  var officerSet = {};
+  rows.forEach(function(r) { if (r.identity_no) officerSet[r.identity_no] = true; });
+
+  // Compute score stats
+  var scores = rows.map(function(r) { return Number(r.positive_score || 0); });
+  var avgScore = scores.length ? (scores.reduce(function(a,b){return a+b;},0) / scores.length).toFixed(1) : '—';
+  var maxScore = scores.length ? Math.max.apply(null, scores).toFixed(1) : '—';
+  var minScore = scores.length ? Math.min.apply(null, scores).toFixed(1) : '—';
+
+  // Stat cards
+  var PILL_DEFS = [
+    { icon: '📅', num: Object.keys(periodSet).length,  lbl: 'Periods Uploaded',      accent: '#7c3aed' },
+    { icon: '👥', num: Object.keys(officerSet).length, lbl: 'Officers Covered',       accent: '#059669' },
+    { icon: '❓', num: rows.length,                    lbl: 'Total Survey Responses', accent: '#d97706' },
+    { icon: '⭐', num: avgScore + '%',                 lbl: 'Avg Positive Score',     accent: '#7c3aed' },
+    { icon: '🔝', num: maxScore + '%',                 lbl: 'Highest Score',          accent: '#15803d' },
+    { icon: '⬇', num: minScore + '%',                  lbl: 'Lowest Score',           accent: '#dc2626' }
+  ];
+
+  document.getElementById('dashSummaryGrid').innerHTML = PILL_DEFS.map(function(d) {
+    return '<div class="dash-stat-card" style="border-left-color:' + d.accent + ';--accent:' + d.accent + ';">' +
+      '<span class="dash-stat-icon">' + d.icon + '</span>' +
+      '<div class="dash-stat-num" style="color:' + d.accent + ';">' + d.num + '</div>' +
+      '<div class="dash-stat-lbl">' + d.lbl + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Score range distribution
+  var ranges = [
+    { label: 'Excellent',  min: 76,  max: 100, color: '#15803d', border: '#86efac', bg: '#f0fdf4' },
+    { label: 'Good',       min: 51,  max: 75,  color: '#1d4ed8', border: '#93c5fd', bg: '#eff6ff' },
+    { label: 'Average',    min: 26,  max: 50,  color: '#d97706', border: '#fcd34d', bg: '#fffbeb' },
+    { label: 'Poor',       min: 0,   max: 25,  color: '#dc2626', border: '#fca5a5', bg: '#fef2f2' }
+  ];
+  document.getElementById('dashScoreRanges').innerHTML = ranges.map(function(rng) {
+    var cnt = scores.filter(function(s) { return s >= rng.min && s <= rng.max; }).length;
+    return '<div class="score-range-pill" style="border-color:' + rng.border + ';color:' + rng.color + ';background:' + rng.bg + ';">' +
+      '<div class="score-range-pill-num">' + cnt + '</div>' +
+      '<div class="score-range-pill-lbl">' + rng.label + '</div>' +
+      '<div class="score-range-pill-range">' + rng.min + '–' + rng.max + '%</div>' +
+    '</div>';
+  }).join('');
+
+  // Service breakdown
+  var svcMap = {};
+  rows.forEach(function(r) {
+    var s = r.service_type || '—';
+    if (!svcMap[s]) svcMap[s] = { ids: new Set(), scores: [], n: 0 };
+    svcMap[s].ids.add(r.identity_no);
+    svcMap[s].scores.push(Number(r.positive_score || 0));
+    svcMap[s].n++;
+  });
+
+  var svcRows = ['IAS','IPS','IFS'].filter(function(s) { return svcMap[s]; }).map(function(s) {
+    var d    = svcMap[s];
+    var avg  = d.scores.length ? (d.scores.reduce(function(a,b){return a+b;},0) / d.scores.length).toFixed(1) : '—';
+    var high = d.scores.length ? Math.max.apply(null,d.scores).toFixed(1) : '—';
+    var low  = d.scores.length ? Math.min.apply(null,d.scores).toFixed(1) : '—';
+    var scoreColor = avg !== '—' ? (Number(avg) >= 76 ? '#15803d' : Number(avg) >= 51 ? '#1d4ed8' : Number(avg) >= 26 ? '#d97706' : '#dc2626') : '#94a3b8';
+    return '<tr>' +
+      '<td><span class="td-badge ' + s.toLowerCase() + '">' + s + '</span></td>' +
+      '<td class="td-num">' + d.ids.size + '</td>' +
+      '<td class="td-num">' + d.n + '</td>' +
+      '<td class="td-score" style="color:' + scoreColor + ';">' + avg + '%</td>' +
+      '<td class="td-num" style="color:#15803d;">' + high + '%</td>' +
+      '<td class="td-num" style="color:#dc2626;">' + low  + '%</td>' +
+    '</tr>';
+  }).join('');
+
+  document.getElementById('dashServiceTableWrap').innerHTML =
+    '<table><thead><tr>' +
+      '<th>Service</th>' +
+      '<th style="text-align:right;">Officers</th>' +
+      '<th style="text-align:right;">Responses</th>' +
+      '<th style="text-align:right;">Avg Score</th>' +
+      '<th style="text-align:right;">Highest</th>' +
+      '<th style="text-align:right;">Lowest</th>' +
+    '</tr></thead><tbody>' + svcRows + '</tbody></table>';
+
+  // Question distribution
+  var qCnt = {};
+  rows.forEach(function(r) {
+    if (!r.identity_no) return;
+    qCnt[r.identity_no] = (qCnt[r.identity_no] || 0) + 1;
+  });
+  var dist = {};
+  Object.values(qCnt).forEach(function(n) { dist[n] = (dist[n] || 0) + 1; });
+
+  var maxOfficers = Math.max.apply(null, Object.values(dist).concat([1]));
+  document.getElementById('dashDistBody').innerHTML =
+    Object.keys(dist).sort(function(a,b){return a-b;}).map(function(n) {
+      var count  = dist[n];
+      var label  = n == 1 ? 'Single question (1 row per officer)' : n + ' questions (' + n + ' rows per officer)';
+      var barW   = Math.max(6, Math.round((count / maxOfficers) * 220));
+      var barCls = 'dist-bar' + (n == 2 ? ' c2' : n == 3 ? ' c3' : n > 3 ? ' cx' : '');
+      return '<tr>' +
+        '<td><strong>' + label + '</strong></td>' +
+        '<td class="td-num">' + count + ' officers</td>' +
+        '<td><span class="' + barCls + '" style="width:' + barW + 'px"></span></td>' +
+      '</tr>';
+    }).join('') ||
+    '<tr><td colspan="3" style="color:#94a3b8;font-style:italic;padding:14px;">No data for selected period</td></tr>';
+}
+
+// ================================================================
+// RECORDS TAB
+// ================================================================
+async function loadPeriods() {
+  var sel = document.getElementById('filterPeriod');
+  var currentVal = sel.value;
+  var { data, error } = await _supabase
+    .from('perception_data')
+    .select('period_from, period_to')
+    .eq('entered_by', (_session.email || '').toUpperCase());
+  if (error || !data) return;
+  var seen = {}, pairs = [];
+  data.forEach(function(r) {
+    if (!r.period_from || !r.period_to) return;
+    var key = r.period_from + '|' + r.period_to;
+    if (!seen[key]) { seen[key] = true; pairs.push({ from: r.period_from, to: r.period_to, key: key }); }
+  });
+  pairs.sort(function(a, b) { return b.from.localeCompare(a.from); });
+  sel.innerHTML = '<option value="">All Periods</option>';
+  pairs.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value       = p.key;
+    opt.textContent = fmtDate(p.from) + ' → ' + fmtDate(p.to);
+    sel.appendChild(opt);
+  });
+  if (currentVal) sel.value = currentVal;
+}
+
+async function loadRecords(page) {
+  _recordsPage = page || 1;
+
+  var filterSvc     = document.getElementById('filterService').value  || '';
+  var filterType    = document.getElementById('filterType').value     || '';
+  var filterOfficer = (document.getElementById('filterOfficer').value || '').trim().toLowerCase();
+  var periodVal     = document.getElementById('filterPeriod').value   || '';
+  var filterFrom = '', filterTo = '';
+  if (periodVal) { var pp = periodVal.split('|'); filterFrom = pp[0] || ''; filterTo = pp[1] || ''; }
+
+  var from = (_recordsPage - 1) * RECORDS_PER_PAGE;
+
+  var q = _supabase
+    .from('perception_data')
+    .select('*', { count: 'exact' })
+    .eq('entered_by', (_session.email || '').toUpperCase())
+    .order('entered_at', { ascending: false });
+
+  if (filterSvc)  q = q.eq('service_type', filterSvc);
+  if (filterType) q = q.eq('upload_type',  filterType);
+  if (filterFrom) q = q.gte('period_from',  filterFrom);
+  if (filterTo)   q = q.lte('period_to',    filterTo);
+
+  q = q.range(from, from + RECORDS_PER_PAGE - 1);
+
+  var { data, count, error } = await q;
+  if (error) { console.error(error); return; }
+
+  var rows = data || [];
+  if (filterOfficer) {
+    rows = rows.filter(function(r) {
+      return (r.officer_name || '').toLowerCase().includes(filterOfficer) ||
+             (r.identity_no  || '').toLowerCase().includes(filterOfficer) ||
+             (r.question     || '').toLowerCase().includes(filterOfficer);
+    });
+  }
+
+  var tbody = document.getElementById('recordsBody');
+  var empty = document.getElementById('recordsEmpty');
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    document.getElementById('recordsPagination').innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(function(r, i) {
+    var sc   = Number(r.positive_score || 0);
+    var scColor = sc >= 76 ? '#15803d' : sc >= 51 ? '#1d4ed8' : sc >= 26 ? '#d97706' : '#dc2626';
+    var entAt = r.entered_at
+      ? new Date(r.entered_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    var svcLower = (r.service_type || '').toLowerCase();
+    return '<tr>' +
+      '<td>' + (from + i + 1) + '</td>' +
+      '<td><span class="td-badge ' + svcLower + '">' + esc(r.service_type || '—') + '</span></td>' +
+      '<td><span class="td-badge ' + (r.upload_type || 'officer') + '">' +
+        (r.upload_type === 'office' ? '🏢 Office' : '👤 Officer') + '</span></td>' +
+      '<td><strong>' + esc(r.officer_name || '—') + '</strong></td>' +
+      '<td><span class="td-badge svc">' + esc(r.identity_no || '—') + '</span></td>' +
+      '<td style="font-size:12px;max-width:280px;">' + esc(r.question || '—') + '</td>' +
+      '<td class="td-score" style="color:' + scColor + ';">' + sc.toFixed(1) + '%</td>' +
+      '<td>' + fmtDate(r.period_from) + '</td>' +
+      '<td>' + fmtDate(r.period_to)   + '</td>' +
+      '<td style="font-size:11px;color:#94a3b8;white-space:nowrap;">' + entAt + '</td>' +
+      '<td><button class="btn-del" onclick="deleteRecord(' + r.id + ')">Delete</button></td>' +
+    '</tr>';
+  }).join('');
+
+  renderPagination(count, _recordsPage, RECORDS_PER_PAGE, 'loadRecords', 'recordsPagination');
+}
+
+async function deleteRecord(id) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  var { error } = await _supabase.from('perception_data').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadRecords(_recordsPage);
+}
+
+function clearFilters() {
+  document.getElementById('filterService').value = '';
+  document.getElementById('filterType').value    = '';
+  document.getElementById('filterOfficer').value = '';
+  document.getElementById('filterPeriod').value  = '';
+  loadRecords(1);
+}
+
+// ================================================================
+// TAB SWITCHING
+// ================================================================
+function showMainTab(tab) {
+  ['dashboard','upload','records'].forEach(function(t) {
+    document.getElementById('mainPane-' + t).style.display = t === tab ? '' : 'none';
+    document.getElementById('mainTab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'records')   loadPeriods().then(function() { loadRecords(1); });
+}
+
+// ================================================================
+// COLLAPSIBLE COLUMN GUIDE
+// ================================================================
+function toggleColGuide() {
+  var el = document.getElementById('colGuide');
+  var ar = document.getElementById('colGuideArrow');
+  if (el.style.display === 'none') { el.style.display = ''; ar.textContent = '▼'; }
+  else { el.style.display = 'none'; ar.textContent = '▶'; }
+}
+
+// ================================================================
+// UTILITIES
+// ================================================================
+function normId(s) { return (s || '').trim().toUpperCase().replace(/\s+/g, ''); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  var p = ('' + d).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function splitCSVLine(line) {
+  var res = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      res.push(cur); cur = '';
+    } else { cur += c; }
+  }
+  res.push(cur);
+  return res;
+}
+
+function showSubmitAlert(type, msg) {
+  var el = document.getElementById('submitAlertWrap');
+  if (el) el.innerHTML = '<div class="alert ' + type + '">' + esc(msg) + '</div>';
+}
+
+function renderPagination(total, page, perPage, fnName, containerId) {
+  var pages = Math.ceil((total || 0) / perPage) || 1;
+  var el    = document.getElementById(containerId);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  var html = '';
+  html += '<button class="pg-btn" onclick="'+fnName+'(1)" '+(page===1?'disabled':'')+'>«</button>';
+  html += '<button class="pg-btn" onclick="'+fnName+'('+(page-1)+')" '+(page===1?'disabled':'')+'>‹</button>';
+  for (var p = Math.max(1,page-2); p <= Math.min(pages,page+2); p++) {
+    html += '<button class="pg-btn'+(p===page?' active':'')+'" onclick="'+fnName+'('+p+')">'+p+'</button>';
+  }
+  html += '<button class="pg-btn" onclick="'+fnName+'('+(page+1)+')" '+(page===pages?'disabled':'')+'>›</button>';
+  html += '<button class="pg-btn" onclick="'+fnName+'('+pages+')" '+(page===pages?'disabled':'')+'>»</button>';
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

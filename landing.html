@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | AIS Officers Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body { font-family: 'Inter', sans-serif; background: #eef0fb; min-height: 100vh; }
+
+    /* ── Top Header ─────────────────────────────────────────────── */
+    .top-header {
+      width: 100%;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+      padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(30,27,75,0.45); gap: 16px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; flex: 1; }
+    .ap-seal {
+      width: 50px; height: 50px; border-radius: 50%;
+      border: 2px solid rgba(165,180,252,0.5);
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .gov-label { font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: #a5b4fc; margin-bottom: 2px; }
+    .cmo-title { font-size: clamp(14px,1.8vw,22px); font-weight: 800; color: #fff; }
+    .cmo-subtitle { font-size: clamp(11px,1.1vw,14px); color: #c7d2fe; margin-top: 2px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-view-officers {
+      padding: 11px 22px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1c0a00; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 800; font-family: 'Inter', sans-serif;
+      cursor: pointer; box-shadow: 0 4px 16px rgba(245,158,11,0.5);
+      transition: transform 0.15s, box-shadow 0.2s; white-space: nowrap;
+    }
+    .btn-view-officers:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(245,158,11,0.65); }
+    .btn-logout-h {
+      padding: 10px 18px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(165,180,252,0.35); border-radius: 8px;
+      color: #e0e7ff; font-size: 13px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    }
+    .btn-logout-h:hover { background: rgba(255,255,255,0.2); }
+    .btn-admin-h {
+      padding: 10px 18px; background: rgba(124,58,237,0.25);
+      border: 1px solid rgba(196,181,253,0.5); border-radius: 8px;
+      color: #ddd6fe; font-size: 13px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: background 0.2s; white-space: nowrap;
+    }
+    .btn-admin-h:hover { background: rgba(124,58,237,0.45); }
+    .btn-self-appraisal {
+      padding: 10px 18px; background: linear-gradient(135deg, #4f46e5, #312e81);
+      border: none; border-radius: 8px;
+      color: #e0e7ff; font-size: 13px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s; white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+    }
+    .btn-self-appraisal:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(79,70,229,0.55); }
+
+    /* ── Welcome bar ─────────────────────────────────────────────── */
+    .welcome-bar {
+      background: #fff; padding: 9px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #c7d2fe; box-shadow: 0 2px 8px rgba(30,27,75,0.08);
+      font-size: 13px; color: #475569;
+    }
+    .welcome-bar strong { color: #1e1b4b; font-weight: 700; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 20px;
+      padding: 4px 13px; font-size: 12px; font-weight: 600; color: #4338ca;
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pulse-dot 1.8s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── Page content ────────────────────────────────────────────── */
+    .page-content { padding: 20px 24px 32px; max-width: 1380px; margin: 0 auto; }
+
+    /* ── Summary cards ───────────────────────────────────────────── */
+    .summary-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 22px; }
+    .summary-card {
+      background: #fff; border-radius: 16px; padding: 22px 24px 18px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.09); border-left: 5px solid;
+      position: relative; overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .summary-card:hover { transform: translateY(-3px); box-shadow: 0 6px 22px rgba(30,27,75,0.14); }
+    .summary-card::after {
+      content:''; position: absolute; top: -20px; right: -20px;
+      width: 90px; height: 90px; border-radius: 50%; opacity: 0.07;
+    }
+    .summary-card.total { border-left-color:#4338ca; }
+    .summary-card.total::after { background:#4338ca; }
+    .summary-card.ias   { border-left-color:#d97706; }
+    .summary-card.ias::after { background:#d97706; }
+    .summary-card.ips   { border-left-color:#dc2626; }
+    .summary-card.ips::after { background:#dc2626; }
+    .summary-card.ifs   { border-left-color:#059669; }
+    .summary-card.ifs::after { background:#059669; }
+    .summary-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+    .summary-num  { font-size: 42px; font-weight: 800; color: #1e1b4b; line-height: 1; margin-bottom: 6px; }
+    .summary-label{ font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; }
+    .summary-sub  { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+    /* ── Analytics grid ──────────────────────────────────────────── */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .analytics-card { background: #fff; border-radius: 16px; padding: 20px 24px; box-shadow: 0 2px 12px rgba(30,27,75,0.09); }
+    .analytics-card-header {
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-bottom: 12px; padding-bottom: 12px; border-bottom: 2px solid #eef0fb;
+    }
+    .a-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .a-title { font-size: 15px; font-weight: 700; color: #1e1b4b; }
+    .a-sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Panel filter buttons ────────────────────────────────────── */
+    .panel-filter-row {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .filter-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-right: 2px; }
+    .pfbtn {
+      padding: 4px 13px; border: 1.5px solid #e2e8f0; border-radius: 20px;
+      background: #f8fafc; font-size: 12px; font-weight: 700;
+      font-family: 'Inter', sans-serif; color: #64748b; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pfbtn:hover    { border-color: #a5b4fc; background: #eef2ff; color: #4338ca; }
+    .pfbtn.active   { border-color: #4338ca; background: #eef2ff; color: #4338ca; }
+    .pfbtn.ias.active { background: linear-gradient(135deg,#d97706,#92400e); border-color: #d97706; color: #fff; }
+    .pfbtn.ips.active { background: linear-gradient(135deg,#dc2626,#991b1b); border-color: #dc2626; color: #fff; }
+    .pfbtn.ifs.active { background: linear-gradient(135deg,#059669,#065f46); border-color: #059669; color: #fff; }
+
+    /* ── AP Domicile stat box ────────────────────────────────────── */
+    .ap-stat-box {
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg,#eef2ff,#dbeafe);
+      border: 1px solid #c7d2fe; border-radius: 12px;
+      padding: 10px 16px; margin-bottom: 10px;
+    }
+    .ap-stat-left {}
+    .ap-stat-lbl { font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px; }
+    .ap-stat-num { font-size: 28px; font-weight: 800; color: #1e1b4b; line-height: 1; }
+    .ap-stat-right { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+    .ap-pill {
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+    }
+    .ap-pill.ias { background:#fef3c7; color:#d97706; }
+    .ap-pill.ips { background:#fee2e2; color:#dc2626; }
+    .ap-pill.ifs { background:#d1fae5; color:#059669; }
+
+    /* ── Chart containers ────────────────────────────────────────── */
+    .chart-container    { position: relative; height: 280px; }
+    .chart-container-sm { position: relative; height: 210px; }
+
+    /* ── Upcoming Retirements list ───────────────────────────────── */
+    .retire-list { max-height: 230px; overflow-y: auto; }
+    .retire-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+    .retire-item:last-child { border-bottom: none; }
+    .svc-badge {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .svc-badge.IAS { background: linear-gradient(135deg,#d97706,#92400e); }
+    .svc-badge.IPS { background: linear-gradient(135deg,#dc2626,#991b1b); }
+    .svc-badge.IFS { background: linear-gradient(135deg,#059669,#065f46); }
+    .ret-info  { flex:1; min-width:0; }
+    .ret-name  { font-size:13px; font-weight:700; color:#1e1b4b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ret-detail{ font-size:11px; color:#64748b; margin-top:2px; }
+    .ret-right { text-align:right; flex-shrink:0; }
+    .ret-pill  { display:inline-block; font-size:10px; font-weight:700; padding:2px 9px; border-radius:10px; margin-top:2px; }
+    .ret-pill.urgent { background:#fee2e2; color:#dc2626; }
+    .ret-pill.soon   { background:#fef3c7; color:#d97706; }
+    .ret-pill.normal { background:#d1fae5; color:#059669; }
+    .empty-retire { text-align:center; padding:36px 20px; color:#94a3b8; font-size:14px; }
+
+    /* ── Loading overlay ─────────────────────────────────────────── */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(238,240,251,0.93);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .spinner { width:50px; height:50px; border:4px solid #c7d2fe; border-top-color:#4338ca; border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { margin-top:16px; font-size:14px; font-weight:600; color:#4338ca; }
+
+    /* ── Modal ───────────────────────────────────────────────────── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(15,12,41,0.75); backdrop-filter:blur(6px);
+      z-index:999; display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity 0.22s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:#fff; border-radius:20px; width:100%; max-width:540px;
+      padding:30px 34px 26px; box-shadow:0 25px 60px rgba(0,0,0,0.5);
+      transform:scale(0.93); transition:transform 0.22s;
+    }
+    .modal-overlay.open .modal-box { transform:scale(1); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+    .modal-title { font-size:21px; font-weight:800; color:#1e1b4b; }
+    .modal-close {
+      width:32px; height:32px; border-radius:8px; background:#f1f5f9;
+      border:none; cursor:pointer; font-size:16px; color:#64748b;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .modal-close:hover { background:#e2e8f0; }
+    .modal-section { margin-bottom:22px; }
+    .modal-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#94a3b8; margin-bottom:11px; }
+    .modal-options { display:flex; gap:10px; flex-wrap:wrap; }
+    .modal-opt {
+      flex:1; padding:11px 14px; border:2px solid #e2e8f0; border-radius:10px;
+      background:#f8fafc; font-size:14px; font-weight:700; font-family:'Inter',sans-serif;
+      color:#475569; cursor:pointer; text-align:center; min-width:80px;
+      transition:border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .modal-opt:hover { border-color:#a5b4fc; background:#eef2ff; color:#4338ca; }
+    .modal-opt.selected { border-color:#4338ca; background:linear-gradient(135deg,#1e1b4b,#4338ca); color:#fff; box-shadow:0 4px 14px rgba(67,56,202,0.35); }
+    .modal-opt.ias.selected { background:linear-gradient(135deg,#d97706,#92400e); border-color:#d97706; }
+    .modal-opt.ips.selected { background:linear-gradient(135deg,#dc2626,#991b1b); border-color:#dc2626; }
+    .modal-opt.ifs.selected { background:linear-gradient(135deg,#059669,#065f46); border-color:#059669; }
+    .btn-proceed {
+      width:100%; padding:14px; background:linear-gradient(135deg,#1e1b4b,#4338ca);
+      color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700;
+      font-family:'Inter',sans-serif; cursor:pointer;
+      box-shadow:0 4px 14px rgba(67,56,202,0.45); margin-top:4px;
+      transition:opacity 0.2s, transform 0.15s;
+    }
+    .btn-proceed:hover:not(:disabled) { opacity:0.92; transform:translateY(-1px); }
+    .btn-proceed:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+
+    footer { text-align:center; padding:22px; font-size:13px; color:rgba(100,116,139,0.7); border-top:1px solid #c7d2fe; margin-top:10px; }
+
+    @media (max-width:900px) {
+      .summary-row { grid-template-columns:repeat(2,1fr); }
+      .analytics-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:600px) {
+      .top-header { flex-direction:column; align-items:flex-start; gap:12px; }
+      .page-content { padding:14px 14px 24px; }
+      .summary-row { grid-template-columns:1fr 1fr; gap:12px; }
+      .summary-num { font-size:32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading analytics&hellip;</div>
+</div>
+
+<!-- Top header -->
+<div class="top-header">
+  <div class="header-left">
+    <div class="ap-seal">&#127961;</div>
+    <div>
+      <div class="gov-label">Government of Andhra Pradesh</div>
+      <div class="cmo-title">Chief Minister's Office, Andhra Pradesh</div>
+      <div class="cmo-subtitle">Integrated Dashboard of AIS Officers&rsquo; Career Details</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="adminNavBtn" class="btn-admin-h" onclick="location.href='admin.html'" style="display:none">&#9881;&nbsp; Admin Panel</button>
+    <button id="selfAppraisalBtn" class="btn-self-appraisal" onclick="location.href='self_appraisal.html'" style="display:none">&#128221;&nbsp; Self Appraisal</button>
+    <button class="btn-view-officers" onclick="openViewModal()">&#128101;&nbsp; View Officers Data</button>
+    <button class="btn-logout-h" onclick="signOut()">&#128274;&nbsp; Logout</button>
+  </div>
+</div>
+
+<!-- Welcome bar -->
+<div class="welcome-bar">
+  <div>Welcome, <strong id="welcomeName">—</strong> &nbsp;&middot;&nbsp; AIS Officers Analytics Home</div>
+  <div class="live-badge"><div class="live-dot"></div> Live Analytics</div>
+</div>
+
+<!-- Main content -->
+<div class="page-content">
+
+  <!-- Summary cards -->
+  <div class="summary-row">
+    <div class="summary-card total">
+      <span class="summary-icon">&#128101;</span>
+      <div class="summary-num" id="totalCount">—</div>
+      <div class="summary-label">Total Active Officers</div>
+      <div class="summary-sub">IAS &plus; IPS &plus; IFS</div>
+    </div>
+    <div class="summary-card ias">
+      <span class="summary-icon">&#128218;</span>
+      <div class="summary-num" id="iasCount">—</div>
+      <div class="summary-label">IAS Officers</div>
+      <div class="summary-sub">Indian Administrative Service</div>
+    </div>
+    <div class="summary-card ips">
+      <span class="summary-icon">&#128110;</span>
+      <div class="summary-num" id="ipsCount">—</div>
+      <div class="summary-label">IPS Officers</div>
+      <div class="summary-sub">Indian Police Service</div>
+    </div>
+    <div class="summary-card ifs">
+      <span class="summary-icon">&#127795;</span>
+      <div class="summary-num" id="ifsCount">—</div>
+      <div class="summary-label">IFS Officers</div>
+      <div class="summary-sub">Indian Forest Service</div>
+    </div>
+  </div>
+
+  <!-- Analytics panels -->
+  <div class="analytics-grid">
+
+    <!-- ① Recruitment Type -->
+    <div class="analytics-card">
+      <div class="analytics-card-header">
+        <div class="a-icon" style="background:#fef3c7;">&#128218;</div>
+        <div>
+          <div class="a-title">Count by Recruitment Type</div>
+          <div class="a-sub">Officers grouped by Source of Recruitment</div>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="recruitChart"></canvas></div>
+    </div>
+
+    <!-- ② Domicile State -->
+    <div class="analytics-card">
+      <div class="analytics-card-header">
+        <div class="a-icon" style="background:#dbeafe;">&#127968;</div>
+        <div>
+          <div class="a-title">Count by Domicile State</div>
+          <div class="a-sub">Officers by home state &mdash; AP shown separately</div>
+        </div>
+      </div>
+
+      <!-- AP highlighted stat -->
+      <div class="ap-stat-box">
+        <div class="ap-stat-left">
+          <div class="ap-stat-lbl">&#127968; Andhra Pradesh Domicile</div>
+          <div class="ap-stat-num" id="apTotal">—</div>
+        </div>
+        <div class="ap-stat-right">
+          <span class="ap-pill ias">IAS: <span id="apIAS">—</span></span>
+          <span class="ap-pill ips">IPS: <span id="apIPS">—</span></span>
+          <span class="ap-pill ifs">IFS: <span id="apIFS">—</span></span>
+        </div>
+      </div>
+
+      <!-- Filter buttons -->
+      <div class="panel-filter-row" id="domicileFilters">
+        <span class="filter-label">Filter:</span>
+        <button class="pfbtn active"  data-filter="ALL" onclick="switchDomicileFilter(this)">All</button>
+        <button class="pfbtn ias"     data-filter="IAS" onclick="switchDomicileFilter(this)">IAS</button>
+        <button class="pfbtn ips"     data-filter="IPS" onclick="switchDomicileFilter(this)">IPS</button>
+        <button class="pfbtn ifs"     data-filter="IFS" onclick="switchDomicileFilter(this)">IFS</button>
+      </div>
+
+      <div class="chart-container-sm"><canvas id="domicileChart"></canvas></div>
+    </div>
+
+    <!-- ③ Year of Recruitment -->
+    <div class="analytics-card">
+      <div class="analytics-card-header">
+        <div class="a-icon" style="background:#d1fae5;">&#128197;</div>
+        <div>
+          <div class="a-title">Year of Recruitment</div>
+          <div class="a-sub">Officers by Allotment Year (IAS / IPS / IFS)</div>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="yearChart"></canvas></div>
+    </div>
+
+    <!-- ④ Upcoming Retirements -->
+    <div class="analytics-card">
+      <div class="analytics-card-header">
+        <div class="a-icon" style="background:#fee2e2;">&#8987;</div>
+        <div>
+          <div class="a-title">Upcoming Retirements</div>
+          <div class="a-sub">Officers retiring within 2 years (at age 60)</div>
+        </div>
+      </div>
+
+      <!-- Filter buttons -->
+      <div class="panel-filter-row" id="retireFilters">
+        <span class="filter-label">Filter:</span>
+        <button class="pfbtn active"  data-filter="ALL" onclick="switchRetireFilter(this)">All</button>
+        <button class="pfbtn ias"     data-filter="IAS" onclick="switchRetireFilter(this)">IAS</button>
+        <button class="pfbtn ips"     data-filter="IPS" onclick="switchRetireFilter(this)">IPS</button>
+        <button class="pfbtn ifs"     data-filter="IFS" onclick="switchRetireFilter(this)">IFS</button>
+      </div>
+
+      <div class="retire-list" id="retireList">
+        <div class="empty-retire">Loading&hellip;</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>&copy; 2025 Chief Minister&rsquo;s Office, Andhra Pradesh. All rights reserved.</footer>
+
+<!-- View Officers Modal -->
+<div id="viewModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">&#128101; View Officers Data</div>
+      <button class="modal-close" onclick="closeViewModal()">&#10006;</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">Select Officer Type</div>
+      <div class="modal-options">
+        <button class="modal-opt ias" data-group="officer" data-value="IAS" onclick="selectModalOpt(this)">&#128218; IAS</button>
+        <button class="modal-opt ips" data-group="officer" data-value="IPS" onclick="selectModalOpt(this)">&#128110; IPS</button>
+        <button class="modal-opt ifs" data-group="officer" data-value="IFS" onclick="selectModalOpt(this)">&#127795; IFS</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">Select View Type</div>
+      <div class="modal-options">
+        <button class="modal-opt" data-group="view" data-value="table" onclick="selectModalOpt(this)">&#128202; Tabular</button>
+        <button class="modal-opt" data-group="view" data-value="graph" onclick="selectModalOpt(this)">&#128200; Graphical</button>
+        <button class="modal-opt" data-group="view" data-value="photo" onclick="selectModalOpt(this)">&#128247; Photo</button>
+        <button class="modal-opt" data-group="view" data-value="360"   onclick="selectModalOpt(this)">&#128260; 360&deg;</button>
+      </div>
+    </div>
+    <button class="btn-proceed" id="proceedBtn" disabled onclick="proceedToView()">
+      Proceed to Dashboard &rarr;
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Module-level state ────────────────────────────────────────────
+  var _all = [], _ias = [], _ips = [], _ifs = [];
+  var _domChart    = null;
+  var _domFilter   = 'ALL';
+  var _retFilter   = 'ALL';
+
+  // ── Auth ──────────────────────────────────────────────────────────
+  requireAuth().then(function (session) {
+    if (!session) return;
+    var el = document.getElementById('welcomeName');
+    if (el) el.textContent = session.email;
+    // Show Self Appraisal button for officers
+    var role = (session.role || '').toLowerCase();
+    if (role === 'ias' || role === 'ips' || role === 'ifs') {
+      var saBtn = document.getElementById('selfAppraisalBtn');
+      if (saBtn) saBtn.style.display = '';
+    }
+    isAdmin().then(function (admin) {
+      if (admin) {
+        var btn = document.getElementById('adminNavBtn');
+        if (btn) btn.style.display = '';
+      }
+    });
+    loadAnalytics();
+  });
+
+  // ── Data load ─────────────────────────────────────────────────────
+  async function loadAnalytics() {
+    try {
+      const PAGE = 1000;
+      let all = [], from = 0;
+      while (true) {
+        const { data, error } = await _supabase
+          .from('officers')
+          .select('service_type, source_of_recruitment, domicile, allotment_year, date_of_birth, name_of_officer')
+          .eq('is_retired', false)
+          .eq('is_transferred_from_ap', false)
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        all = all.concat(data || []);
+        if ((data || []).length < PAGE) break;
+        from += PAGE;
+      }
+      _all = all;
+      _ias = all.filter(function(o){ return o.service_type === 'IAS'; });
+      _ips = all.filter(function(o){ return o.service_type === 'IPS'; });
+      _ifs = all.filter(function(o){ return o.service_type === 'IFS'; });
+      renderAll();
+    } catch (e) {
+      console.error('Analytics error:', e);
+      document.getElementById('retireList').innerHTML =
+        '<div class="empty-retire">&#10060; Error: ' + esc(e.message) + '</div>';
+    } finally {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  }
+
+  // ── Render all ────────────────────────────────────────────────────
+  function renderAll() {
+    setEl('totalCount', _all.length);
+    setEl('iasCount',   _ias.length);
+    setEl('ipsCount',   _ips.length);
+    setEl('ifsCount',   _ifs.length);
+    renderRecruitChart();
+    renderDomicilePanel('ALL');
+    renderYearChart();
+    renderRetirements('ALL');
+  }
+
+  function setEl(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function countBy(arr, key) {
+    var map = {};
+    arr.forEach(function(o) {
+      var v = ((o[key] || '') + '').trim() || 'Unknown';
+      map[v] = (map[v] || 0) + 1;
+    });
+    return map;
+  }
+
+  // ── AP domicile detection ─────────────────────────────────────────
+  function isAP(domicile) {
+    var d = ((domicile || '') + '').toUpperCase().trim();
+    return d === 'ANDHRA PRADESH' || d === 'AP' || d === 'A.P.' ||
+           d.indexOf('ANDHRA PRAD') === 0;
+  }
+
+  // ── Robust date parser ────────────────────────────────────────────
+  function parseDate(s) {
+    if (!s) return null;
+    var str = String(s).trim();
+
+    // ISO: YYYY-MM-DD (standard PostgreSQL / Supabase output)
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      var p = str.split('T')[0].split('-');
+      var d = new Date(+p[0], +p[1] - 1, +p[2]);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    var m = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+    if (m) {
+      var d2 = new Date(+m[3], +m[2] - 1, +m[1]);
+      return isNaN(d2.getTime()) ? null : d2;
+    }
+    // DD-MMM-YYYY  e.g. 05-Jan-1965
+    var m2 = str.match(/^(\d{1,2})[-\s]([A-Za-z]{3,})[-\s](\d{4})$/);
+    if (m2) {
+      var d3 = new Date(m2[1] + ' ' + m2[2] + ' ' + m2[3]);
+      return isNaN(d3.getTime()) ? null : d3;
+    }
+    // Fallback
+    var d4 = new Date(str);
+    return isNaN(d4.getTime()) ? null : d4;
+  }
+
+  function retirementDate(dob) {
+    var d = parseDate(dob);
+    if (!d) return null;
+    var r = new Date(d);
+    r.setFullYear(r.getFullYear() + 60);
+    return r;
+  }
+
+  // ── Chart 1: Recruitment Type ─────────────────────────────────────
+  function renderRecruitChart() {
+    var iasC = countBy(_ias, 'source_of_recruitment');
+    var ipsC = countBy(_ips, 'source_of_recruitment');
+    var ifsC = countBy(_ifs, 'source_of_recruitment');
+    var combined = {};
+    [iasC, ipsC, ifsC].forEach(function(m) {
+      Object.keys(m).forEach(function(k){ combined[k] = (combined[k]||0) + m[k]; });
+    });
+    var labels = Object.keys(combined).sort(function(a,b){ return combined[b]-combined[a]; }).slice(0,12);
+
+    new Chart(document.getElementById('recruitChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label:'IAS', data:labels.map(function(l){return iasC[l]||0;}), backgroundColor:'rgba(217,119,6,0.82)',  borderColor:'#d97706', borderWidth:1 },
+          { label:'IPS', data:labels.map(function(l){return ipsC[l]||0;}), backgroundColor:'rgba(220,38,38,0.82)',  borderColor:'#dc2626', borderWidth:1 },
+          { label:'IFS', data:labels.map(function(l){return ifsC[l]||0;}), backgroundColor:'rgba(5,150,105,0.82)',  borderColor:'#059669', borderWidth:1 }
+        ]
+      },
+      options: {
+        indexAxis:'y', maintainAspectRatio:false,
+        plugins:{ legend:{ position:'top', labels:{ font:{size:11,family:'Inter'}, boxWidth:14 } } },
+        scales:{ x:{ beginAtZero:true, ticks:{precision:0,font:{size:11}} }, y:{ ticks:{font:{size:11}} } }
+      }
+    });
+  }
+
+  // ── Chart 2: Domicile (interactive) ──────────────────────────────
+  function renderDomicilePanel(filter) {
+    _domFilter = filter;
+
+    // Always show full IAS/IPS/IFS AP breakdown in pills
+    var apIAS = _ias.filter(function(o){ return isAP(o.domicile); }).length;
+    var apIPS = _ips.filter(function(o){ return isAP(o.domicile); }).length;
+    var apIFS = _ifs.filter(function(o){ return isAP(o.domicile); }).length;
+
+    // Main AP number reflects current filter
+    var apMain = filter === 'IAS' ? apIAS
+               : filter === 'IPS' ? apIPS
+               : filter === 'IFS' ? apIFS
+               : apIAS + apIPS + apIFS;
+
+    setEl('apTotal', apMain);
+    setEl('apIAS',   apIAS);
+    setEl('apIPS',   apIPS);
+    setEl('apIFS',   apIFS);
+
+    // Source list for the chart
+    var source = filter === 'IAS' ? _ias
+               : filter === 'IPS' ? _ips
+               : filter === 'IFS' ? _ifs
+               : _all;
+
+    var nonAP = source.filter(function(o){ return !isAP(o.domicile); });
+    var counts = countBy(nonAP, 'domicile');
+    var sorted = Object.entries(counts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,12);
+    var labels = sorted.map(function(e){ return e[0]; });
+    var data   = sorted.map(function(e){ return e[1]; });
+
+    // Per-service colour when filtered; gradient otherwise
+    var fgColor = filter === 'IAS' ? 'rgba(217,119,6,0.82)'
+                : filter === 'IPS' ? 'rgba(220,38,38,0.82)'
+                : filter === 'IFS' ? 'rgba(5,150,105,0.82)'
+                : null;
+    var colors = fgColor
+      ? labels.map(function(){ return fgColor; })
+      : labels.map(function(_,i){ return 'hsla('+(230-i*10)+',65%,52%,0.82)'; });
+
+    if (_domChart) { _domChart.destroy(); _domChart = null; }
+
+    _domChart = new Chart(document.getElementById('domicileChart'), {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label:'Officers', data:data, backgroundColor:colors, borderWidth:1 }] },
+      options: {
+        indexAxis:'y', maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ beginAtZero:true, ticks:{precision:0,font:{size:11}} }, y:{ ticks:{font:{size:10}} } }
+      }
+    });
+  }
+
+  window.switchDomicileFilter = function(btn) {
+    document.querySelectorAll('#domicileFilters .pfbtn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderDomicilePanel(btn.getAttribute('data-filter'));
+  };
+
+  // ── Chart 3: Year of Recruitment ─────────────────────────────────
+  function renderYearChart() {
+    var iasC = countBy(_ias, 'allotment_year');
+    var ipsC = countBy(_ips, 'allotment_year');
+    var ifsC = countBy(_ifs, 'allotment_year');
+    var years = Array.from(new Set(
+      Object.keys(iasC).concat(Object.keys(ipsC)).concat(Object.keys(ifsC))
+    )).filter(function(y){ return y !== 'Unknown' && /^\d{4}$/.test(String(y)); }).sort();
+
+    new Chart(document.getElementById('yearChart'), {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: [
+          { label:'IAS', data:years.map(function(y){return iasC[y]||0;}), backgroundColor:'rgba(217,119,6,0.82)',  borderColor:'#d97706', borderWidth:1 },
+          { label:'IPS', data:years.map(function(y){return ipsC[y]||0;}), backgroundColor:'rgba(220,38,38,0.82)',  borderColor:'#dc2626', borderWidth:1 },
+          { label:'IFS', data:years.map(function(y){return ifsC[y]||0;}), backgroundColor:'rgba(5,150,105,0.82)',  borderColor:'#059669', borderWidth:1 }
+        ]
+      },
+      options: {
+        maintainAspectRatio:false,
+        plugins:{ legend:{ position:'top', labels:{ font:{size:11,family:'Inter'}, boxWidth:14 } } },
+        scales:{
+          x:{ stacked:true, ticks:{font:{size:10}, maxRotation:90} },
+          y:{ stacked:true, beginAtZero:true, ticks:{precision:0,font:{size:11}} }
+        }
+      }
+    });
+  }
+
+  // ── Upcoming Retirements (interactive) ────────────────────────────
+  function renderRetirements(filter) {
+    _retFilter = filter;
+    var today  = new Date();
+    var cutoff = new Date(today);
+    cutoff.setFullYear(cutoff.getFullYear() + 2);
+
+    var source = filter === 'IAS' ? _ias
+               : filter === 'IPS' ? _ips
+               : filter === 'IFS' ? _ifs
+               : _all;
+
+    var upcoming = source
+      .map(function(o){ return Object.assign({}, o, { retDate: retirementDate(o.date_of_birth) }); })
+      .filter(function(o){ return o.retDate && o.retDate >= today && o.retDate <= cutoff; })
+      .sort(function(a,b){ return a.retDate - b.retDate; });
+
+    var container = document.getElementById('retireList');
+    if (!upcoming.length) {
+      var suffix = filter !== 'ALL' ? ' for ' + filter : '';
+      container.innerHTML = '<div class="empty-retire">&#10003; No retirements within 2 years' + suffix + '</div>';
+      return;
+    }
+
+    container.innerHTML = upcoming.map(function(o) {
+      var msLeft   = o.retDate - today;
+      var daysLeft = Math.ceil(msLeft / 86400000);
+      var mLeft    = Math.floor(daysLeft / 30);
+      var urgency  = daysLeft < 180 ? 'urgent' : daysLeft < 365 ? 'soon' : 'normal';
+      var pill     = daysLeft < 180
+        ? (mLeft + ' mo left')
+        : daysLeft < 365
+        ? ('~' + mLeft + ' mo left')
+        : ('~' + (Math.floor(mLeft/12) ? Math.floor(mLeft/12)+'y ' : '') + (mLeft%12) + 'mo');
+      var svc     = (o.service_type || '').toUpperCase();
+      var dateStr = o.retDate.toLocaleDateString('en-IN', {month:'long',year:'numeric'});
+
+      return '<div class="retire-item">' +
+        '<div class="svc-badge ' + esc(svc) + '">' + esc(svc) + '</div>' +
+        '<div class="ret-info">' +
+          '<div class="ret-name">' + esc(o.name_of_officer || '—') + '</div>' +
+          '<div class="ret-detail">Retires ' + dateStr + '</div>' +
+        '</div>' +
+        '<div class="ret-right"><div class="ret-pill ' + urgency + '">' + pill + '</div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  window.switchRetireFilter = function(btn) {
+    document.querySelectorAll('#retireFilters .pfbtn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderRetirements(btn.getAttribute('data-filter'));
+  };
+
+  // ── HTML escape ───────────────────────────────────────────────────
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────
+  var selOfficer = null, selView = null;
+
+  window.openViewModal  = function(){ document.getElementById('viewModal').classList.add('open'); };
+  window.closeViewModal = function(){ document.getElementById('viewModal').classList.remove('open'); };
+
+  window.selectModalOpt = function(btn) {
+    var group = btn.getAttribute('data-group');
+    document.querySelectorAll('.modal-opt[data-group="'+group+'"]')
+      .forEach(function(b){ b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    if (group === 'officer') selOfficer = btn.getAttribute('data-value');
+    else                     selView    = btn.getAttribute('data-value');
+    document.getElementById('proceedBtn').disabled = !(selOfficer && selView);
+  };
+
+  window.proceedToView = function() {
+    if (!selOfficer || !selView) return;
+    var pages = { table:'table.html', graph:'graph.html', photo:'photo.html', '360':'360.html' };
+    var url = (pages[selView] || 'table.html') + '?service=' + selOfficer;
+
+    // Mark fullscreen intent so every destination page knows to restore it.
+    try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+
+    function go() { location.href = url; }
+
+    // Enter fullscreen NOW (user-gesture context is still active from the button click).
+    // Chromium preserves fullscreen across same-origin navigation.
+    // Destination pages re-request via DOMContentLoaded as a fallback for other browsers.
+    if (!document.fullscreenElement &&
+        (document.documentElement.requestFullscreen ||
+         document.documentElement.webkitRequestFullscreen)) {
+      var req = document.documentElement.requestFullscreen
+              ? document.documentElement.requestFullscreen()
+              : document.documentElement.webkitRequestFullscreen();
+      Promise.resolve(req).then(go).catch(go);
+    } else {
+      go();
+    }
+  };
+
+  document.getElementById('viewModal').addEventListener('click', function(e){
+    if (e.target === this) closeViewModal();
+  });
+
+  // When returning to landing via Home button, honour the fullscreen flag.
+  document.addEventListener('DOMContentLoaded', function () {
+    var wantFs = false;
+    try { wantFs = !!sessionStorage.getItem('ais_fs_mode'); } catch(e) {}
+    if (!document.fullscreenElement && wantFs) {
+      document.documentElement.requestFullscreen().catch(function () {});
+    }
+  });
+
+  // If the user manually exits fullscreen on the landing page, clear the flag.
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement) {
+      try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+    }
+  });
+
+})();
+</script>
+
+</body>
+</html>
