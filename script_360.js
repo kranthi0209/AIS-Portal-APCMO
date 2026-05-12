@@ -25,6 +25,136 @@
     { label: 'CMO Score',          color: '#b45309', light: '#fcd34d' },
   ];
 
+  // Dummy details for each segment (for demo / 360° click-expand)
+  const CAT_DETAILS = [
+    { icon: '💻', source: 'E-Office Portal — Data uploaded by E-Office Operator',
+      desc: 'Measures adoption and efficiency of the e-Office digital file processing system across the officer\'s department.',
+      metrics: [
+        { label: 'Files Disposed On-Time', val: 87 },
+        { label: 'Digital Signatures Used', val: 94 },
+        { label: 'Avg Disposal Time Index', val: 68 },
+        { label: 'Pending >30 Days (Inv.)', val: 82 },
+        { label: 'e-Office Adoption Rate',  val: 91 },
+      ]},
+    { icon: '⭐', source: 'Swarna AP Portal — Uploaded by Swarna Operator',
+      desc: 'Annual performance score based on KPIs defined under the Swarna Andhra Pradesh governance framework.',
+      metrics: [
+        { label: 'KPI Achievement Rate',    val: 78 },
+        { label: 'Target vs Actual Score',  val: 82 },
+        { label: 'Citizen Service Score',   val: 91 },
+        { label: 'Field Visit Compliance',  val: 65 },
+        { label: 'Reporting Punctuality',   val: 88 },
+      ]},
+    { icon: '📈', source: 'GSDP Portal — Uploaded by GSDP Operator',
+      desc: 'Gross State Domestic Product contribution and economic indicators from the officer\'s jurisdiction.',
+      metrics: [
+        { label: 'GSDP Growth Rate',        val: 72 },
+        { label: 'Sectoral Contribution',   val: 66 },
+        { label: 'Investment Facilitated',  val: 58 },
+        { label: 'Revenue Collection',      val: 80 },
+        { label: 'Infrastructure Index',    val: 74 },
+      ]},
+    { icon: '🏛️', source: 'GoI Funds Portal — Uploaded by GoI Funds Operator',
+      desc: 'Utilization efficiency of Government of India funds and centrally sponsored schemes.',
+      metrics: [
+        { label: 'Fund Utilization Rate',   val: 85 },
+        { label: 'Timely Claims Filed',     val: 79 },
+        { label: 'Scheme Completion Rate',  val: 88 },
+        { label: 'Beneficiary Coverage',    val: 76 },
+        { label: 'Audit Compliance',        val: 82 },
+      ]},
+    { icon: '👥', source: 'Perception Survey — Uploaded by Perception Operator',
+      desc: 'Citizen satisfaction and perception scores from structured field surveys across the district.',
+      metrics: [
+        { label: 'Overall Satisfaction',    val: 74 },
+        { label: 'Accessibility Score',     val: 68 },
+        { label: 'Grievance Resolution',    val: 81 },
+        { label: 'Service Efficiency',      val: 77 },
+        { label: 'Transparency Index',      val: 63 },
+      ]},
+    { icon: '💡', source: 'Self Appraisal — Entered directly by Officer',
+      desc: 'Novel solutions and best practices introduced in the jurisdiction during the review period.',
+      metrics: [
+        { label: 'Initiatives Implemented', val: 90 },
+        { label: 'Impact Assessment',       val: 72 },
+        { label: 'Replication Potential',   val: 65 },
+        { label: 'Stakeholder Approval',    val: 83 },
+        { label: 'Sustainability Score',    val: 78 },
+      ]},
+    { icon: '📱', source: 'Self Appraisal — Entered directly by Officer',
+      desc: 'Digital transformation initiatives, citizen-facing apps and paperless process adoption.',
+      metrics: [
+        { label: 'Digital Services Launched', val: 80 },
+        { label: 'Citizen App Adoption',      val: 71 },
+        { label: 'Paperless Processes',       val: 88 },
+        { label: 'Data Accuracy Index',       val: 93 },
+        { label: 'Tech Training Score',       val: 69 },
+      ]},
+    { icon: '📋', source: 'Self Appraisal — Entered directly by Officer',
+      desc: 'Policies conceptualized, notified and implemented during the review period.',
+      metrics: [
+        { label: 'Policies Drafted',          val: 75 },
+        { label: 'Policies Notified',         val: 68 },
+        { label: 'Stakeholder Consultation',  val: 82 },
+        { label: 'Implementation Rate',       val: 60 },
+        { label: 'Outcome Monitoring',        val: 77 },
+      ]},
+    { icon: '✂️', source: 'Self Appraisal — Entered directly by Officer',
+      desc: 'Reduction of redundant regulations and simplification of compliance processes.',
+      metrics: [
+        { label: 'Regulations Removed',       val: 85 },
+        { label: 'Process Steps Reduced',     val: 78 },
+        { label: 'Compliance Reduction',      val: 66 },
+        { label: 'Business Ease Impact',      val: 73 },
+        { label: 'Citizen Feedback',          val: 89 },
+      ]},
+    { icon: '🛡️', source: 'Integrity Data — Uploaded by Integrity Operator',
+      desc: 'Composite integrity score based on ACB records, vigilance clearance and conduct.',
+      metrics: [
+        { label: 'ACB Cases (Clean = 100)',   val: 95 },
+        { label: 'Complaint Resolution',      val: 88 },
+        { label: 'Vigilance Clearance',       val: 100 },
+        { label: 'Asset Declaration',         val: 100 },
+        { label: 'Conduct Score',             val: 91 },
+      ]},
+    { icon: '🤝', source: 'Party Feedback — Uploaded by Party Operator',
+      desc: 'Feedback scores from ruling party functionaries and elected representatives.',
+      metrics: [
+        { label: 'MLA Feedback Score',        val: 76 },
+        { label: 'MP Feedback Score',         val: 81 },
+        { label: 'Zilla Parishad Score',      val: 68 },
+        { label: 'Mandal Parishad Score',     val: 74 },
+        { label: 'Village Sarpanch Score',    val: 83 },
+      ]},
+    { icon: '📰', source: 'Media Feedback — Uploaded by Media Operator',
+      desc: 'Sentiment analysis of print, digital and social media coverage of the officer\'s work.',
+      metrics: [
+        { label: 'Positive Coverage %',       val: 79 },
+        { label: 'Neutral/Negative (Inv.)',   val: 85 },
+        { label: 'Social Media Sentiment',    val: 72 },
+        { label: 'Print Media Score',         val: 77 },
+        { label: 'Digital Media Score',       val: 68 },
+      ]},
+    { icon: '🎯', source: 'Self Appraisal — Entered directly by Officer',
+      desc: 'Leadership qualities, team management and institutional capacity building.',
+      metrics: [
+        { label: 'Team Building',             val: 84 },
+        { label: 'Decision Making',           val: 91 },
+        { label: 'Crisis Management',         val: 76 },
+        { label: 'Mentoring & Training',      val: 68 },
+        { label: 'Stakeholder Coordination',  val: 88 },
+      ]},
+    { icon: '🏆', source: 'CMO Assessment — Chief Minister\'s Office',
+      desc: 'Direct performance assessment by the Chief Minister\'s Office on special assignments.',
+      metrics: [
+        { label: 'Special Assignment',        val: 88 },
+        { label: 'Responsiveness',            val: 94 },
+        { label: 'Report Quality',            val: 82 },
+        { label: 'Field Reliability',         val: 90 },
+        { label: 'CMO Interaction Rating',    val: 86 },
+      ]},
+  ];
+
   // Cadre → top-border colour mapping
   const CADRE_COLORS = {
     'CHIEF SECRETARY':         '#16a34a',
@@ -46,6 +176,8 @@
   let photoMap    = {};
   let hcmPhotoMap = {};   // HCM name → photo URL
   let filtered    = [];   // current filtered subset
+  let currentWheelData = { scores: [], ranks: [] }; // scores for open wheel
+  let activeSegSet = new Set(); // indices of segments with open detail cards
 
   // Try to load HCM photos from DB; silently skip if table absent
   async function fetchHcmPhotos() {
@@ -375,6 +507,11 @@
     const ranks  = scores.map(s => sorted.indexOf(s) + 1);
     const avg    = (scores.reduce((a, v) => a + v, 0) / WHEEL_CATS.length).toFixed(2);
 
+    // Store for segment detail panel; clear any floating cards from previous officer
+    currentWheelData = { scores, ranks };
+    activeSegSet.clear();
+    document.getElementById('wheelOverlay').querySelectorAll('.sdp-card').forEach(function(c){ c.remove(); });
+
     // Overall rank: random 1-150 (independent of per-category ranks)
     const overallRank = Math.floor(Math.random() * 150) + 1;
 
@@ -591,7 +728,7 @@
 
     document.getElementById('wheelSvg').innerHTML = s;
 
-    // ── Hover animations on segment groups ────────────────────────
+    // ── Hover + click animations on segment groups ───────────────
     document.querySelectorAll('#wheelSvg .seg-group').forEach(function (g) {
       const hx = parseFloat(g.dataset.hx || '0');
       const hy = parseFloat(g.dataset.hy || '0');
@@ -602,10 +739,17 @@
         if (lbl) { lbl.style.fontSize = '13px'; lbl.style.fill = '#92400e'; lbl.style.fontWeight = '900'; }
       });
       g.addEventListener('mouseleave', function () {
+        const idx = parseInt(g.id.replace('wGroup', ''), 10);
+        if (activeSegSet.has(idx)) return; // keep open segments pushed out
         g.style.transform = 'translate(0,0)';
         g.style.filter = '';
         const lbl = g.querySelector('[id^="wLbl"]');
         if (lbl) { lbl.style.fontSize = '11px'; lbl.style.fill = '#78350f'; lbl.style.fontWeight = '800'; }
+      });
+      g.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const idx = parseInt(g.id.replace('wGroup', ''), 10);
+        openSegDetail(idx);
       });
     });
 
@@ -660,8 +804,210 @@
     document.getElementById('wheelOverlay').classList.add('open');
   }
 
+  // ── Segment detail panel (multi-card stack) ───────────────────
+  function openSegDetail(i) {
+    const cat = WHEEL_CATS[i];
+    const det = CAT_DETAILS[i];
+    if (!cat || !det) return;
+
+    // Toggle: clicking an open segment closes its card
+    if (activeSegSet.has(i)) {
+      closeSegCard(i);
+      return;
+    }
+
+    const score = currentWheelData.scores[i] || 0;
+    const rank  = currentWheelData.ranks[i]  || '—';
+
+    activeSegSet.add(i);
+
+    // Push segment further out to show it's selected
+    const grp = document.getElementById('wGroup' + i);
+    if (grp) {
+      const hx = parseFloat(grp.dataset.hx || '0');
+      const hy = parseFloat(grp.dataset.hy || '0');
+      grp.style.transform = 'translate(' + (hx * 1.7) + 'px,' + (hy * 1.7) + 'px)';
+      grp.style.filter = 'brightness(1.7) drop-shadow(0 0 16px rgba(255,200,40,1))';
+    }
+
+    // Alternating inner/outer rings so adjacent cards don't overlap
+    const svg = document.getElementById('wheelSvg');
+    const svgRect = svg.getBoundingClientRect();
+    const scale = svgRect.width / 640;
+    const midAngle = (-90 + (i + 0.5) * (360 / 14)) * Math.PI / 180;
+    const R = (i % 2 === 0) ? 440 : 530; // even → inner ring, odd → outer ring
+    const rawX = svgRect.left + (320 + R * Math.cos(midAngle)) * scale;
+    const rawY = svgRect.top  + (320 + R * Math.sin(midAngle)) * scale;
+    const CARD_W = 240, CARD_H = 200;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const cx = Math.max(CARD_W / 2 + 8, Math.min(vw - CARD_W / 2 - 8, rawX));
+    const cy = Math.max(CARD_H / 2 + 8, Math.min(vh - CARD_H / 2 - 8, rawY));
+
+    // Mini card: top 3 metrics only — full details open on card click
+    const miniMetrics = det.metrics.slice(0, 3).map(function (m) {
+      return '<div class="sdp-metric-row">' +
+        '<div class="sdp-metric-label" title="' + m.label + '">' + m.label + '</div>' +
+        '<div class="sdp-metric-track">' +
+          '<div class="sdp-metric-bar" data-val="' + m.val + '" style="background:' + cat.color + '"></div>' +
+        '</div>' +
+        '<div class="sdp-metric-val">' + m.val + '%</div>' +
+      '</div>';
+    }).join('');
+
+    // Create mini card
+    const card = document.createElement('div');
+    card.className = 'sdp-card';
+    card.dataset.segIdx = i;
+    card.style.setProperty('--sdp-color', cat.color);
+    card.style.left = cx + 'px';
+    card.style.top  = cy + 'px';
+    card.innerHTML =
+      '<button class="sdp-close">&#10006;</button>' +
+      '<div class="sdp-header">' +
+        '<div class="sdp-icon-wrap" style="background:' + cat.color + '">' + det.icon + '</div>' +
+        '<div class="sdp-title-group">' +
+          '<div class="sdp-title">' + cat.label + '</div>' +
+          '<div class="sdp-score-badge" style="background:' + cat.color + '">Score: ' + score.toFixed(2) + ' / 10</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sdp-source">&#128204; ' + det.source + '</div>' +
+      '<div class="sdp-sec-title">Top Metrics <span class="sdp-demo-tag">DEMO</span></div>' +
+      miniMetrics +
+      '<div class="sdp-expand-hint">&#8599; Click for full breakdown</div>';
+
+    // ✖ closes this mini card (toggles segment off)
+    card.querySelector('.sdp-close').addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeSegCard(i);
+    });
+
+    // Body click → open full detail popup
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('.sdp-close')) return;
+      e.stopPropagation();
+      openSegPopup(i);
+    });
+
+    document.getElementById('wheelOverlay').appendChild(card);
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        card.querySelectorAll('.sdp-metric-bar').forEach(function (bar) {
+          bar.style.width = bar.dataset.val + '%';
+        });
+      });
+    });
+  }
+
+  function openSegPopup(i) {
+    const cat = WHEEL_CATS[i];
+    const det = CAT_DETAILS[i];
+    if (!cat || !det) return;
+
+    const score = currentWheelData.scores[i] || 0;
+    const rank  = currentWheelData.ranks[i]  || '—';
+
+    // Remove any existing popup first
+    const overlay = document.getElementById('wheelOverlay');
+    const existingBg = overlay.querySelector('.sdp-popup-bg');
+    if (existingBg) existingBg.remove();
+
+    // Build all 5 metric rows
+    const metricsHtml = det.metrics.map(function (m) {
+      return '<div class="sdp-popup-metric">' +
+        '<div class="sdp-popup-mlabel">' + m.label + '</div>' +
+        '<div class="sdp-popup-mtrack">' +
+          '<div class="sdp-popup-mbar" data-val="' + m.val + '" style="background:' + cat.color + '"></div>' +
+        '</div>' +
+        '<div class="sdp-popup-mval">' + m.val + '%</div>' +
+      '</div>';
+    }).join('');
+
+    const bg = document.createElement('div');
+    bg.className = 'sdp-popup-bg';
+
+    const popup = document.createElement('div');
+    popup.className = 'sdp-popup';
+    popup.style.setProperty('--sdp-color', cat.color);
+    popup.innerHTML =
+      '<button class="sdp-popup-close">&#10006;</button>' +
+      '<div class="sdp-popup-header">' +
+        '<div class="sdp-popup-icon" style="background:' + cat.color + '">' + det.icon + '</div>' +
+        '<div>' +
+          '<div class="sdp-popup-name">' + cat.label + '</div>' +
+          '<div class="sdp-popup-score" style="background:' + cat.color + '">Score: ' + score.toFixed(2) + ' / 10</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sdp-popup-body">' +
+        '<div class="sdp-popup-source">&#128204; ' + det.source + '</div>' +
+        '<div class="sdp-popup-desc">' + det.desc + '</div>' +
+        '<div class="sdp-popup-sec">Score Components <span class="sdp-popup-demo">DEMO DATA</span></div>' +
+        metricsHtml +
+      '</div>' +
+      '<div class="sdp-popup-footer">' +
+        '<span class="sdp-popup-rank-label">Category Rank (among 14)</span>' +
+        '<span class="sdp-popup-rank-val" style="background:' + cat.color + '">#' + rank + '</span>' +
+      '</div>';
+
+    function closePopup() { bg.remove(); }
+
+    popup.querySelector('.sdp-popup-close').addEventListener('click', function (e) {
+      e.stopPropagation(); closePopup();
+    });
+    bg.addEventListener('click', function (e) {
+      if (e.target === bg) closePopup();
+    });
+    popup.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    bg.appendChild(popup);
+    overlay.appendChild(bg);
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        popup.querySelectorAll('.sdp-popup-mbar').forEach(function (bar) {
+          bar.style.width = bar.dataset.val + '%';
+        });
+      });
+    });
+  }
+
+  function closeSegCard(i) {
+    const overlay = document.getElementById('wheelOverlay');
+    if (overlay) {
+      const card = overlay.querySelector('.sdp-card[data-seg-idx="' + i + '"]');
+      if (card) card.remove();
+    }
+    activeSegSet.delete(i);
+    const grp = document.getElementById('wGroup' + i);
+    if (grp) {
+      grp.style.transform = 'translate(0,0)';
+      grp.style.filter = '';
+      const lbl = grp.querySelector('[id^="wLbl"]');
+      if (lbl) { lbl.style.fontSize = '11px'; lbl.style.fill = '#78350f'; lbl.style.fontWeight = '800'; }
+    }
+  }
+
+  function closeAllSegCards() {
+    const overlay = document.getElementById('wheelOverlay');
+    if (overlay) {
+      overlay.querySelectorAll('.sdp-card').forEach(function(c){ c.remove(); });
+      overlay.querySelectorAll('.sdp-popup-bg').forEach(function(c){ c.remove(); });
+    }
+    activeSegSet.forEach(function (i) {
+      const grp = document.getElementById('wGroup' + i);
+      if (grp) {
+        grp.style.transform = 'translate(0,0)';
+        grp.style.filter = '';
+        const lbl = grp.querySelector('[id^="wLbl"]');
+        if (lbl) { lbl.style.fontSize = '11px'; lbl.style.fill = '#78350f'; lbl.style.fontWeight = '800'; }
+      }
+    });
+    activeSegSet.clear();
+  }
+
   // ── Wheel overlay close handlers ──────────────────────────────
   function closeWheel() {
+    closeAllSegCards();
     document.getElementById('wheelOverlay').classList.remove('open');
   }
   document.getElementById('wheelClose').addEventListener('click', closeWheel);
