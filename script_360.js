@@ -280,6 +280,7 @@
 
       populateFilterOptions();
       applyFilters360();
+      document.dispatchEvent(new CustomEvent('officers360Loaded'));
 
     }).catch(err => {
       document.getElementById('grid360').innerHTML =

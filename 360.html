@@ -503,6 +503,207 @@
       border-color: rgba(165,180,252,0.7); color: white;
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       ALKRA — Beautiful Cat Chatbot  ·  Yellow / Amber Theme
+    ══════════════════════════════════════════════════════════════ */
+
+    /* ── Floating cat button ──────────────────────────────────── */
+    #alkraBtn {
+      position: fixed; bottom: 28px; right: 28px; z-index: 8100;
+      width: 70px; height: 70px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #b45309 0%, #78350f 52%, #3b1a02 100%);
+      border: 3px solid #92400e;
+      box-shadow: 0 8px 28px rgba(60,28,5,0.8), 0 2px 8px rgba(30,10,2,0.55);
+      cursor: pointer; padding: 7px;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s;
+      animation: catBreath 3.5s ease-in-out infinite;
+    }
+    #alkraBtn:hover {
+      transform: translateY(-4px) scale(1.07);
+      box-shadow: 0 16px 40px rgba(60,28,5,0.9), 0 4px 12px rgba(30,10,2,0.6);
+      animation: none;
+    }
+    #alkraBtn.open {
+      border-color: #b45309;
+      box-shadow: 0 6px 24px rgba(60,28,5,0.65), 0 0 0 5px rgba(120,53,15,0.28);
+      animation: none;
+    }
+    .alkra-fab-icon, .alkra-fab-label { display: none; } /* replaced by SVG */
+
+    /* ── Cat SVG animations ────────────────────────────────────── */
+    @keyframes catBreath {
+      0%, 100% { transform: scale(1);     box-shadow: 0 8px 28px rgba(60,28,5,0.8); }
+      50%       { transform: scale(1.04);  box-shadow: 0 14px 40px rgba(60,28,5,0.95); }
+    }
+    /* Blink — applied to the eye <g> groups */
+    @keyframes catBlink {
+      0%, 88%, 100% { transform: scaleY(1); }
+      93%           { transform: scaleY(0.07); }
+    }
+    /* Ear twitch (listening) */
+    @keyframes catEarL {
+      0%, 100% { transform: rotate(0deg)   translateY(0); }
+      40%      { transform: rotate(-14deg) translateY(-3px); }
+    }
+    @keyframes catEarR {
+      0%, 100% { transform: rotate(0deg)  translateY(0); }
+      40%      { transform: rotate(14deg) translateY(-3px); }
+    }
+    /* Whisker twitch (typing) */
+    @keyframes catWhiskerL {
+      0%, 100% { transform: rotate(0deg); }
+      50%      { transform: rotate(-9deg); }
+    }
+    @keyframes catWhiskerR {
+      0%, 100% { transform: rotate(0deg); }
+      50%      { transform: rotate(9deg); }
+    }
+    /* Eyes always blink gently */
+    .cat-eye-l { transform-origin: 35px 50px; animation: catBlink 4.5s ease-in-out infinite; }
+    .cat-eye-r { transform-origin: 65px 50px; animation: catBlink 4.5s ease-in-out infinite 0.6s; }
+    /* Listening → ears twitch */
+    #alkraPanel.listening .cat-ear-l { transform-origin: 26px 33px; animation: catEarL 0.65s ease-in-out infinite; }
+    #alkraPanel.listening .cat-ear-r { transform-origin: 74px 33px; animation: catEarR 0.65s ease-in-out infinite 0.15s; }
+    #alkraBtn.listening               { animation: catBreath 0.8s ease-in-out infinite; border-color: #fca5a5; }
+    /* Typing → whiskers twitch */
+    #alkraPanel.typing .cat-wl { transform-origin: 42px 69px; animation: catWhiskerL 0.38s ease-in-out infinite; }
+    #alkraPanel.typing .cat-wr { transform-origin: 58px 69px; animation: catWhiskerR 0.38s ease-in-out infinite 0.09s; }
+
+    /* ── Typing dots ────────────────────────────────────────────── */
+    .alkra-dots { display: flex; gap: 5px; align-items: center; padding: 3px 0; }
+    .alkra-dots span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #f59e0b; display: block;
+      animation: dotBounce 1.1s ease-in-out infinite;
+    }
+    .alkra-dots span:nth-child(2) { animation-delay: 0.18s; background: #d97706; }
+    .alkra-dots span:nth-child(3) { animation-delay: 0.36s; background: #b45309; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0);    opacity: 0.45; }
+      40%           { transform: translateY(-8px);  opacity: 1; }
+    }
+
+    /* ── Chat panel ─────────────────────────────────────────────── */
+    #alkraPanel {
+      position: fixed; bottom: 112px; right: 28px; z-index: 8000;
+      width: 340px; max-height: 500px;
+      background: #fffbeb; border-radius: 22px;
+      box-shadow: 0 28px 70px rgba(120,53,15,0.28), 0 0 0 1.5px rgba(245,158,11,0.35);
+      display: flex; flex-direction: column; overflow: hidden;
+      transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none;
+      transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s;
+    }
+    #alkraPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    .alkra-hdr {
+      background: linear-gradient(135deg, #78350f 0%, #b45309 55%, #d97706 100%);
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+      border-bottom: 1px solid rgba(251,191,36,0.25);
+    }
+    .alkra-hdr-left { display: flex; align-items: center; gap: 10px; }
+    .alkra-avatar {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: radial-gradient(circle at 42% 38%, #fde68a, #f59e0b);
+      border: 2px solid #fbbf24;
+      padding: 4px; overflow: hidden;
+      flex-shrink: 0;
+    }
+    .alkra-name { font-size: 15px; font-weight: 800; color: #fef3c7; letter-spacing: 0.2px; }
+    .alkra-st   { font-size: 10.5px; color: #fcd34d; margin-top: 2px; }
+    .alkra-x {
+      background: rgba(255,255,255,0.12); border: none; border-radius: 8px;
+      width: 28px; height: 28px; color: #fcd34d; cursor: pointer; font-size: 15px;
+      display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    .alkra-x:hover { background: rgba(255,255,255,0.28); color: #fff; }
+
+    /* ── Messages area ──────────────────────────────────────────── */
+    .alkra-msgs {
+      flex: 1; overflow-y: auto; padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      min-height: 180px; background: #fffbeb;
+    }
+    .alkra-msg      { display: flex; }
+    .alkra-msg.bot  { justify-content: flex-start; }
+    .alkra-msg.user { justify-content: flex-end; }
+    .alkra-bbl {
+      max-width: 84%; padding: 9px 13px; border-radius: 14px;
+      font-size: 13px; line-height: 1.5; font-family: 'Inter', Arial, sans-serif;
+    }
+    .alkra-msg.bot  .alkra-bbl {
+      background: #fff; color: #78350f;
+      border: 1px solid #fde68a; border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 8px rgba(245,158,11,0.12);
+    }
+    .alkra-msg.user .alkra-bbl {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff; border-bottom-right-radius: 4px;
+      box-shadow: 0 3px 10px rgba(245,158,11,0.35);
+    }
+
+    /* ── Quick chips ─────────────────────────────────────────────── */
+    .alkra-chips {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      padding: 0 12px 10px; background: #fffbeb;
+      border-top: 1px solid #fef3c7;
+    }
+    .alkra-chip {
+      background: #fef3c7; border: 1px solid #fcd34d; border-radius: 20px;
+      padding: 3px 10px; font-size: 11px; color: #92400e; cursor: pointer;
+      font-family: 'Inter', Arial, sans-serif; font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .alkra-chip:hover { background: #fde68a; border-color: #f59e0b; }
+
+    /* ── Input bar ───────────────────────────────────────────────── */
+    .alkra-input-row {
+      display: flex; gap: 7px; padding: 10px 12px;
+      border-top: 1px solid #fde68a; background: #fff; flex-shrink: 0;
+    }
+    #alkraInput {
+      flex: 1; border: 1.5px solid #fcd34d; border-radius: 12px;
+      padding: 8px 12px; font-size: 13px; outline: none; color: #78350f;
+      font-family: 'Inter', Arial, sans-serif; background: #fffbeb;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #alkraInput:focus { border-color: #f59e0b; background: #fff; box-shadow: 0 0 0 3px rgba(245,158,11,0.18); }
+    #alkraInput::placeholder { color: #d97706; opacity: 0.7; }
+    #alkraSendBtn {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none; color: #fff; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    #alkraSendBtn:hover  { opacity: 0.88; transform: scale(1.07); }
+    #alkraSendBtn:active { transform: scale(0.94); }
+    #alkraMicBtn {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      background: #fef3c7; border: 1.5px solid #fcd34d;
+      color: #d97706; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    #alkraMicBtn:hover { background: #fde68a; border-color: #f59e0b; }
+    #alkraMicBtn.listening {
+      background: #fee2e2; border-color: #fca5a5; color: #dc2626;
+      animation: alkraMicPulse 0.9s ease-in-out infinite;
+    }
+    @keyframes alkraMicPulse {
+      0%, 100% { box-shadow: 0 0 0 0   rgba(220,38,38,0.5); }
+      50%       { box-shadow: 0 0 0 8px rgba(220,38,38,0);   }
+    }
+    #alkraMicBtn:not([data-sr]) { opacity: 0.38; cursor: not-allowed; }
+
+    @media (max-width: 400px) {
+      #alkraPanel { width: calc(100vw - 16px); right: 8px; }
+      #alkraBtn   { right: 14px; bottom: 14px; }
+    }
+
     /* ── Responsive bar ──────────────────────────────────────────── */
     @media (max-width: 1280px) {
       .b360-fl { display: none; }
@@ -1330,5 +1531,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script src="script_360.js"></script>
+<script src="voice_360.js"></script>
 </body>
 </html>
