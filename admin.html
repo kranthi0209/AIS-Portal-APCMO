@@ -380,6 +380,56 @@
       </div>
     </div>
 
+    <!-- Post Type Options Management -->
+    <div class="section-card" style="margin-top:24px;" id="post-type-section">
+      <div class="section-header">
+        <h3>&#127991; Post Type Options</h3>
+        <div class="toolbar">
+          <select id="ptSvcFilter" onchange="loadPostTypeAdmin()">
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+          <button class="btn btn-teal" onclick="openAddPostTypeModal()">+ Add Option</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadPostTypeAdmin()">&#8635; Refresh</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:48px;">#</th>
+              <th>Label</th>
+              <th style="width:90px;text-align:center;">Sort Order</th>
+              <th style="width:140px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="post-type-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add/Edit Post Type Modal -->
+    <div class="modal-overlay" id="pt-modal">
+      <div class="modal" style="max-width:420px;">
+        <h2 id="pt-modal-title">Add Post Type Option</h2>
+        <input type="hidden" id="pt-id">
+        <input type="hidden" id="pt-svc">
+        <div class="form-grid">
+          <div class="form-group full"><label>Label</label>
+            <input id="pt-label" placeholder="e.g. District Collector">
+          </div>
+          <div class="form-group full"><label>Sort Order</label>
+            <input id="pt-sort" type="number" placeholder="1" value="0">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('pt-modal')">Cancel</button>
+          <button class="btn btn-success" onclick="savePostType()">&#10003; Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- CSV Upload Section -->
     <div class="section-card" style="margin-top:24px;">
       <div class="section-header">
@@ -413,7 +463,7 @@
         <!-- Expected format hint -->
         <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#166534;">
           <strong>Expected CSV columns (header row required):</strong><br>
-          <code style="font-size:11px;color:#065f46;">service_type, identity_no, name_of_officer, cadre, current_posting, date_of_appointment, source_of_recruitment, educational_qualification, date_of_birth, allotment_year, domicile, email_id, phone_no, photo_url, is_retired, is_transferred_from_ap</code><br>
+          <code style="font-size:11px;color:#065f46;">service_type, identity_no, name_of_officer, cadre, current_posting, date_of_appointment, source_of_recruitment, educational_qualification, date_of_birth, allotment_year, domicile, email_id, phone_no, photo_url, post_type, is_retired, is_transferred_from_ap</code><br>
           <span style="margin-top:4px;display:block;">Column names are case-insensitive. <code>is_retired</code> and <code>is_transferred_from_ap</code> accept <code>true/false</code> or <code>1/0</code>. Dates: <code>YYYY-MM-DD</code> preferred.</span>
         </div>
 
@@ -655,6 +705,9 @@
       </div>
       <div class="form-group full"><label>Photo URL</label>
         <input id="ofr-photo_url" type="url" placeholder="https://example.com/photo.jpg">
+      </div>
+      <div class="form-group full"><label>Post Type</label>
+        <select id="ofr-post_type"><option value="">— Select Post Type —</option></select>
       </div>
     </div>
     <div class="modal-actions">
@@ -961,7 +1014,7 @@ function showTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'data')    loadOfficers();
+  if (name === 'data')    { loadOfficers(); loadPostTypeAdmin(); }
   if (name === 'users')   { loadResetRequests(); loadUsers(); }
   if (name === 'control') loadModuleControl();
 }
@@ -1140,6 +1193,102 @@ function renderOfficersPagination(total, page) {
 // ================================================================
 let _cadresCache = [];
 
+// ================================================================
+// Post Type Options cache + dropdown helpers
+// ================================================================
+let _postTypeCache = {};   // { 'IAS': [{id,label,sort_order}, …], 'IPS': […], 'IFS': […] }
+
+async function loadPostTypeOptions(svc) {
+  if (_postTypeCache[svc]) return _postTypeCache[svc];
+  const { data } = await _supabase
+    .from('post_type_options')
+    .select('id, label, sort_order')
+    .eq('service_type', svc)
+    .order('sort_order')
+    .order('label');
+  _postTypeCache[svc] = data || [];
+  return _postTypeCache[svc];
+}
+
+async function updatePostTypeDropdown(svc, currentVal) {
+  const sel  = document.getElementById('ofr-post_type');
+  if (!sel) return;
+  const opts = await loadPostTypeOptions(svc);
+  sel.innerHTML = '<option value="">— Select Post Type —</option>' +
+    opts.map(o => `<option value="${esc(o.label)}"${o.label === currentVal ? ' selected' : ''}>${esc(o.label)}</option>`).join('');
+}
+
+// ---- Post Type Admin (manage options table) ----
+async function loadPostTypeAdmin() {
+  const svc   = document.getElementById('ptSvcFilter').value;
+  const tbody = document.getElementById('post-type-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:#6366f1;">&#8987; Loading…</td></tr>';
+  _postTypeCache[svc] = null;  // bust cache
+  const opts = await loadPostTypeOptions(svc);
+  if (!opts.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:#94a3b8;">No options found. Click <strong>+ Add Option</strong>.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = opts.map((o, i) => `<tr>
+    <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+    <td style="font-weight:600;">${esc(o.label)}</td>
+    <td style="text-align:center;">${o.sort_order}</td>
+    <td>
+      <button class="btn btn-amber btn-sm" onclick='openEditPostTypeModal(${JSON.stringify(o)})'>&#9998; Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deletePostType(${o.id})">&#128465;</button>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddPostTypeModal() {
+  const svc = document.getElementById('ptSvcFilter').value;
+  document.getElementById('pt-modal-title').textContent = 'Add Post Type Option (' + svc + ')';
+  document.getElementById('pt-id').value   = '';
+  document.getElementById('pt-svc').value  = svc;
+  document.getElementById('pt-label').value = '';
+  document.getElementById('pt-sort').value  = '0';
+  document.getElementById('pt-modal').classList.add('open');
+}
+
+function openEditPostTypeModal(o) {
+  const svc = document.getElementById('ptSvcFilter').value;
+  document.getElementById('pt-modal-title').textContent = 'Edit Post Type Option (' + svc + ')';
+  document.getElementById('pt-id').value   = o.id;
+  document.getElementById('pt-svc').value  = svc;
+  document.getElementById('pt-label').value = o.label;
+  document.getElementById('pt-sort').value  = o.sort_order;
+  document.getElementById('pt-modal').classList.add('open');
+}
+
+async function savePostType() {
+  const id    = document.getElementById('pt-id').value;
+  const svc   = document.getElementById('pt-svc').value;
+  const label = document.getElementById('pt-label').value.trim();
+  const sort  = parseInt(document.getElementById('pt-sort').value, 10) || 0;
+  if (!label) { showToast('Label is required.', true); return; }
+  const payload = { service_type: svc, label, sort_order: sort };
+  let error;
+  if (id) {
+    ({ error } = await _supabase.from('post_type_options').update(payload).eq('id', id));
+  } else {
+    ({ error } = await _supabase.from('post_type_options').insert(payload));
+  }
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast(id ? 'Option updated.' : 'Option added.');
+  closeModal('pt-modal');
+  loadPostTypeAdmin();
+}
+
+function deletePostType(id) {
+  showConfirm('Delete Post Type Option', 'Delete this option? Existing officers with this type will keep their value.', async function () {
+    const { error } = await _supabase.from('post_type_options').delete().eq('id', id);
+    if (error) { showToast('Error: ' + error.message, true); return; }
+    showToast('Option deleted.');
+    loadPostTypeAdmin();
+  }, 'danger');
+}
+
 async function loadCadres() {
   if (_cadresCache.length) return;
   const { data } = await _supabase.from('cadres').select('type,cadre_name').order('cadre_name');
@@ -1169,6 +1318,7 @@ function onOfficerSvcChange() {
   const svc = document.getElementById('ofr-service_type').value;
   updateCadreDropdown(svc, '');
   updateSourceDropdown(svc, '');
+  updatePostTypeDropdown(svc, '');
 }
 
 // Convert any stored date string to YYYY-MM-DD for <input type="date">
@@ -1202,6 +1352,7 @@ async function openEditOfficerModal(o) {
   document.getElementById('ofr-photo_url').value             = o.photo_url ?? '';
   updateCadreDropdown(o.service_type ?? 'IAS', o.cadre ?? '');
   updateSourceDropdown(o.service_type ?? 'IAS', o.source_of_recruitment ?? '');
+  updatePostTypeDropdown(o.service_type ?? 'IAS', o.post_type ?? '');
   document.getElementById('officer-modal').classList.add('open');
 }
 
@@ -1225,7 +1376,8 @@ function saveOfficer() {
     educational_qualification: strVal('ofr-educational_qualification'),
     email_id:                  strVal('ofr-email_id'),
     phone_no:                  strVal('ofr-phone_no'),
-    photo_url:                 strVal('ofr-photo_url') || null
+    photo_url:                 strVal('ofr-photo_url') || null,
+    post_type:                 strVal('ofr-post_type') || null
   };
 
   if (!officerId) { showToast('No officer selected for editing.', true); return; }
@@ -2277,6 +2429,7 @@ function _parseCSV(text) {
       email_id:                  toNull(row.email_id),
       phone_no:                  toNull(row.phone_no),
       photo_url:                 toNull(row.photo_url),
+      post_type:                 toNull(row.post_type),
       is_retired:                toBool(row.is_retired ?? ''),
       is_transferred_from_ap:    toBool(row.is_transferred_from_ap ?? '')
     });

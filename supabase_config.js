@@ -86,6 +86,7 @@ function mapRow(row) {
     Domicile:                 o.domicile,
     EmailId:                  o.email_id,
     PhoneNo:                  o.phone_no,
+    PostType:                 o.post_type,
     is_retired:               o.is_retired ?? false,
     is_transferred_from_ap:   o.is_transferred_from_ap ?? false,
     From:                     row.from_date,
@@ -119,7 +120,7 @@ async function loadOfficerData(serviceType) {
           id, identity_no, cadre, name_of_officer,
           current_posting, date_of_appointment, source_of_recruitment,
           educational_qualification, date_of_birth, allotment_year,
-          domicile, email_id, phone_no, is_retired, is_transferred_from_ap
+          domicile, email_id, phone_no, post_type, is_retired, is_transferred_from_ap
         )
       `)
       .eq('service_type', serviceType)

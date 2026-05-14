@@ -172,9 +172,10 @@
   }
 
   // ── State ──────────────────────────────────────────────────────
-  let allOfficers = [];   // sorted Array of [name, {meta, services}]
-  let photoMap    = {};
-  let hcmPhotoMap = {};   // HCM name → photo URL
+  let allOfficers  = [];   // sorted Array of [name, {meta, services}]
+  let photoMap     = {};
+  let hcmPhotoMap  = {};   // HCM name → photo URL
+  let postTypeOrder = []; // ordered list from post_type_options table
   let filtered    = [];   // current filtered subset
   let currentWheelData = { scores: [], ranks: [] }; // scores for open wheel
   let activeSegSet = new Set(); // indices of segments with open detail cards
@@ -242,9 +243,11 @@
 
     Promise.all([
       loadOfficerData(svc),
-      loadPhotos(svc)
-    ]).then(([rows, photos]) => {
+      loadPhotos(svc),
+      _supabase.from('post_type_options').select('label').eq('service_type', svc).order('sort_order').order('label')
+    ]).then(([rows, photos, ptResult]) => {
       photoMap = photos;
+      postTypeOrder = (ptResult.data || []).map(r => r.label);
 
       // Group rows by officer (active only — skip retired / transferred)
       const grouped = {};
@@ -289,19 +292,27 @@
 
   // ── Populate filter dropdowns ──────────────────────────────────
   function populateFilterOptions() {
-    const cadres   = new Set();
-    const sources  = new Set();
+    const cadres    = new Set();
+    const sources   = new Set();
     const domiciles = new Set();
+    const postTypes = new Set();
 
     allOfficers.forEach(([, { meta }]) => {
       if (meta.Cadre)               cadres.add(meta.Cadre.trim());
       if (meta.SourceOfRecruitment) sources.add(meta.SourceOfRecruitment.trim());
       if (meta.Domicile)            domiciles.add(meta.Domicile.trim());
+      if (meta.PostType)            postTypes.add(meta.PostType.trim());
     });
 
-    fillSelect('fCadre',    [...cadres].sort(),    'All Cadres');
-    fillSelect('fSource',   [...sources].sort(),   'All Sources');
+    fillSelect('fCadre',    [...cadres].sort(),     'All Cadres');
+    fillSelect('fSource',   [...sources].sort(),    'All Sources');
     fillSelect('fDomicile', [...domiciles].sort(),  'All Domiciles');
+    // preserve table sort_order; append any values not yet in the DB order at the end
+    const ptOrdered = [
+      ...postTypeOrder.filter(v => postTypes.has(v)),
+      ...[...postTypes].filter(v => !postTypeOrder.includes(v)).sort()
+    ];
+    fillSelect('fPostType', ptOrdered, 'All Post Types');
     buildRangeSliders();
   }
 
@@ -385,16 +396,18 @@
 
   // ── Apply all filters ──────────────────────────────────────────
   window.applyFilters360 = function () {
-    const cadreVal  = (document.getElementById('fCadre')?.value      || '').trim();
-    const sourceVal = (document.getElementById('fSource')?.value     || '').trim();
-    const domVal    = (document.getElementById('fDomicile')?.value   || '').trim();
-    const nameVal   = (document.getElementById('searchName360')?.value || '').trim().toLowerCase();
+    const cadreVal    = (document.getElementById('fCadre')?.value      || '').trim();
+    const sourceVal   = (document.getElementById('fSource')?.value     || '').trim();
+    const domVal      = (document.getElementById('fDomicile')?.value   || '').trim();
+    const postTypeVal = (document.getElementById('fPostType')?.value   || '').trim();
+    const nameVal     = (document.getElementById('searchName360')?.value || '').trim().toLowerCase();
 
     filtered = allOfficers.filter(([name, { meta }]) => {
-      if (cadreVal  && (meta.Cadre               || '').trim() !== cadreVal)  return false;
-      if (sourceVal && (meta.SourceOfRecruitment || '').trim() !== sourceVal) return false;
-      if (domVal    && (meta.Domicile            || '').trim() !== domVal)    return false;
-      if (nameVal   && !name.toLowerCase().includes(nameVal))                 return false;
+      if (cadreVal    && (meta.Cadre               || '').trim() !== cadreVal)    return false;
+      if (sourceVal   && (meta.SourceOfRecruitment || '').trim() !== sourceVal)   return false;
+      if (domVal      && (meta.Domicile            || '').trim() !== domVal)      return false;
+      if (postTypeVal && (meta.PostType            || '').trim() !== postTypeVal) return false;
+      if (nameVal     && !name.toLowerCase().includes(nameVal))                   return false;
       const batchNum = parseInt(meta.AllotmentYear, 10);
       if (!isNaN(batchNum) && (batchNum < batchRange.lo || batchNum > batchRange.hi)) return false;
       const ry = getRetireYear(meta);

@@ -1048,6 +1048,12 @@
     <option value="">All Domiciles</option>
   </select>
 
+  <!-- Post Type filter -->
+  <span class="b360-fl">Post Type</span>
+  <select class="b360-select" id="fPostType" onchange="applyFilters360()" style="min-width:120px;max-width:200px;">
+    <option value="">All Post Types</option>
+  </select>
+
   <!-- Name search -->
   <input type="text" class="b360-search" id="searchName360"
          placeholder="&#128269; Search name..." oninput="applyFilters360()">
@@ -1266,7 +1272,7 @@ window.switchSvc = function (s) {
 };
 
 window.reset360 = function () {
-  ['fCadre', 'fSource', 'fDomicile'].forEach(function (id) {
+  ['fCadre', 'fSource', 'fDomicile', 'fPostType'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
