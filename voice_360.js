@@ -18,119 +18,115 @@
 (function () {
   'use strict';
 
-  var SR       = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var isOpen   = false;
-  var micRec   = null;
+  var SR        = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var SS        = window.speechSynthesis   || null;
+  var isOpen    = false;
+  var micRec    = null;
   var micActive = false;
+  var wakeRec   = null;
+  var wakeActive = false;
 
-  // ── Cat face SVG  (realistic golden tabby) ───────────────────
+  // ── Robot SVG icon ───────────────────────────────────────────
+  // Inspired by the round-headed robot with cyan ear cups, dark face plate,
+  // glowing rectangular eyes, dome body, and antenna.
+  // Animation groups reuse the same CSS class names:
+  //   cat-ear-l/r  → cyan ear cups (tilt when listening, pivot 26,33 / 74,33)
+  //   cat-eye-l/r  → eye windows  (blink scaleY, pivot 35,50 / 65,50)
+  //   cat-wl/wr    → arms         (wave rotate±9°, pivot 42,69 / 58,69)
   var CAT_SVG =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style="display:block">' +
 
-    // ── Ears (drawn first so face covers their base) ───────────
-    '<g class="cat-ear-l">' +
-      // Outer ear — curved organic shape
-      '<path d="M 19 43 Q 5 14 21 6 Q 35 1 38 30" fill="#b45309"/>' +
-      // Inner ear — lighter warm fur + pink skin
-      '<path d="M 21 41 Q 10 18 22 11 Q 33 7 35 30" fill="#fde68a" opacity="0.7"/>' +
-      '<path d="M 22 40 Q 12 20 23 13 Q 31 9 33 30" fill="#fda4af" opacity="0.85"/>' +
-    '</g>' +
-    '<g class="cat-ear-r">' +
-      '<path d="M 81 43 Q 95 14 79 6 Q 65 1 62 30" fill="#b45309"/>' +
-      '<path d="M 79 41 Q 90 18 78 11 Q 67 7 65 30" fill="#fde68a" opacity="0.7"/>' +
-      '<path d="M 78 40 Q 88 20 77 13 Q 69 9 67 30" fill="#fda4af" opacity="0.85"/>' +
-    '</g>' +
+    // ── Ground shadow ─────────────────────────────────────────────
+    '<ellipse cx="50" cy="94" rx="19" ry="3.5" fill="#4a5568" opacity="0.2"/>' +
 
-    // ── Face base ─────────────────────────────────────────────
-    // Head — slightly pear shaped (wider cheeks)
-    '<ellipse cx="50" cy="56" rx="37" ry="34" fill="#f59e0b"/>' +
-    // Subtle warm shadow on temples & top
-    '<ellipse cx="50" cy="37" rx="28" ry="14" fill="#c27803" opacity="0.32"/>' +
-    // Lighter chin/lower face
-    '<ellipse cx="50" cy="74" rx="24" ry="13" fill="#fde68a" opacity="0.6"/>' +
-    // Whisker-pad muzzle bumps
-    '<ellipse cx="34" cy="68" rx="11" ry="8.5" fill="#fef3c7" opacity="0.55"/>' +
-    '<ellipse cx="66" cy="68" rx="11" ry="8.5" fill="#fef3c7" opacity="0.55"/>' +
+    // ── Antenna stems (drawn first, behind everything) ─────────────
+    '<line x1="43" y1="20" x2="40" y2="9"  stroke="#1a2f5a" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<line x1="57" y1="20" x2="60" y2="9"  stroke="#1a2f5a" stroke-width="2.5" stroke-linecap="round"/>' +
 
-    // ── Tabby markings ────────────────────────────────────────
-    // Classic M on forehead
-    '<path d="M 39 33 Q 42.5 28 46 33 Q 50 27 54 33 Q 57.5 28 61 33"' +
-      ' stroke="#92400e" stroke-width="1.9" fill="none" stroke-linecap="round" opacity="0.7"/>' +
-    // Vertical brow stripes
-    '<path d="M 43 36 C 42 39 42 42 43 46" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.45"/>' +
-    '<path d="M 50 35 L 50 46"              stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.45"/>' +
-    '<path d="M 57 36 C 58 39 58 42 57 46" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.45"/>' +
-    // Cheek stripes (short diagonal)
-    '<path d="M 20 54 Q 25 50 27 56" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.4"/>' +
-    '<path d="M 18 63 Q 23 60 25 65" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.4"/>' +
-    '<path d="M 80 54 Q 75 50 73 56" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.4"/>' +
-    '<path d="M 82 63 Q 77 60 75 65" stroke="#92400e" stroke-width="1.3" fill="none" opacity="0.4"/>' +
-
-    // ── Left eye (almond shaped using path) ────────────────────
-    '<g class="cat-eye-l">' +
-      // Eye socket shadow
-      '<ellipse cx="35" cy="50" rx="12" ry="9.5" fill="#7c2d12" opacity="0.3"/>' +
-      // Iris — almond shape
-      '<path d="M 25 50 Q 28 42 35 42 Q 42 42 45 50 Q 42 58 35 58 Q 28 58 25 50 Z" fill="#16a34a"/>' +
-      // Depth ring
-      '<path d="M 27.5 50 Q 30 44.5 35 44.5 Q 40 44.5 42.5 50 Q 40 55.5 35 55.5 Q 30 55.5 27.5 50 Z"' +
-        ' fill="#14532d" opacity="0.5"/>' +
-      // Vertical slit pupil
-      '<path d="M 33.2 43 Q 31.5 50 33.2 57 Q 35 59 36.8 57 Q 38.5 50 36.8 43 Q 35 41 33.2 43 Z"' +
-        ' fill="#0c0a09"/>' +
-      // Upper lid crease (heaviness = realism)
-      '<path d="M 25 50 Q 28 42 35 42 Q 42 42 45 50"' +
-        ' stroke="#3b1a02" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>' +
-      // Primary shine dot
-      '<ellipse cx="30.5" cy="45.5" rx="2.8" ry="2.2" fill="white" opacity="0.92"/>' +
-      // Secondary small shine
-      '<circle cx="37.5" cy="47.5" r="1.3" fill="white" opacity="0.5"/>' +
-    '</g>' +
-
-    // ── Right eye ──────────────────────────────────────────────
-    '<g class="cat-eye-r">' +
-      '<ellipse cx="65" cy="50" rx="12" ry="9.5" fill="#7c2d12" opacity="0.3"/>' +
-      '<path d="M 55 50 Q 58 42 65 42 Q 72 42 75 50 Q 72 58 65 58 Q 58 58 55 50 Z" fill="#16a34a"/>' +
-      '<path d="M 57.5 50 Q 60 44.5 65 44.5 Q 70 44.5 72.5 50 Q 70 55.5 65 55.5 Q 60 55.5 57.5 50 Z"' +
-        ' fill="#14532d" opacity="0.5"/>' +
-      '<path d="M 63.2 43 Q 61.5 50 63.2 57 Q 65 59 66.8 57 Q 68.5 50 66.8 43 Q 65 41 63.2 43 Z"' +
-        ' fill="#0c0a09"/>' +
-      '<path d="M 55 50 Q 58 42 65 42 Q 72 42 75 50"' +
-        ' stroke="#3b1a02" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>' +
-      '<ellipse cx="60.5" cy="45.5" rx="2.8" ry="2.2" fill="white" opacity="0.92"/>' +
-      '<circle cx="67.5" cy="47.5" r="1.3" fill="white" opacity="0.5"/>' +
-    '</g>' +
-
-    // ── Nose (heart-shaped leather) ────────────────────────────
-    '<path d="M 50 63 Q 47.5 65 46.5 67.5 Q 48.5 70 50 69 Q 51.5 70 53.5 67.5 Q 52.5 65 50 63 Z"' +
-      ' fill="#ec4899"/>' +
-    // Nose bridge highlight
-    '<path d="M 49 63.5 Q 50 62.5 51 63.5" stroke="#fda4af" stroke-width="0.8" fill="none" opacity="0.7"/>' +
-    // Nostril hints
-    '<path d="M 48 65.5 Q 47 66.5 47.2 67.5" stroke="#be185d" stroke-width="0.8" fill="none" opacity="0.55"/>' +
-    '<path d="M 52 65.5 Q 53 66.5 52.8 67.5" stroke="#be185d" stroke-width="0.8" fill="none" opacity="0.55"/>' +
-
-    // ── Philtrum + mouth ──────────────────────────────────────
-    '<line x1="50" y1="69" x2="50" y2="73" stroke="#7c2d12" stroke-width="1" opacity="0.65"/>' +
-    '<path d="M 50 73 Q 45.5 77.5 42 75.5" stroke="#7c2d12" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
-    '<path d="M 50 73 Q 54.5 77.5 58 75.5" stroke="#7c2d12" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
-
-    // ── Whiskers left ──────────────────────────────────────────
+    // ── Left arm  (cat-wl, CSS pivot 42,69) ───────────────────────
+    // Arm extends left from shoulder joint at ~(42,69); rotates ±9° when typing
     '<g class="cat-wl">' +
-      '<line x1="43" y1="64" x2="5"  y2="57" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      '<line x1="43" y1="67" x2="5"  y2="67" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      '<line x1="43" y1="70" x2="5"  y2="77" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      // Short inner accent whiskers
-      '<line x1="43" y1="65.5" x2="26" y2="62" stroke="#3b1a02" stroke-width="0.7" opacity="0.35"/>' +
+      '<ellipse cx="27" cy="72" rx="12" ry="9"   fill="#8fa0cc"/>' +
+      '<ellipse cx="25" cy="67" rx="6"  ry="4"   fill="#b8c5e2" opacity="0.72"/>' +
+      '<line x1="18" y1="69" x2="22" y2="66" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
+      '<line x1="17" y1="74" x2="21" y2="74" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
+      '<line x1="18" y1="79" x2="22" y2="81" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
     '</g>' +
 
-    // ── Whiskers right ─────────────────────────────────────────
+    // ── Right arm  (cat-wr, CSS pivot 58,69) ──────────────────────
     '<g class="cat-wr">' +
-      '<line x1="57" y1="64" x2="95" y2="57" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      '<line x1="57" y1="67" x2="95" y2="67" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      '<line x1="57" y1="70" x2="95" y2="77" stroke="#3b1a02" stroke-width="1"   opacity="0.6"/>' +
-      '<line x1="57" y1="65.5" x2="74" y2="62" stroke="#3b1a02" stroke-width="0.7" opacity="0.35"/>' +
+      '<ellipse cx="73" cy="72" rx="12" ry="9"   fill="#8fa0cc"/>' +
+      '<ellipse cx="75" cy="67" rx="6"  ry="4"   fill="#b8c5e2" opacity="0.72"/>' +
+      '<line x1="82" y1="69" x2="78" y2="66" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
+      '<line x1="83" y1="74" x2="79" y2="74" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
+      '<line x1="82" y1="79" x2="78" y2="81" stroke="#5a6fa0" stroke-width="1.7" stroke-linecap="round"/>' +
     '</g>' +
+
+    // ── Body ──────────────────────────────────────────────────────
+    '<ellipse cx="50" cy="79" rx="21" ry="16" fill="#bdc8e8"/>' +
+    '<ellipse cx="43" cy="70" rx="9"  ry="6"  fill="white"   opacity="0.26"/>' +
+    '<ellipse cx="50" cy="88" rx="16" ry="6"  fill="#7080aa" opacity="0.28"/>' +
+
+    // ── Chest button ──────────────────────────────────────────────
+    '<circle cx="50" cy="79" r="9.5" fill="#0d418a"/>' +
+    '<circle cx="50" cy="79" r="7.5" fill="#0284c7"/>' +
+    '<circle cx="50" cy="79" r="5.5" fill="#22d3ee"/>' +
+    '<ellipse cx="47.5" cy="76.5" rx="2.5" ry="1.5" fill="white" opacity="0.45"/>' +
+
+    // ── Left ear cup  (cat-ear-l, CSS pivot 26,33) ────────────────
+    // Drawn before head dome → head covers inner half, outer half visible as ear cup
+    '<g class="cat-ear-l">' +
+      '<circle cx="26" cy="33" r="11"  fill="#0ea5e9"/>' +
+      '<circle cx="26" cy="33" r="7.5" fill="#0369a1"/>' +
+      '<circle cx="26" cy="33" r="4.5" fill="#7dd3fc"/>' +
+      '<ellipse cx="24" cy="30.5" rx="1.6" ry="1" fill="white" opacity="0.55"/>' +
+    '</g>' +
+
+    // ── Right ear cup  (cat-ear-r, CSS pivot 74,33) ───────────────
+    '<g class="cat-ear-r">' +
+      '<circle cx="74" cy="33" r="11"  fill="#0ea5e9"/>' +
+      '<circle cx="74" cy="33" r="7.5" fill="#0369a1"/>' +
+      '<circle cx="74" cy="33" r="4.5" fill="#7dd3fc"/>' +
+      '<ellipse cx="72" cy="30.5" rx="1.6" ry="1" fill="white" opacity="0.55"/>' +
+    '</g>' +
+
+    // ── Head dome (covers inner halves of ear cups) ────────────────
+    '<ellipse cx="50" cy="37" rx="23" ry="21" fill="#dde3f5"/>' +
+    '<ellipse cx="43" cy="26" rx="11" ry="7"  fill="white"   opacity="0.28"/>' +
+    '<ellipse cx="50" cy="37" rx="23" ry="21" fill="none" stroke="#aab4d8" stroke-width="1.5" opacity="0.5"/>' +
+
+    // ── Dark face plate ───────────────────────────────────────────
+    // rx=19 → spans x 31–69 so both eye windows fit exactly inside
+    '<ellipse cx="50" cy="44" rx="19" ry="14" fill="#1a237e"/>' +
+    '<ellipse cx="50" cy="36" rx="13" ry="5"  fill="#283593"  opacity="0.55"/>' +
+    '<ellipse cx="50" cy="44" rx="19" ry="14" fill="none" stroke="#0d1b55" stroke-width="1.2"/>' +
+
+    // ── Left eye window  (cat-eye-l, CSS pivot 35,50) ─────────────
+    // Rect centered at y=50 so catBlink scaleY(0.07) squishes symmetrically
+    '<g class="cat-eye-l">' +
+      '<rect x="31" y="43" width="12" height="14" rx="3.5" fill="white"   opacity="0.97"/>' +
+      '<rect x="33" y="45" width="8"  height="10" rx="2"   fill="#67e8f9" opacity="0.88"/>' +
+      '<rect x="35" y="48" width="4"  height="5"  rx="1.5" fill="#0c4a6e"/>' +
+      '<circle cx="34" cy="46.5" r="1.5" fill="white" opacity="0.75"/>' +
+    '</g>' +
+
+    // ── Right eye window  (cat-eye-r, CSS pivot 65,50) ────────────
+    '<g class="cat-eye-r">' +
+      '<rect x="57" y="43" width="12" height="14" rx="3.5" fill="white"   opacity="0.97"/>' +
+      '<rect x="59" y="45" width="8"  height="10" rx="2"   fill="#67e8f9" opacity="0.88"/>' +
+      '<rect x="61" y="48" width="4"  height="5"  rx="1.5" fill="#0c4a6e"/>' +
+      '<circle cx="60" cy="46.5" r="1.5" fill="white" opacity="0.75"/>' +
+    '</g>' +
+
+    // ── Neck joint ────────────────────────────────────────────────
+    '<rect x="44" y="57" width="12" height="8" rx="3" fill="#9fa8da"/>' +
+    '<line x1="44" y1="61" x2="56" y2="61" stroke="#7986cb" stroke-width="1.5"/>' +
+
+    // ── Antenna tips (drawn last — front layer) ────────────────────
+    '<circle cx="40" cy="8.5" r="3.2" fill="#0ea5e9"/>' +
+    '<circle cx="40" cy="8.5" r="1.8" fill="#bae6fd"/>' +
+    '<circle cx="60" cy="8.5" r="3.2" fill="#0ea5e9"/>' +
+    '<circle cx="60" cy="8.5" r="1.8" fill="#bae6fd"/>' +
 
     '</svg>';
 
@@ -558,6 +554,198 @@
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // ── Female voice helper ───────────────────────────────────────
+  function _pickFemaleVoice(voices) {
+    var prefer = ['zira','hazel','heera','raveena','veena','kanya',
+                  'samantha','victoria','karen','moira','aria','jenny',
+                  'natasha','female','woman'];
+    for (var i = 0; i < voices.length; i++) {
+      var n = voices[i].name.toLowerCase();
+      for (var j = 0; j < prefer.length; j++) {
+        if (n.indexOf(prefer[j]) !== -1) return voices[i];
+      }
+    }
+    for (var k = 0; k < voices.length; k++) {
+      if (/^en/i.test(voices[k].lang)) return voices[k];
+    }
+    return voices[0] || null;
+  }
+
+  function _getVoice(cb) {
+    if (!SS) { cb(null); return; }
+    var v = SS.getVoices();
+    if (v.length) { cb(_pickFemaleVoice(v)); return; }
+    SS.onvoiceschanged = function () { cb(_pickFemaleVoice(SS.getVoices())); };
+  }
+
+  function speakWelcome(onDone) {
+    if (!SS) { if (onDone) onDone(); return; }
+    SS.cancel();
+    var utt = new SpeechSynthesisUtterance(
+      'Hello! I am Alkra, your smart assistant. ' +
+      'I can sort the officers list and filter by cadre, domicile, source, and post type. ' +
+      'Go ahead, tell me what you need!'
+    );
+    utt.pitch  = 1.18;
+    utt.rate   = 0.9;
+    utt.volume = 1;
+    if (onDone) utt.onend = onDone;
+    _getVoice(function (voice) {
+      if (voice) utt.voice = voice;
+      SS.speak(utt);
+    });
+  }
+
+  // ── Wake word listener ("Hi Alkra") ──────────────────────────
+  function startWakeListener() {
+    if (!SR || wakeActive) return;
+    wakeActive = true;
+    _rebuildWakeRec();
+  }
+
+  function _rebuildWakeRec() {
+    if (!wakeActive) return;
+    try {
+      wakeRec                = new SR();
+      wakeRec.continuous     = true;
+      wakeRec.interimResults = true;
+      wakeRec.lang           = 'en-IN';
+      wakeRec.onresult = function (ev) {
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          var t     = ev.results[i][0].transcript.toLowerCase().trim();
+          var words = t.split(/\s+/);
+          var hasGreet = words.some(function (w) { return /^(hi|hey|hello)$/.test(w); });
+          var hasName  = words.some(function (w) {
+            return w.length >= 3 && levenshtein(w, 'alkra') <= 2;
+          });
+          if (hasGreet && hasName) { wakeWordDetected(); break; }
+        }
+      };
+      wakeRec.onend = function () {
+        if (wakeActive) setTimeout(_rebuildWakeRec, 300);
+      };
+      wakeRec.onerror = function (ev) {
+        if (ev.error === 'not-allowed') { wakeActive = false; return; }
+        if (wakeActive) setTimeout(_rebuildWakeRec, 1000);
+      };
+      wakeRec.start();
+    } catch (e) { wakeActive = false; }
+  }
+
+  function stopWakeListener() {
+    wakeActive = false;
+    if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; }
+  }
+
+  function wakeWordDetected() {
+    stopWakeListener();
+    if (!isOpen) openChat();
+    addMsg('bot',
+      '<b>Hi! I\'m Alkra</b> &#129302; &#128075;<br>' +
+      '<small style="color:#6b7280">Listening for your command after I finish speaking…</small>'
+    );
+    setSt('Speaking…');
+    speakWelcome(function () {
+      setSt('Listening…');
+      setTimeout(startVoiceCommand, 250);
+    });
+  }
+
+  // ── Voice command: one-shot, auto-process, auto-close ─────────
+  function startVoiceCommand() {
+    if (!SR) {
+      addMsg('bot', 'Voice input needs Chrome or Edge. Please type your command.');
+      var inp0 = document.getElementById('alkraInput');
+      if (inp0) inp0.focus();
+      return;
+    }
+    if (micActive && micRec) { micRec.abort(); return; }
+
+    micRec = new SR();
+    micRec.lang            = 'en-IN';
+    micRec.continuous      = false;
+    micRec.interimResults  = true;
+    micRec.maxAlternatives = 1;
+
+    micRec.onstart = function () {
+      micActive = true;
+      setMicBtnState(true);
+      var inp = document.getElementById('alkraInput');
+      if (inp) { inp.value = ''; inp.placeholder = 'Listening…'; }
+    };
+
+    micRec.onresult = function (ev) {
+      var result = ev.results[ev.results.length - 1];
+      var inp = document.getElementById('alkraInput');
+      if (inp) inp.value = result[0].transcript;
+      if (result.isFinal) {
+        var spoken = result[0].transcript;
+        micActive = false; micRec = null;
+        setMicBtnState(false);
+        _processVoiceCommand(spoken);
+      }
+    };
+
+    micRec.onerror = function (ev) {
+      micActive = false; micRec = null;
+      setMicBtnState(false);
+      setSt('Online');
+      if (ev.error === 'not-allowed') {
+        addMsg('bot', '&#128274; Mic blocked — allow microphone access in your browser.');
+      } else if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
+        addMsg('bot', 'Mic error: ' + ev.error + '. Please type instead.');
+      }
+    };
+
+    micRec.onend = function () {
+      micActive = false; micRec = null;
+      setMicBtnState(false);
+      setSt('Online');
+    };
+
+    try {
+      micRec.start();
+    } catch (ex) {
+      micActive = false; micRec = null;
+      setMicBtnState(false);
+      addMsg('bot', 'Could not start mic: ' + ex.message);
+    }
+  }
+
+  // Auto-process voice result: task found → close; no task → stay open
+  function _processVoiceCommand(text) {
+    text = (text || '').trim();
+    if (!text) return;
+    var inp = document.getElementById('alkraInput');
+    if (inp) inp.value = '';
+    addMsg('user', esc(text));
+    setSt('Online');
+
+    if (/^\s*(bye|goodbye|close|exit|done|thanks?|thank\s*you)\s*$/i.test(text)) {
+      showTyping(function () {
+        addMsg('bot', 'Goodbye! &#128075;');
+        setTimeout(window.alkraClose, 800);
+      });
+      return;
+    }
+
+    var intents = parseCommands(text);
+    showTyping(function () {
+      if (intents) {
+        intents.forEach(function (intent) { dispatchAction(intent); });
+        var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
+        addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
+        setTimeout(window.alkraClose, 1800);   // auto-close after voice task
+      } else {
+        addMsg('bot',
+          'I didn\'t quite catch that. &#129300;<br>' +
+          '<small style="color:#6b7280">Please try again or type your command below.</small>'
+        );
+        if (inp) inp.focus();                  // stay open — let user try again
+      }
+    });
+  }
+
   // ── Speech-to-text for the input field ────────────────────────
   function setMicBtnState(listening) {
     var btn = document.getElementById('alkraMicBtn');
@@ -573,68 +761,8 @@
     if (fab) fab.classList.toggle('listening', listening);
   }
 
-  function startMicInput() {
-    if (!SR) {
-      addMsg('bot', 'Voice input needs Chrome or Edge browser.');
-      return;
-    }
-    // Second click cancels
-    if (micActive && micRec) { micRec.abort(); return; }
-
-    micRec = new SR();
-    micRec.lang            = 'en-IN';
-    micRec.continuous      = false;
-    micRec.interimResults  = true;   // show words forming in real-time
-    micRec.maxAlternatives = 1;
-
-    micRec.onstart = function () {
-      micActive = true;
-      setMicBtnState(true);
-      var inp = document.getElementById('alkraInput');
-      if (inp) inp.value = '';
-    };
-
-    micRec.onresult = function (ev) {
-      var result     = ev.results[ev.results.length - 1];
-      var transcript = result[0].transcript;
-      var inp = document.getElementById('alkraInput');
-      if (inp) inp.value = transcript;          // show text as it forms
-      if (result.isFinal) {
-        // Done — user reviews the text and presses Enter themselves
-        micActive = false;
-        micRec    = null;
-        setMicBtnState(false);
-        if (inp) inp.focus();
-      }
-    };
-
-    micRec.onerror = function (ev) {
-      micActive = false;
-      micRec    = null;
-      setMicBtnState(false);
-      if (ev.error === 'not-allowed') {
-        addMsg('bot', '&#128274; Mic blocked — click the lock icon in your browser address bar and allow microphone.');
-      } else if (ev.error === 'network') {
-        addMsg('bot', '&#127760; No network — voice input needs an internet connection.');
-      } else if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
-        addMsg('bot', 'Mic error: ' + ev.error + '. Please type instead.');
-      }
-    };
-
-    micRec.onend = function () {
-      micActive = false;
-      micRec    = null;
-      setMicBtnState(false);
-    };
-
-    try {
-      micRec.start();
-    } catch (ex) {
-      micActive = false; micRec = null;
-      setMicBtnState(false);
-      addMsg('bot', 'Could not start mic: ' + ex.message);
-    }
-  }
+  // Mic button delegates to the auto-process voice command flow
+  function startMicInput() { startVoiceCommand(); }
 
   var CHIPS = [
     'Principal Secretary', 'direct recruit', 'sort by CMO descending',
@@ -724,8 +852,9 @@
 
     // Greet
     addMsg('bot',
-      'Hello! &#128075; I can filter and sort the officer list.<br>' +
-      '<small style="color:#6b7280">Type a command or tap a suggestion above.</small>'
+      'Hello! I\'m <b>Alkra</b> &#129302; &#128075;<br>' +
+      'I can filter and sort the officer list.<br>' +
+      '<small style="color:#6b7280">Say <b>"Hi Alkra"</b> to wake me by voice, or type a command below.</small>'
     );
   }
 
@@ -837,12 +966,12 @@
   function openChat() {
     if (isOpen) return;
     isOpen = true;
+    stopWakeListener();
     var panel = document.getElementById('alkraPanel');
     if (panel) panel.classList.add('open');
     var fab = document.getElementById('alkraBtn');
     if (fab) fab.classList.add('open');
     setSt('Online');
-    // Focus input after animation
     setTimeout(function () {
       var inp = document.getElementById('alkraInput');
       if (inp) inp.focus();
@@ -851,11 +980,16 @@
 
   window.alkraClose = function () {
     isOpen = false;
+    // Stop any in-progress mic or speech
+    if (micActive && micRec) { try { micRec.abort(); } catch (e) {} micRec = null; micActive = false; }
+    if (SS) SS.cancel();
     var panel = document.getElementById('alkraPanel');
-    if (panel) panel.classList.remove('open');
+    if (panel) panel.classList.remove('open', 'listening', 'typing');
     var fab = document.getElementById('alkraBtn');
-    if (fab) fab.classList.remove('open');
+    if (fab) fab.classList.remove('open', 'listening');
     setSt('Filter Assistant');
+    // Re-arm wake word listener after panel closes
+    setTimeout(startWakeListener, 600);
   };
 
   window.alkraToggle = function () { isOpen ? window.alkraClose() : openChat(); };
@@ -870,10 +1004,17 @@
   // INIT
   // ================================================================
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', buildUI);
-  } else {
+  function _init() {
     buildUI();
+    // Start wake-word listener after a short delay
+    // (gives Chrome time to set up; prompts mic permission on first use)
+    setTimeout(startWakeListener, 1500);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _init);
+  } else {
+    _init();
   }
 
 })();

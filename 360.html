@@ -507,41 +507,43 @@
        ALKRA — Beautiful Cat Chatbot  ·  Yellow / Amber Theme
     ══════════════════════════════════════════════════════════════ */
 
-    /* ── Floating cat button ──────────────────────────────────── */
+    /* ── Alkra robot FAB button ───────────────────────────────── */
     #alkraBtn {
       position: fixed; bottom: 28px; right: 28px; z-index: 8100;
       width: 70px; height: 70px; border-radius: 50%;
-      background: radial-gradient(circle at 40% 35%, #b45309 0%, #78350f 52%, #3b1a02 100%);
-      border: 3px solid #92400e;
-      box-shadow: 0 8px 28px rgba(60,28,5,0.8), 0 2px 8px rgba(30,10,2,0.55);
-      cursor: pointer; padding: 7px;
+      background: radial-gradient(circle at 40% 35%, #1e3464 0%, #0f1a40 52%, #060d20 100%);
+      border: 3px solid #0ea5e9;
+      box-shadow: 0 8px 28px rgba(10,20,60,0.85), 0 2px 8px rgba(5,10,30,0.6),
+                  0 0 0 0 rgba(14,165,233,0);
+      cursor: pointer; padding: 7px; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s;
       animation: catBreath 3.5s ease-in-out infinite;
     }
     #alkraBtn:hover {
       transform: translateY(-4px) scale(1.07);
-      box-shadow: 0 16px 40px rgba(60,28,5,0.9), 0 4px 12px rgba(30,10,2,0.6);
+      box-shadow: 0 16px 40px rgba(10,20,60,0.95), 0 4px 12px rgba(5,10,30,0.65),
+                  0 0 18px rgba(14,165,233,0.45);
       animation: none;
     }
     #alkraBtn.open {
-      border-color: #b45309;
-      box-shadow: 0 6px 24px rgba(60,28,5,0.65), 0 0 0 5px rgba(120,53,15,0.28);
+      border-color: #22d3ee;
+      box-shadow: 0 6px 24px rgba(10,20,60,0.7), 0 0 0 5px rgba(14,165,233,0.25);
       animation: none;
     }
     .alkra-fab-icon, .alkra-fab-label { display: none; } /* replaced by SVG */
 
-    /* ── Cat SVG animations ────────────────────────────────────── */
+    /* ── Robot SVG animations ──────────────────────────────────── */
     @keyframes catBreath {
-      0%, 100% { transform: scale(1);     box-shadow: 0 8px 28px rgba(60,28,5,0.8); }
-      50%       { transform: scale(1.04);  box-shadow: 0 14px 40px rgba(60,28,5,0.95); }
+      0%, 100% { transform: scale(1);     box-shadow: 0 8px 28px rgba(10,20,60,0.85), 0 0 0 0 rgba(14,165,233,0); }
+      50%       { transform: scale(1.04);  box-shadow: 0 14px 40px rgba(10,20,60,1),   0 0 12px rgba(14,165,233,0.3); }
     }
     /* Blink — applied to the eye <g> groups */
     @keyframes catBlink {
       0%, 88%, 100% { transform: scaleY(1); }
       93%           { transform: scaleY(0.07); }
     }
-    /* Ear twitch (listening) */
+    /* Ear cup tilt (listening) */
     @keyframes catEarL {
       0%, 100% { transform: rotate(0deg)   translateY(0); }
       40%      { transform: rotate(-14deg) translateY(-3px); }
@@ -550,7 +552,7 @@
       0%, 100% { transform: rotate(0deg)  translateY(0); }
       40%      { transform: rotate(14deg) translateY(-3px); }
     }
-    /* Whisker twitch (typing) */
+    /* Arm wave (typing) */
     @keyframes catWhiskerL {
       0%, 100% { transform: rotate(0deg); }
       50%      { transform: rotate(-9deg); }
@@ -559,14 +561,15 @@
       0%, 100% { transform: rotate(0deg); }
       50%      { transform: rotate(9deg); }
     }
-    /* Eyes always blink gently */
+    /* Eyes blink continuously */
     .cat-eye-l { transform-origin: 35px 50px; animation: catBlink 4.5s ease-in-out infinite; }
     .cat-eye-r { transform-origin: 65px 50px; animation: catBlink 4.5s ease-in-out infinite 0.6s; }
-    /* Listening → ears twitch */
+    /* Listening → ear cups tilt */
     #alkraPanel.listening .cat-ear-l { transform-origin: 26px 33px; animation: catEarL 0.65s ease-in-out infinite; }
     #alkraPanel.listening .cat-ear-r { transform-origin: 74px 33px; animation: catEarR 0.65s ease-in-out infinite 0.15s; }
-    #alkraBtn.listening               { animation: catBreath 0.8s ease-in-out infinite; border-color: #fca5a5; }
-    /* Typing → whiskers twitch */
+    #alkraBtn.listening               { animation: catBreath 0.8s ease-in-out infinite; border-color: #22d3ee;
+                                        box-shadow: 0 8px 28px rgba(10,20,60,0.85), 0 0 20px rgba(34,211,238,0.6); }
+    /* Typing → arms wave */
     #alkraPanel.typing .cat-wl { transform-origin: 42px 69px; animation: catWhiskerL 0.38s ease-in-out infinite; }
     #alkraPanel.typing .cat-wr { transform-origin: 58px 69px; animation: catWhiskerR 0.38s ease-in-out infinite 0.09s; }
 
