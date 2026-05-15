@@ -282,6 +282,20 @@
     if (/^(?:close|dismiss|exit|shut)\s*(?:the\s*)?(?:popup|card|modal|window|detail|it|this)?\s*$/.test(t))
       return [{ type: 'closePopup', params: {} }];
 
+    // ── Popup tab switches (work when detail popup is open or from chatbot) ──
+    if (/\bshow\s+(?:department|dept)\s*(?:wise)?\b/i.test(t))
+      return [{ type: 'showTab', params: { tab: 'dept', label: 'Department-wise' } }];
+    if (/\bshow\s+categor\w*\s*(?:wise)?\b/i.test(t))
+      return [{ type: 'showTab', params: { tab: 'cat',  label: 'Category-wise'   } }];
+    if (/\bshow\s+(?:chief\s*min\w*|hcm|cm)\s*(?:wise)?\b/i.test(t))
+      return [{ type: 'showTab', params: { tab: 'hcm',  label: 'Chief Minister-wise' } }];
+    if (/\bshow\s+service\s*(?:records?)?\b/i.test(t))
+      return [{ type: 'showTab', params: { tab: 'svc',  label: 'Service Records' } }];
+
+    // ── Open 360° wheel popup ───────────────────────────────────────────────
+    if (/\bshow\s+(?:360|three\s*sixty|wheel|profile\s*view)\b/i.test(t))
+      return [{ type: 'show360', params: {} }];
+
     // Service switch
     var m = t.match(/\b(ias|ips|ifs)\b/);
     if (m) intents.push({ type: 'service', params: { svc: m[1].toUpperCase() } });
@@ -433,6 +447,8 @@
       case 'name':        return 'Searching for "' + intent.params.value + '"';
       case 'openOfficer': return 'Opening profile: ' + intent.params.name;
       case 'closePopup':  return 'Popup closed';
+      case 'showTab':     return 'Showing ' + (intent.params.label || intent.params.tab);
+      case 'show360':     return 'Opening 360° Profile View';
       case 'batch':
         return 'Batch ' + intent.params.lo + (intent.params.lo !== intent.params.hi ? ' – ' + intent.params.hi : '');
       case 'retire':
@@ -586,7 +602,23 @@
         break;
       }
 
+      case 'showTab': {
+        if (window.switchDetailTab) window.switchDetailTab(intent.params.tab);
+        break;
+      }
+      case 'show360': {
+        var btn360 = document.getElementById('detailBtnWheel');
+        if (btn360) btn360.click();
+        break;
+      }
       case 'closePopup': {
+        // Close 360° wheel overlay first (highest priority)
+        var wOvW = document.getElementById('wheelOverlay');
+        if (wOvW && wOvW.classList.contains('open')) {
+          var wheelCloseBtn = document.getElementById('wheelClose');
+          if (wheelCloseBtn) wheelCloseBtn.click(); else wOvW.classList.remove('open');
+          break;
+        }
         // Close officer detail overlay
         var detOvD = document.getElementById('detailOverlay');
         if (detOvD && detOvD.classList.contains('open')) {
@@ -702,13 +734,32 @@
       wakeRec.lang           = 'en-IN';
       wakeRec.onresult = function (ev) {
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          var t     = ev.results[i][0].transcript.toLowerCase().trim();
-          var words = t.split(/\s+/);
-          // Just saying "Alkra" (any variation) is enough to wake Alkra
-          var hasName = words.some(function (w) {
-            return w.length >= 3 && levenshtein(w, 'alkra') <= 2;
+          var isFinal = ev.results[i].isFinal;
+          var t       = ev.results[i][0].transcript.toLowerCase().trim();
+          var words   = t.split(/\s+/);
+
+          // Find "Alkra" anywhere in the utterance (fuzzy: ≤2 edits)
+          var alkraIdx = -1;
+          for (var wi = 0; wi < words.length; wi++) {
+            if (words[wi].length >= 3 && levenshtein(words[wi], 'alkra') <= 2) {
+              alkraIdx = wi; break;
+            }
+          }
+          if (alkraIdx === -1) continue;
+
+          // Words after "Alkra", ignoring common fillers
+          var postWords = words.slice(alkraIdx + 1).filter(function (w) {
+            return !/^(hi|hey|hello|please|ok|okay)$/.test(w);
           });
-          if (hasName) { wakeWordDetected(); break; }
+
+          if (postWords.length > 0 && isFinal) {
+            // "Alkra [command]" compound utterance — context-aware dispatch
+            _wakeWithCommand(postWords.join(' ')); break;
+          } else if (postWords.length === 0) {
+            // "Alkra" or "Hi Alkra" alone — open chat and listen
+            wakeWordDetected(); break;
+          }
+          // postWords has content but not final yet — wait for final
         }
       };
       wakeRec.onstart = function () {
@@ -734,6 +785,104 @@
   function stopWakeListener() {
     wakeActive = false;
     if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; }
+  }
+
+  // 360° wheel segment → term table (maps spoken words to segment index 0-13)
+  var WHEEL_TERMS = [
+    ['e office', 'eoffice', 'e-office', 'electronic office'],            // 0 e-Office
+    ['swarna ap', 'swarna andhra', 'swarna'],                            // 1 Swarna AP
+    ['gsdp', 'gross state domestic'],                                    // 2 GSDP
+    ['goi fund', 'central fund', 'central scheme', 'goi'],               // 3 GoI Funds
+    ['public perception', 'perception', 'public opinion'],               // 4 Public Perception
+    ['innovation', 'innovative'],                                        // 5 Innovations
+    ['digitalisation', 'digitalization', 'digital'],                     // 6 Digitalisation
+    ['new policy', 'new policies', 'policy'],                            // 7 New Policies
+    ['deregularisation', 'deregularization', 'deregular'],               // 8 De Regularisation
+    ['integrity index', 'integrity'],                                    // 9 Integrity Index
+    ['party feedback', 'party rating', 'party'],                         // 10 Party Feedback
+    ['media feedback', 'media rating', 'media'],                         // 11 Media Feedback
+    ['leadership skill', 'leadership'],                                   // 12 Leadership Skills
+    ['cmo score', 'cmo rating', 'chief minister score', 'cmo'],          // 13 CMO Score
+  ];
+
+  // Handle popup tab commands when the officer detail popup is open
+  function _processPopupCommand(t) {
+    if (/\bdepart/i.test(t)) {
+      if (window.switchDetailTab) window.switchDetailTab('dept'); return true;
+    }
+    if (/\bcategor/i.test(t)) {
+      if (window.switchDetailTab) window.switchDetailTab('cat');  return true;
+    }
+    if (/chief\s*min|minister|\bhcm\b|\bcm\b/i.test(t)) {
+      if (window.switchDetailTab) window.switchDetailTab('hcm');  return true;
+    }
+    if (/service\s*rec|service\s*record|\bsvc\b|\brecord/i.test(t)) {
+      if (window.switchDetailTab) window.switchDetailTab('svc');  return true;
+    }
+    if (/360|wheel|profile\s*view/i.test(t)) {
+      var btn = document.getElementById('detailBtnWheel');
+      if (btn) { btn.click(); return true; }
+    }
+    return false;
+  }
+
+  // Open a 360° wheel segment by spoken name
+  function _processWheelCommand(t) {
+    var idx = -1;
+    for (var ci = 0; ci < WHEEL_TERMS.length && idx < 0; ci++) {
+      for (var ti = 0; ti < WHEEL_TERMS[ci].length; ti++) {
+        if (t.indexOf(WHEEL_TERMS[ci][ti]) !== -1) { idx = ci; break; }
+      }
+    }
+    if (idx >= 0) {
+      if (window.openWheelSegment) {
+        window.openWheelSegment(idx);
+      } else {
+        var segs = document.querySelectorAll('#wheelSvg .seg-group');
+        if (segs[idx]) segs[idx].click();
+      }
+    }
+  }
+
+  // Dispatch a command that arrived WITH the wake word in the same utterance.
+  // Runs without opening the chatbot panel.
+  function _wakeWithCommand(command) {
+    stopWakeListener();
+    var t = command.toLowerCase();
+
+    // "close the chatbot" — explicit close
+    if (/close.*chat(bot)?|chatbot.*close|chat.*close/i.test(t)) {
+      if (isOpen) window.alkraClose();
+      else setTimeout(startWakeListener, 400);
+      return;
+    }
+
+    // Determine current UI context
+    var wheelOv  = document.getElementById('wheelOverlay');
+    var detailOv = document.getElementById('detailOverlay');
+    var wheelOpen  = wheelOv  && wheelOv.classList.contains('open');
+    var popupOpen  = detailOv && detailOv.classList.contains('open');
+
+    if (wheelOpen) {
+      _processWheelCommand(t);
+      setTimeout(startWakeListener, 800);
+      return;
+    }
+    if (popupOpen) {
+      var handled = _processPopupCommand(t);
+      if (!handled) {
+        // Popup open but unknown command → open chatbot to clarify
+        if (!isOpen) openChat();
+        _processVoiceCommand(command);
+      } else {
+        setTimeout(startWakeListener, 800);
+      }
+      return;
+    }
+
+    // No popup — open chatbot and process normally
+    if (!isOpen) openChat();
+    _processVoiceCommand(command);
   }
 
   function wakeWordDetected() {
@@ -888,16 +1037,16 @@
         if (intents) {
           intents.forEach(function (intent) { dispatchAction(intent); });
           var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
-          var hasPopupCmd = intents.some(function (i) {
-            return i.type === 'openOfficer' || i.type === 'closePopup';
-          });
-          if (hasPopupCmd) {
-            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening for more…</small>');
+          // closePopup: chatbot stays open for another command
+          // all others (openOfficer, showTab, show360, filters…): chatbot closes
+          var stayOpen = intents.every(function (i) { return i.type === 'closePopup'; });
+          if (stayOpen) {
+            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Anything else?</small>');
             setSt('Listening…');
-            setTimeout(startVoiceCommand, 1500);
+            setTimeout(startVoiceCommand, 1200);
           } else {
             addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
-            setTimeout(window.alkraClose, 1800);
+            setTimeout(window.alkraClose, 1600);
           }
         } else {
           addMsg('bot',
@@ -1018,9 +1167,13 @@
     // Greet
     addMsg('bot',
       'Hello! I\'m <b>Alkra</b> &#129302; &#128075;<br>' +
-      'I understand <b>English and Telugu</b> commands.<br>' +
-      '<small style="color:#6b7280">Just say <b>"Alkra"</b> to wake me — no "Hi" needed!<br>' +
-      'Try: <b>"Open Kumar"</b> · <b>"అందరినీ చూపించు"</b> · <b>"CMO score sort"</b></small>'
+      'Supports <b>English &amp; Telugu</b>. Always listening!<br>' +
+      '<small style="color:#6b7280">' +
+      '<b>Say "Alkra"</b> to open me · <b>"Alkra open Kumar"</b> for profile<br>' +
+      '<b>"Alkra show service records"</b> · <b>"Alkra show 360 degree view"</b><br>' +
+      '<b>"Alkra show department wise"</b> · <b>"Alkra close the chatbot"</b><br>' +
+      'In 360 view: <b>"Alkra open CMO score"</b> · <b>"Alkra open e-office"</b>' +
+      '</small>'
     );
   }
 

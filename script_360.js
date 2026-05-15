@@ -1229,6 +1229,9 @@
     });
   }
 
+  // Expose for voice_360.js voice commands
+  window.openWheelSegment = openSegPopup;
+
   function closeSegCard(i) {
     const overlay = document.getElementById('wheelOverlay');
     if (overlay) {
