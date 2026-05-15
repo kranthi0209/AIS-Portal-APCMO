@@ -277,6 +277,14 @@
     var t = raw.toLowerCase().trim();
     var intents = [];
 
+    // "Work silently" — hide UI, keep executing commands
+    if (/\bwork\s+silently\b|\bsilent\s+mode\b|\bdo\s+the\s+work\s+silently\b|\bwork\s+in\s+background\b/i.test(t))
+      return [{ type: 'silentMode', params: {} }];
+
+    // "Show me your face" — restore chatbot UI
+    if (/\bshow\s+(me\s+)?your\s+face\b|\bshow\s+face\b|\bcome\s+back\b/i.test(t))
+      return [{ type: 'showFace', params: {} }];
+
     // Reset is exclusive — return immediately
     if (/reset|clear\s*(all\s*)?(filters?)?|start\s*over|show\s*all/.test(t))
       return [{ type: 'reset', params: {} }];
@@ -462,6 +470,8 @@
       case 'postType':    return 'Post Type: ' + intent.params.value;
       case 'name':        return 'Searching for "' + intent.params.value + '"';
       case 'openOfficer': return 'Opening profile: ' + intent.params.name;
+      case 'silentMode':    return 'Working silently — say "show me your face" to return';
+      case 'showFace':      return 'Welcome back!';
       case 'closePopup':    return 'Popup closed';
       case 'close360':      return 'Closing 360° View';
       case 'closeSegment':  return 'Segment closed';
@@ -627,6 +637,15 @@
       case 'show360': {
         var btn360 = document.getElementById('detailBtnWheel');
         if (btn360) btn360.click();
+        break;
+      }
+      case 'silentMode': {
+        // Hide the UI immediately — voice keeps running
+        setTimeout(window.alkraHide, 400); // slight delay so "Done!" message is briefly visible
+        break;
+      }
+      case 'showFace': {
+        window.alkraShow();
         break;
       }
       case 'close360': {
@@ -797,6 +816,22 @@
             break; // never open chatbot for a farewell
           }
 
+          // ── "Work silently" — hide UI, keep listening & executing ──
+          if (/\bwork\s+silently\b|\bsilent\s+mode\b|\bdo\s+the\s+work\s+silently\b|\bwork\s+in\s+background\b/i.test(tl)) {
+            isProcessing = true;
+            window.alkraHide();
+            setTimeout(function () { isProcessing = false; }, 600);
+            break;
+          }
+          // ── "Show me your face" — restore UI ──
+          if (/\bshow\s+(me\s+)?your\s+face\b|\bshow\s+face\b|\bcome\s+back\b/i.test(tl)) {
+            isProcessing = true;
+            window.alkraShow();
+            if (!isOpen) openChat();
+            setTimeout(function () { isProcessing = false; }, 600);
+            break;
+          }
+
           // ── HIDE / SHOW commands (work even when panel is hidden) ──
           if (/\b(hide|dismiss|vanish)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
             isProcessing = true;
@@ -936,6 +971,19 @@
   function _wakeWithCommand(command) {
     var t = command.toLowerCase();
 
+    // "Alkra work silently" / "Alkra do the work silently"
+    if (/work\s+silently|silent\s+mode|do\s+the\s+work\s+silently|work\s+in\s+background/i.test(t)) {
+      window.alkraHide();
+      setTimeout(function () { isProcessing = false; }, 600);
+      return;
+    }
+    // "Alkra show me your face" / "Alkra come back"
+    if (/show\s+(me\s+)?your\s+face|show\s+face|come\s+back/i.test(t)) {
+      window.alkraShow();
+      if (!isOpen) openChat();
+      setTimeout(function () { isProcessing = false; }, 600);
+      return;
+    }
     // "Alkra hide" — hide chatbot, voice keeps listening
     if (/^hide\b|^dismiss\b|^vanish\b/.test(t)) {
       window.alkraHide();
