@@ -281,6 +281,19 @@
     if (/reset|clear\s*(all\s*)?(filters?)?|start\s*over|show\s*all/.test(t))
       return [{ type: 'reset', params: {} }];
 
+    // Close 360° overlay (explicit — "close 360 degree view", "close wheel")
+    if (/\bclose\b.*\b(360|three\s*sixty|wheel|degree\s*view)\b/i.test(t) ||
+        /\b(360|wheel)\b.*\bclose\b/i.test(t))
+      return [{ type: 'close360', params: {} }];
+
+    // Close segment popup when 360° wheel is open (e.g. "close CMO Score")
+    if (/\bclose\b/i.test(t)) {
+      var wOvPC  = document.getElementById('wheelOverlay');
+      var sdpPC  = document.querySelector('.sdp-popup-bg');
+      if (wOvPC && wOvPC.classList.contains('open') && sdpPC)
+        return [{ type: 'closeSegment', params: {} }];
+    }
+
     // Close popup is exclusive
     if (/^(?:close|dismiss|exit|shut)\s*(?:the\s*)?(?:popup|card|modal|window|detail|it|this)?\s*$/.test(t))
       return [{ type: 'closePopup', params: {} }];
@@ -449,7 +462,9 @@
       case 'postType':    return 'Post Type: ' + intent.params.value;
       case 'name':        return 'Searching for "' + intent.params.value + '"';
       case 'openOfficer': return 'Opening profile: ' + intent.params.name;
-      case 'closePopup':  return 'Popup closed';
+      case 'closePopup':    return 'Popup closed';
+      case 'close360':      return 'Closing 360° View';
+      case 'closeSegment':  return 'Segment closed';
       case 'showTab':     return 'Showing ' + (intent.params.label || intent.params.tab);
       case 'show360':     return 'Opening 360° Profile View';
       case 'batch':
@@ -614,6 +629,18 @@
         if (btn360) btn360.click();
         break;
       }
+      case 'close360': {
+        var wOvC = document.getElementById('wheelOverlay');
+        if (wOvC) {
+          var wCBC = document.getElementById('wheelClose');
+          if (wCBC) wCBC.click(); else wOvC.classList.remove('open');
+        }
+        break;
+      }
+      case 'closeSegment': {
+        document.querySelectorAll('.sdp-popup-bg').forEach(function (bg) { bg.remove(); });
+        break;
+      }
       case 'closePopup': {
         // Close 360° wheel overlay first (highest priority)
         var wOvW = document.getElementById('wheelOverlay');
@@ -745,11 +772,29 @@
           // ── COMMAND MODE: chatbot is open — process any FINAL speech ──
           if (isOpen) {
             if (!isFinal) continue; // wait for complete phrase
-            // Strip optional "Alkra" prefix if user says "Alkra show department wise"
-            var cmdText = raw.replace(/^(?:hi\s+|hey\s+)?(?:alkra|elcra|alcra|alka)\s*/i, '').trim();
-            if (!cmdText) cmdText = raw;
-            if (cmdText) { isProcessing = true; _processVoiceCommand(cmdText); }
+            // Strip leading AND trailing "Alkra" / greeting so
+            // "Hi Alkra" → "", "Bye Alkra" → "bye", "Alkra open Kumar" → "open kumar"
+            var cmdText = raw
+              .replace(/^(?:hi\s+|hey\s+|hello\s+)?(?:alkra|elcra|alcra|alka)\s*/i, '')
+              .replace(/\s*\b(?:alkra|elcra|alcra|alka)\b\s*$/i, '')
+              .trim();
+            if (!cmdText) {
+              // "Alkra" / "Hi Alkra" alone — just acknowledge, don't treat as command
+              isProcessing = true;
+              addMsg('bot', '&#129302; I\'m listening! Say your command.');
+              setSt('Listening…');
+              setTimeout(function () { isProcessing = false; }, 500);
+              return;
+            }
+            isProcessing = true;
+            _processVoiceCommand(cmdText);
             return;
+          }
+
+          // ── "Bye Alkra" — close chatbot (or no-op if already closed) ──
+          if (/\b(bye|goodbye)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
+            if (isOpen) { isProcessing = true; window.alkraClose(); setTimeout(function () { isProcessing = false; }, 500); }
+            break; // never open chatbot for a farewell
           }
 
           // ── HIDE / SHOW commands (work even when panel is hidden) ──
@@ -919,6 +964,22 @@
     var popupOpen  = detailOv && detailOv.classList.contains('open');
 
     if (wheelOpen) {
+      // "Close 360 degree view / close wheel" → close the overlay
+      if (/\bclose\b.*\b(360|three\s*sixty|wheel|degree\s*view)\b/i.test(t) ||
+          /\b(360|wheel)\b.*\bclose\b/i.test(t)) {
+        var wCBt = document.getElementById('wheelClose');
+        if (wCBt) wCBt.click();
+        else { var wOvT = document.getElementById('wheelOverlay'); if (wOvT) wOvT.classList.remove('open'); }
+        setTimeout(function () { isProcessing = false; }, 800);
+        return;
+      }
+      // "Close [segment name]" → close only the segment popup, not the whole wheel
+      if (/\bclose\b/i.test(t)) {
+        document.querySelectorAll('.sdp-popup-bg').forEach(function (bg) { bg.remove(); });
+        setTimeout(function () { isProcessing = false; }, 800);
+        return;
+      }
+      // "Open [segment]" → open that segment
       _processWheelCommand(t);
       setTimeout(function () { isProcessing = false; }, 800);
       return;
