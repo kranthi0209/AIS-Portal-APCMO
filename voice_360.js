@@ -25,8 +25,9 @@
   var micActive = false;
   var wakeRec   = null;
   var wakeActive = false;
-  var isProcessing   = false; // true while a voice command is being handled
+  var isProcessing    = false; // true while a voice command is being handled
   var listeningPaused = false; // true while user is actively typing
+  var isHidden        = false; // FAB + panel hidden but voice still active
 
   // ── Robot SVG icon ───────────────────────────────────────────
   // Inspired by the round-headed robot with cyan ear cups, dark face plate,
@@ -751,6 +752,20 @@
             return;
           }
 
+          // ── HIDE / SHOW commands (work even when panel is hidden) ──
+          if (/\b(hide|dismiss|vanish)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
+            isProcessing = true;
+            window.alkraHide();
+            setTimeout(function () { isProcessing = false; }, 600);
+            break;
+          }
+          if (/\b(show|display|reveal|open)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
+            isProcessing = true;
+            window.alkraShow();
+            setTimeout(function () { isProcessing = false; }, 600);
+            break;
+          }
+
           // ── WAKE MODE: chatbot is closed — scan for "Alkra" ──
           var words    = tl.split(/\s+/);
           var alkraIdx = -1;
@@ -876,6 +891,20 @@
   function _wakeWithCommand(command) {
     var t = command.toLowerCase();
 
+    // "Alkra hide" — hide chatbot, voice keeps listening
+    if (/^hide\b|^dismiss\b|^vanish\b/.test(t)) {
+      window.alkraHide();
+      setTimeout(function () { isProcessing = false; }, 600);
+      return;
+    }
+    // "Alkra show" — restore chatbot
+    if (/^show\b|^display\b|^reveal\b/.test(t)) {
+      window.alkraShow();
+      if (!isOpen) openChat();
+      setTimeout(function () { isProcessing = false; }, 600);
+      return;
+    }
+
     // "close the chatbot" — explicit close
     if (/close.*chat(bot)?|chatbot.*close|chat.*close/i.test(t)) {
       if (isOpen) window.alkraClose();
@@ -906,12 +935,14 @@
       return;
     }
 
-    // No popup — open chatbot and process normally
+    // No popup — un-hide if needed, open chatbot and process
+    if (isHidden) window.alkraShow();
     if (!isOpen) openChat();
     _processVoiceCommand(command); // clears isProcessing inside
   }
 
   function wakeWordDetected() {
+    if (isHidden) window.alkraShow(); // un-hide before opening
     if (!isOpen) openChat();
     addMsg('bot',
       '<b>Hi! I\'m Alkra</b> &#129302; &#128075;<br>' +
@@ -1136,7 +1167,10 @@
           '<div class="alkra-st" id="alkraSt">Filter Assistant</div>' +
         '</div>' +
       '</div>' +
-      '<button class="alkra-x" onclick="alkraClose()">&#10005;</button>';
+      '<div class="alkra-hdr-actions">' +
+        '<button class="alkra-hide-btn" onclick="alkraHide()" title="Hide — voice still listens">&#128065;&#65039; Hide</button>' +
+        '<button class="alkra-x" onclick="alkraClose()">&#10005;</button>' +
+      '</div>';
 
     // Messages area
     var msgs = document.createElement('div');
@@ -1382,6 +1416,29 @@
   };
 
   window.alkraToggle = function () { isOpen ? window.alkraClose() : openChat(); };
+
+  // Hide: make FAB + panel invisible; voice keeps listening
+  window.alkraHide = function () {
+    if (isHidden) return;
+    isHidden = true;
+    if (isOpen) window.alkraClose(); // close panel first (clears open state)
+    var fab   = document.getElementById('alkraBtn');
+    var panel = document.getElementById('alkraPanel');
+    if (fab)   fab.style.display   = 'none';
+    if (panel) panel.style.display = 'none';
+    // wakeRec keeps running silently
+    if (!wakeActive) setTimeout(startWakeListener, 400);
+  };
+
+  // Show: restore FAB (and open panel if it was open before)
+  window.alkraShow = function () {
+    if (!isHidden) return;
+    isHidden = false;
+    var fab   = document.getElementById('alkraBtn');
+    var panel = document.getElementById('alkraPanel');
+    if (fab)   fab.style.display   = '';
+    if (panel) panel.style.display = '';
+  };
 
   // Expose send so inline onclick can call it if needed
   window.alkraSend = function () {
