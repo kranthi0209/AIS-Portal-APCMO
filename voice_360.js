@@ -28,6 +28,8 @@
   var isProcessing    = false; // true while a voice command is being handled
   var listeningPaused = false; // true while user is actively typing
   var isHidden        = false; // FAB + panel hidden but voice still active
+  var _cmdTimer       = null;  // debounce timer — waits for complete phrase before processing
+  var _cmdBuffer      = '';    // accumulates final results within the debounce window
 
   // ── Robot SVG icon ───────────────────────────────────────────
   // Inspired by the round-headed robot with cyan ear cups, dark face plate,
@@ -788,25 +790,46 @@
           var raw     = ev.results[i][0].transcript.trim();
           var tl      = raw.toLowerCase();
 
-          // ── COMMAND MODE: chatbot is open — process any FINAL speech ──
+          // ── COMMAND MODE: chatbot is open ──────────────────────────
           if (isOpen) {
-            if (!isFinal) continue; // wait for complete phrase
-            // Strip leading AND trailing "Alkra" / greeting so
-            // "Hi Alkra" → "", "Bye Alkra" → "bye", "Alkra open Kumar" → "open kumar"
-            var cmdText = raw
+            if (!isFinal) {
+              // Show interim text in the input box so user sees what's heard
+              var inpIm = document.getElementById('alkraInput');
+              if (inpIm && !listeningPaused) inpIm.value = raw;
+              continue;
+            }
+
+            // Strip leading AND trailing "Alkra" / greeting:
+            // "Hi Alkra" → "", "Bye Alkra" → "bye", "Alkra open Kumar" → "open Kumar"
+            var stripped = raw
               .replace(/^(?:hi\s+|hey\s+|hello\s+)?(?:alkra|elcra|alcra|alka)\s*/i, '')
               .replace(/\s*\b(?:alkra|elcra|alcra|alka)\b\s*$/i, '')
               .trim();
-            if (!cmdText) {
-              // "Alkra" / "Hi Alkra" alone — just acknowledge, don't treat as command
+
+            if (!stripped) {
+              // Pure greeting — acknowledge without searching
               isProcessing = true;
               addMsg('bot', '&#129302; I\'m listening! Say your command.');
               setSt('Listening…');
+              _cmdBuffer = '';
+              clearTimeout(_cmdTimer);
               setTimeout(function () { isProcessing = false; }, 500);
               return;
             }
-            isProcessing = true;
-            _processVoiceCommand(cmdText);
+
+            // Debounce: Chrome's continuous recogniser can split "district collector"
+            // into two separate final results. Accumulate for 650 ms; if more speech
+            // arrives within that window, append it and restart the timer.
+            _cmdBuffer = (_cmdBuffer ? _cmdBuffer + ' ' : '') + stripped;
+            clearTimeout(_cmdTimer);
+            _cmdTimer = setTimeout(function () {
+              var phrase = _cmdBuffer.trim();
+              _cmdBuffer = '';
+              if (phrase && !isProcessing && !listeningPaused) {
+                isProcessing = true;
+                _processVoiceCommand(phrase);
+              }
+            }, 650);
             return;
           }
 
@@ -1512,6 +1535,7 @@
     isOpen = false;
     isProcessing = false;
     listeningPaused = false;
+    clearTimeout(_cmdTimer); _cmdBuffer = ''; // discard any partial phrase
     // Stop any in-progress manual mic or speech
     if (micActive && micRec) { try { micRec.abort(); } catch (e) {} micRec = null; micActive = false; }
     if (SS) SS.cancel();
