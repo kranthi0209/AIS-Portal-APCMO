@@ -704,11 +704,11 @@
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
           var t     = ev.results[i][0].transcript.toLowerCase().trim();
           var words = t.split(/\s+/);
-          var hasGreet = words.some(function (w) { return /^(hi|hey|hello)$/.test(w); });
-          var hasName  = words.some(function (w) {
+          // Just saying "Alkra" (any variation) is enough to wake Alkra
+          var hasName = words.some(function (w) {
             return w.length >= 3 && levenshtein(w, 'alkra') <= 2;
           });
-          if (hasGreet && hasName) { wakeWordDetected(); break; }
+          if (hasName) { wakeWordDetected(); break; }
         }
       };
       wakeRec.onstart = function () {
@@ -741,13 +741,10 @@
     if (!isOpen) openChat();
     addMsg('bot',
       '<b>Hi! I\'m Alkra</b> &#129302; &#128075;<br>' +
-      '<small style="color:#6b7280">Listening for your command after I finish speaking…</small>'
+      '<small style="color:#6b7280">Listening… say your command in English or Telugu.</small>'
     );
-    setSt('Speaking…');
-    speakWelcome(function () {
-      setSt('Listening…');
-      setTimeout(startVoiceCommand, 250);
-    });
+    setSt('Listening…');
+    setTimeout(startVoiceCommand, 300); // no welcome speech — straight to listening
   }
 
   // ── Voice command: one-shot, auto-process, auto-close ─────────
@@ -761,7 +758,7 @@
     if (micActive && micRec) { micRec.abort(); return; }
 
     micRec = new SR();
-    micRec.lang            = 'en-IN';
+    micRec.lang            = 'te-IN'; // Telugu-IN; also recognises English & mixed speech
     micRec.continuous      = false;
     micRec.interimResults  = true;
     micRec.maxAlternatives = 1;
@@ -811,69 +808,106 @@
     }
   }
 
-  // Auto-process voice result: task found → close; no task → re-listen (touchless)
-  function _processVoiceCommand(text) {
-    text = (text || '').trim();
-    if (!text) return;
-    var inp = document.getElementById('alkraInput');
-    if (inp) inp.value = '';
-    addMsg('user', esc(text));
-    setSt('Online');
-
-    // "bye / close" — context-sensitive
-    if (/^\s*(bye|goodbye|done|thanks?|thank\s*you)\s*$/i.test(text)) {
-      showTyping(function () {
-        addMsg('bot', 'Goodbye! &#128075;');
-        setTimeout(window.alkraClose, 800);
-      });
+  // Detect Telugu Unicode (U+0C00–U+0C7F) and translate to English via Google
+  function _maybeTranslate(text, callback) {
+    if (!/[ఀ-౿]/.test(text)) {
+      callback(text, null); // already English / Latin — no translation needed
       return;
     }
-    if (/^\s*(close|exit)\s*$/i.test(text)) {
-      var detOv = document.getElementById('detailOverlay');
-      var wOv   = document.getElementById('weightsOverlay');
-      var sdpBg = document.querySelector('.sdp-popup-bg');
-      if ((detOv && detOv.classList.contains('open')) ||
-          (wOv && wOv.style.display !== 'none') || sdpBg) {
+    setSt('Translating…');
+    var url = 'https://translate.googleapis.com/translate_a/single' +
+      '?client=gtx&sl=te&tl=en&dt=t&q=' + encodeURIComponent(text);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.timeout = 6000;
+    xhr.onload = function () {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var eng = data[0].map(function (x) { return (x && x[0]) || ''; }).join('').trim();
+        callback(eng || text, text); // (englishText, originalTelugu)
+      } catch (e) {
+        callback(text, null); // parse failed — try original as-is
+      }
+    };
+    xhr.onerror = xhr.ontimeout = function () { callback(text, null); };
+    xhr.send();
+  }
+
+  // Auto-process voice result (Telugu or English) — touchless flow
+  function _processVoiceCommand(raw) {
+    raw = (raw || '').trim();
+    if (!raw) return;
+    var inp = document.getElementById('alkraInput');
+    if (inp) inp.value = '';
+
+    // Show what was heard (Telugu label if translated later)
+    addMsg('user', esc(raw));
+    setSt('Online');
+
+    // Translate if Telugu, then dispatch
+    _maybeTranslate(raw, function (text, origTelugu) {
+      // If translated, show the English interpretation as a hint
+      if (origTelugu && text !== origTelugu) {
+        addMsg('bot',
+          '<small style="color:#6b7280">&#127470;&#127475; Translated: <i>' +
+          esc(text) + '</i></small>'
+        );
+      }
+
+      // "bye / close" — context-sensitive
+      if (/^\s*(bye|goodbye|done|thanks?|thank\s*you)\s*$/i.test(text)) {
         showTyping(function () {
-          dispatchAction({ type: 'closePopup', params: {} });
-          addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Anything else?</small>');
-          setSt('Listening…');
-          setTimeout(startVoiceCommand, 1200); // touchless: keep listening
+          addMsg('bot', 'Goodbye! &#128075;');
+          setTimeout(window.alkraClose, 800);
         });
         return;
       }
-      showTyping(function () {
-        addMsg('bot', 'Goodbye! &#128075;');
-        setTimeout(window.alkraClose, 800);
-      });
-      return;
-    }
-
-    var intents = parseCommands(text);
-    showTyping(function () {
-      if (intents) {
-        intents.forEach(function (intent) { dispatchAction(intent); });
-        var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
-        // openOfficer & closePopup: don't auto-close chatbot — stay for more commands
-        var hasPopupCmd = intents.some(function (i) {
-          return i.type === 'openOfficer' || i.type === 'closePopup';
-        });
-        if (hasPopupCmd) {
-          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening for more…</small>');
-          setSt('Listening…');
-          setTimeout(startVoiceCommand, 1500);  // touchless: keep going
-        } else {
-          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
-          setTimeout(window.alkraClose, 1800);
+      if (/^\s*(close|exit)\s*$/i.test(text)) {
+        var detOv = document.getElementById('detailOverlay');
+        var wOv   = document.getElementById('weightsOverlay');
+        var sdpBg = document.querySelector('.sdp-popup-bg');
+        if ((detOv && detOv.classList.contains('open')) ||
+            (wOv && wOv.style.display !== 'none') || sdpBg) {
+          showTyping(function () {
+            dispatchAction({ type: 'closePopup', params: {} });
+            addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Anything else?</small>');
+            setSt('Listening…');
+            setTimeout(startVoiceCommand, 1200);
+          });
+          return;
         }
-      } else {
-        addMsg('bot',
-          'I didn\'t catch that. &#129300;<br>' +
-          '<small style="color:#6b7280">Listening again — say your command…</small>'
-        );
-        setSt('Listening…');
-        setTimeout(startVoiceCommand, 1800); // touchless: auto-retry
+        showTyping(function () {
+          addMsg('bot', 'Goodbye! &#128075;');
+          setTimeout(window.alkraClose, 800);
+        });
+        return;
       }
+
+      var intents = parseCommands(text);
+      showTyping(function () {
+        if (intents) {
+          intents.forEach(function (intent) { dispatchAction(intent); });
+          var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
+          var hasPopupCmd = intents.some(function (i) {
+            return i.type === 'openOfficer' || i.type === 'closePopup';
+          });
+          if (hasPopupCmd) {
+            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening for more…</small>');
+            setSt('Listening…');
+            setTimeout(startVoiceCommand, 1500);
+          } else {
+            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
+            setTimeout(window.alkraClose, 1800);
+          }
+        } else {
+          addMsg('bot',
+            'I didn\'t catch that. &#129300;<br>' +
+            '<small style="color:#6b7280">Listening again — English లేదా Telugu లో చెప్పండి…</small>'
+          );
+          setSt('Listening…');
+          setTimeout(startVoiceCommand, 1800);
+        }
+      });
     });
   }
 
@@ -984,9 +1018,9 @@
     // Greet
     addMsg('bot',
       'Hello! I\'m <b>Alkra</b> &#129302; &#128075;<br>' +
-      'I can filter, sort, open officer profiles, and reset the list.<br>' +
-      '<small style="color:#6b7280">Say <b>"Hi Alkra"</b> to go fully hands-free, or type below.<br>' +
-      'Try: <b>"Open Kumar"</b> · <b>"show all"</b> · <b>"sort by CMO descending"</b></small>'
+      'I understand <b>English and Telugu</b> commands.<br>' +
+      '<small style="color:#6b7280">Just say <b>"Alkra"</b> to wake me — no "Hi" needed!<br>' +
+      'Try: <b>"Open Kumar"</b> · <b>"అందరినీ చూపించు"</b> · <b>"CMO score sort"</b></small>'
     );
   }
 
@@ -1112,7 +1146,8 @@
       '<b>Sort</b> — "sort by CMO score descending"<br>' +
       '<b>Service</b> — "IAS" / "IPS" / "IFS"<br>' +
       '<b>Search</b> — "search Kumar"<br>' +
-      '<small style="color:#92400e">Voice: say "Hi Alkra" → speak command → fully hands-free!</small>';
+      '<b>Telugu</b> — speak in Telugu, auto-translated &#127470;&#127475;→&#127468;&#127463;<br>' +
+      '<small style="color:#92400e">Say <b>"Alkra"</b> to wake → speak in English or Telugu — fully hands-free!</small>';
   }
 
   // ── Open / close ──────────────────────────────────────────────
