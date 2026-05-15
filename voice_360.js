@@ -275,8 +275,12 @@
     var intents = [];
 
     // Reset is exclusive — return immediately
-    if (/reset|clear\s*(all\s*)?(filters?)?|start\s*over/.test(t))
+    if (/reset|clear\s*(all\s*)?(filters?)?|start\s*over|show\s*all/.test(t))
       return [{ type: 'reset', params: {} }];
+
+    // Close popup is exclusive
+    if (/^(?:close|dismiss|exit|shut)\s*(?:the\s*)?(?:popup|card|modal|window|detail|it|this)?\s*$/.test(t))
+      return [{ type: 'closePopup', params: {} }];
 
     // Service switch
     var m = t.match(/\b(ias|ips|ifs)\b/);
@@ -397,6 +401,13 @@
     var postTypeMatch = matchSelectOption('fPostType', t, true);
     if (postTypeMatch) intents.push({ type: 'postType', params: { value: postTypeMatch } });
 
+    // ── Open officer detail popup ────────────────────────────────
+    // "open Kumar" / "open officer Ravi Kumar" / "open profile of Sharma"
+    var openOfficerM = t.match(/^open\s+(?:officer\s+|profile\s+(?:of\s+)?|detail\s+(?:of\s+)?)?(.{2,})$/);
+    if (openOfficerM) {
+      intents.push({ type: 'openOfficer', params: { name: openOfficerM[1].trim() } });
+    }
+
     // ── Name search — only when nothing else matched ──────────────
     if (intents.length === 0) {
       m = t.match(/(?:search|find|look\s*for|show\s*officer|officer\s*named?|name)\s+([a-z\s]{2,})/);
@@ -418,8 +429,10 @@
         return 'Source: ' + (sv === '__dr__' ? 'Direct Recruit' : sv === '__promo__' ? 'Promoted' : sv);
       }
       case 'domicile': return 'Domicile: ' + intent.params.value;
-      case 'postType': return 'Post Type: ' + intent.params.value;
-      case 'name':     return 'Searching for "' + intent.params.value + '"';
+      case 'postType':    return 'Post Type: ' + intent.params.value;
+      case 'name':        return 'Searching for "' + intent.params.value + '"';
+      case 'openOfficer': return 'Opening profile: ' + intent.params.name;
+      case 'closePopup':  return 'Popup closed';
       case 'batch':
         return 'Batch ' + intent.params.lo + (intent.params.lo !== intent.params.hi ? ' – ' + intent.params.hi : '');
       case 'retire':
@@ -433,6 +446,21 @@
       case 'sortdir': return 'Direction: ' + (intent.params.dir === 'desc' ? 'Descending ↓' : 'Ascending ↑');
       default: return 'Done';
     }
+  }
+
+  // Fuzzy name match for officer cards: returns 0..1 (higher = better match)
+  function fuzzyNameMatch(spoken, cardName) {
+    var s = spoken.toLowerCase().trim();
+    var c = cardName.toLowerCase().trim();
+    if (c.indexOf(s) !== -1 || s.indexOf(c) !== -1) return 1; // substring hit
+    var sw = s.split(/\s+/).filter(function (w) { return w.length > 1; });
+    var cw = c.split(/\s+/);
+    if (!sw.length) return 0;
+    var hits = sw.filter(function (w) {
+      var thr = Math.floor(w.length / 4);
+      return cw.some(function (cv) { return levenshtein(w, cv) <= thr; });
+    });
+    return hits.length / sw.length;
   }
 
   function applyDir(wantDir) {
@@ -543,6 +571,36 @@
       case 'sortdir':
         applyDir(intent.params.dir);
         break;
+
+      case 'openOfficer': {
+        var cards = document.querySelectorAll('.c360[data-name]');
+        var bestCard = null, bestScore = -1;
+        cards.forEach(function (card) {
+          var s = fuzzyNameMatch(intent.params.name, card.getAttribute('data-name') || '');
+          if (s > bestScore) { bestScore = s; bestCard = card; }
+        });
+        if (bestCard && bestScore >= 0.5) {
+          bestCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(function () { bestCard.click(); }, 400);
+        }
+        break;
+      }
+
+      case 'closePopup': {
+        // Close officer detail overlay
+        var detOvD = document.getElementById('detailOverlay');
+        if (detOvD && detOvD.classList.contains('open')) {
+          detOvD.classList.remove('open'); break;
+        }
+        // Close weights overlay
+        var wOvD = document.getElementById('weightsOverlay');
+        if (wOvD && wOvD.style.display !== 'none') {
+          wOvD.style.display = 'none'; break;
+        }
+        // Close any segment popup
+        document.querySelectorAll('.sdp-popup-bg').forEach(function (bg) { bg.remove(); });
+        break;
+      }
     }
   }
 
@@ -575,25 +633,57 @@
     if (!SS) { cb(null); return; }
     var v = SS.getVoices();
     if (v.length) { cb(_pickFemaleVoice(v)); return; }
-    SS.onvoiceschanged = function () { cb(_pickFemaleVoice(SS.getVoices())); };
+    var done = false;
+    var finish = function (voices) { if (!done) { done = true; cb(_pickFemaleVoice(voices || [])); } };
+    SS.onvoiceschanged = function () { finish(SS.getVoices()); };
+    setTimeout(function () { finish(SS.getVoices()); }, 2500); // fallback if event never fires
   }
+
+  // Unlock TTS on the very first user interaction so wake-word speech works
+  // without needing the user to click the Alkra FAB first.
+  function _unlockTTSOnce() {
+    document.removeEventListener('click',      _unlockTTSOnce, true);
+    document.removeEventListener('keydown',    _unlockTTSOnce, true);
+    document.removeEventListener('touchstart', _unlockTTSOnce, true);
+    if (!SS) return;
+    var u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    SS.speak(u);
+    setTimeout(function () { SS.cancel(); }, 200);
+  }
+  document.addEventListener('click',      _unlockTTSOnce, true);
+  document.addEventListener('keydown',    _unlockTTSOnce, true);
+  document.addEventListener('touchstart', _unlockTTSOnce, true);
 
   function speakWelcome(onDone) {
     if (!SS) { if (onDone) onDone(); return; }
     SS.cancel();
+    var done = false;
+    var finish = function () { if (!done) { done = true; if (onDone) onDone(); } };
     var utt = new SpeechSynthesisUtterance(
       'Hello! I am Alkra, your smart assistant. ' +
-      'I can sort the officers list and filter by cadre, domicile, source, and post type. ' +
+      'I can sort the officers list, filter by cadre, domicile, source, and post type, ' +
+      'open officer profiles, and reset all filters. ' +
       'Go ahead, tell me what you need!'
     );
     utt.pitch  = 1.18;
     utt.rate   = 0.9;
     utt.volume = 1;
-    if (onDone) utt.onend = onDone;
+    utt.onend  = finish;
+    utt.onerror = finish; // don't hang if browser blocks TTS
+    // Chrome sometimes pauses long utterances silently — keep it alive
+    var keepAlive = setInterval(function () {
+      if (SS.speaking) { SS.pause(); SS.resume(); }
+    }, 8000);
+    utt.onend = utt.onerror = function () {
+      clearInterval(keepAlive); finish();
+    };
     _getVoice(function (voice) {
       if (voice) utt.voice = voice;
       SS.speak(utt);
     });
+    // Hard fallback: if TTS never fires (browser blocks audio), continue after 9 s
+    setTimeout(finish, 9000);
   }
 
   // ── Wake word listener ("Hi Alkra") ──────────────────────────
@@ -619,6 +709,15 @@
             return w.length >= 3 && levenshtein(w, 'alkra') <= 2;
           });
           if (hasGreet && hasName) { wakeWordDetected(); break; }
+        }
+      };
+      wakeRec.onstart = function () {
+        // When mic activates (user may have just granted permission), try to unlock TTS.
+        if (SS) {
+          var u = new SpeechSynthesisUtterance('');
+          u.volume = 0;
+          SS.speak(u);
+          setTimeout(function () { SS.cancel(); }, 200);
         }
       };
       wakeRec.onend = function () {
@@ -712,7 +811,7 @@
     }
   }
 
-  // Auto-process voice result: task found → close; no task → stay open
+  // Auto-process voice result: task found → close; no task → re-listen (touchless)
   function _processVoiceCommand(text) {
     text = (text || '').trim();
     if (!text) return;
@@ -721,7 +820,28 @@
     addMsg('user', esc(text));
     setSt('Online');
 
-    if (/^\s*(bye|goodbye|close|exit|done|thanks?|thank\s*you)\s*$/i.test(text)) {
+    // "bye / close" — context-sensitive
+    if (/^\s*(bye|goodbye|done|thanks?|thank\s*you)\s*$/i.test(text)) {
+      showTyping(function () {
+        addMsg('bot', 'Goodbye! &#128075;');
+        setTimeout(window.alkraClose, 800);
+      });
+      return;
+    }
+    if (/^\s*(close|exit)\s*$/i.test(text)) {
+      var detOv = document.getElementById('detailOverlay');
+      var wOv   = document.getElementById('weightsOverlay');
+      var sdpBg = document.querySelector('.sdp-popup-bg');
+      if ((detOv && detOv.classList.contains('open')) ||
+          (wOv && wOv.style.display !== 'none') || sdpBg) {
+        showTyping(function () {
+          dispatchAction({ type: 'closePopup', params: {} });
+          addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Anything else?</small>');
+          setSt('Listening…');
+          setTimeout(startVoiceCommand, 1200); // touchless: keep listening
+        });
+        return;
+      }
       showTyping(function () {
         addMsg('bot', 'Goodbye! &#128075;');
         setTimeout(window.alkraClose, 800);
@@ -734,14 +854,25 @@
       if (intents) {
         intents.forEach(function (intent) { dispatchAction(intent); });
         var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
-        addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
-        setTimeout(window.alkraClose, 1800);   // auto-close after voice task
+        // openOfficer & closePopup: don't auto-close chatbot — stay for more commands
+        var hasPopupCmd = intents.some(function (i) {
+          return i.type === 'openOfficer' || i.type === 'closePopup';
+        });
+        if (hasPopupCmd) {
+          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening for more…</small>');
+          setSt('Listening…');
+          setTimeout(startVoiceCommand, 1500);  // touchless: keep going
+        } else {
+          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
+          setTimeout(window.alkraClose, 1800);
+        }
       } else {
         addMsg('bot',
-          'I didn\'t quite catch that. &#129300;<br>' +
-          '<small style="color:#6b7280">Please try again or type your command below.</small>'
+          'I didn\'t catch that. &#129300;<br>' +
+          '<small style="color:#6b7280">Listening again — say your command…</small>'
         );
-        if (inp) inp.focus();                  // stay open — let user try again
+        setSt('Listening…');
+        setTimeout(startVoiceCommand, 1800); // touchless: auto-retry
       }
     });
   }
@@ -766,7 +897,7 @@
 
   var CHIPS = [
     'Principal Secretary', 'direct recruit', 'sort by CMO descending',
-    'batch 1990 to 2000', 'retiring 2026 to 2030', 'reset'
+    'batch 1990 to 2000', 'retiring 2026 to 2030', 'show all'
   ];
 
   function buildUI() {
@@ -853,8 +984,9 @@
     // Greet
     addMsg('bot',
       'Hello! I\'m <b>Alkra</b> &#129302; &#128075;<br>' +
-      'I can filter and sort the officer list.<br>' +
-      '<small style="color:#6b7280">Say <b>"Hi Alkra"</b> to wake me by voice, or type a command below.</small>'
+      'I can filter, sort, open officer profiles, and reset the list.<br>' +
+      '<small style="color:#6b7280">Say <b>"Hi Alkra"</b> to go fully hands-free, or type below.<br>' +
+      'Try: <b>"Open Kumar"</b> · <b>"show all"</b> · <b>"sort by CMO descending"</b></small>'
     );
   }
 
@@ -916,8 +1048,27 @@
 
     addMsg('user', esc(text));
 
-    // Bye / close
-    if (/^\s*(bye|goodbye|close|exit|done|thanks?|thank\s*you)\s*$/i.test(text)) {
+    // Bye / close — context-sensitive
+    if (/^\s*(bye|goodbye|done|thanks?|thank\s*you)\s*$/i.test(text)) {
+      showTyping(function () {
+        addMsg('bot', 'Goodbye! Click the button anytime to come back. &#128075;');
+        setTimeout(window.alkraClose, 900);
+      });
+      return;
+    }
+    if (/^\s*(close|exit)\s*$/i.test(text)) {
+      var detOvH = document.getElementById('detailOverlay');
+      var wOvH   = document.getElementById('weightsOverlay');
+      var sdpBgH = document.querySelector('.sdp-popup-bg');
+      if ((detOvH && detOvH.classList.contains('open')) ||
+          (wOvH && wOvH.style.display !== 'none') || sdpBgH) {
+        showTyping(function () {
+          dispatchAction({ type: 'closePopup', params: {} });
+          addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Anything else?</small>');
+          if (inp) inp.focus();
+        });
+        return;
+      }
       showTyping(function () {
         addMsg('bot', 'Goodbye! Click the button anytime to come back. &#128075;');
         setTimeout(window.alkraClose, 900);
@@ -948,18 +1099,20 @@
   }
 
   function helpText() {
-    return '<b>Filters I can set:</b><br>' +
-      '<b>Cadre</b> — "Principal Secretary", "Chief Secretary", "Secretary"…<br>' +
+    return '<b>Commands I understand:</b><br>' +
+      '<b>Open</b> — "open Kumar" → opens officer profile popup<br>' +
+      '<b>Close</b> — "close" → closes the open popup<br>' +
+      '<b>Show all</b> — resets all filters<br>' +
+      '<b>Cadre</b> — "Principal Secretary", "Chief Secretary"…<br>' +
       '<b>Source</b> — "direct recruit", "promoted"<br>' +
       '<b>Domicile</b> — "Andhra Pradesh", "Telangana"…<br>' +
-      '<b>Post Type</b> — any post type name (e.g. "Secretary to GoAP")<br>' +
+      '<b>Post Type</b> — any post type name<br>' +
       '<b>Batch</b> — "batch 1990 to 2000"<br>' +
       '<b>Retiring</b> — "retiring 2026 to 2028"<br>' +
       '<b>Sort</b> — "sort by CMO score descending"<br>' +
       '<b>Service</b> — "IAS" / "IPS" / "IFS"<br>' +
       '<b>Search</b> — "search Kumar"<br>' +
-      '<b>Reset</b> — clear all filters<br>' +
-      '<small style="color:#92400e">Combine: "Andhra Pradesh direct recruit batch 2000 to 2010"</small>';
+      '<small style="color:#92400e">Voice: say "Hi Alkra" → speak command → fully hands-free!</small>';
   }
 
   // ── Open / close ──────────────────────────────────────────────
