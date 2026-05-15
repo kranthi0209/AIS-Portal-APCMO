@@ -732,26 +732,26 @@
     try {
       wakeRec                = new SR();
       wakeRec.continuous     = true;
-      wakeRec.interimResults = false; // only act on final results — cleaner
-      wakeRec.lang           = 'te-IN'; // handles Telugu + English + mixed
+      wakeRec.interimResults = true;  // interim results give faster wake-word response
+      wakeRec.lang           = 'en-IN'; // English-India; reliable for "Hi Alkra" + Indian English commands
       wakeRec.onresult = function (ev) {
         if (isProcessing || listeningPaused) return;
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          if (!ev.results[i].isFinal) continue;
-          var raw   = ev.results[i][0].transcript.trim();
-          var tl    = raw.toLowerCase();
+          var isFinal = ev.results[i].isFinal;
+          var raw     = ev.results[i][0].transcript.trim();
+          var tl      = raw.toLowerCase();
 
-          // ── COMMAND MODE: chatbot is open — any speech is a command ──
+          // ── COMMAND MODE: chatbot is open — process any FINAL speech ──
           if (isOpen) {
-            // Strip optional leading "Alkra" filler so user can say either
-            // "show department wise" or "Alkra show department wise"
+            if (!isFinal) continue; // wait for complete phrase
+            // Strip optional "Alkra" prefix if user says "Alkra show department wise"
             var cmdText = raw.replace(/^(?:hi\s+|hey\s+)?(?:alkra|elcra|alcra|alka)\s*/i, '').trim();
             if (!cmdText) cmdText = raw;
             if (cmdText) { isProcessing = true; _processVoiceCommand(cmdText); }
             return;
           }
 
-          // ── WAKE MODE: chatbot is closed — look for "Alkra" ──
+          // ── WAKE MODE: chatbot is closed — scan for "Alkra" ──
           var words    = tl.split(/\s+/);
           var alkraIdx = -1;
           for (var wi = 0; wi < words.length; wi++) {
@@ -761,20 +761,23 @@
           }
           if (alkraIdx === -1) continue;
 
-          // Words after "Alkra", ignoring common fillers
+          // Words after "Alkra", ignoring filler words
           var postWords = words.slice(alkraIdx + 1).filter(function (w) {
             return !/^(hi|hey|hello|please|ok|okay)$/.test(w);
           });
 
-          isProcessing = true;
-          if (postWords.length > 0) {
-            // "Alkra open Kumar" — context-aware direct dispatch
+          if (postWords.length > 0 && isFinal) {
+            // "Alkra open Kumar" — compound command on final result
+            isProcessing = true;
             _wakeWithCommand(postWords.join(' '));
-          } else {
-            // "Alkra" or "Hi Alkra" alone — open chatbot, ready to listen
+            break;
+          } else if (postWords.length === 0) {
+            // "Alkra" or "Hi Alkra" alone — wake immediately even on interim
+            isProcessing = true;
             wakeWordDetected();
+            break;
           }
-          break;
+          // "Alkra [words]" seen but not final yet — keep waiting
         }
       };
       wakeRec.onstart = function () {
@@ -1075,7 +1078,7 @@
         } else {
           addMsg('bot',
             'I didn\'t catch that. &#129300;<br>' +
-            '<small style="color:#6b7280">Say your command in English or Telugu…</small>'
+            '<small style="color:#6b7280">Speak in English, or press &#127908; for Telugu.</small>'
           );
           setSt('Listening…');
           setTimeout(function () { isProcessing = false; }, 1000);
