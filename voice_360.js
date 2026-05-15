@@ -25,6 +25,8 @@
   var micActive = false;
   var wakeRec   = null;
   var wakeActive = false;
+  var isProcessing   = false; // true while a voice command is being handled
+  var listeningPaused = false; // true while user is actively typing
 
   // ── Robot SVG icon ───────────────────────────────────────────
   // Inspired by the round-headed robot with cyan ear cups, dark face plate,
@@ -730,15 +732,27 @@
     try {
       wakeRec                = new SR();
       wakeRec.continuous     = true;
-      wakeRec.interimResults = true;
-      wakeRec.lang           = 'en-IN';
+      wakeRec.interimResults = false; // only act on final results — cleaner
+      wakeRec.lang           = 'te-IN'; // handles Telugu + English + mixed
       wakeRec.onresult = function (ev) {
+        if (isProcessing || listeningPaused) return;
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          var isFinal = ev.results[i].isFinal;
-          var t       = ev.results[i][0].transcript.toLowerCase().trim();
-          var words   = t.split(/\s+/);
+          if (!ev.results[i].isFinal) continue;
+          var raw   = ev.results[i][0].transcript.trim();
+          var tl    = raw.toLowerCase();
 
-          // Find "Alkra" anywhere in the utterance (fuzzy: ≤2 edits)
+          // ── COMMAND MODE: chatbot is open — any speech is a command ──
+          if (isOpen) {
+            // Strip optional leading "Alkra" filler so user can say either
+            // "show department wise" or "Alkra show department wise"
+            var cmdText = raw.replace(/^(?:hi\s+|hey\s+)?(?:alkra|elcra|alcra|alka)\s*/i, '').trim();
+            if (!cmdText) cmdText = raw;
+            if (cmdText) { isProcessing = true; _processVoiceCommand(cmdText); }
+            return;
+          }
+
+          // ── WAKE MODE: chatbot is closed — look for "Alkra" ──
+          var words    = tl.split(/\s+/);
           var alkraIdx = -1;
           for (var wi = 0; wi < words.length; wi++) {
             if (words[wi].length >= 3 && levenshtein(words[wi], 'alkra') <= 2) {
@@ -752,18 +766,22 @@
             return !/^(hi|hey|hello|please|ok|okay)$/.test(w);
           });
 
-          if (postWords.length > 0 && isFinal) {
-            // "Alkra [command]" compound utterance — context-aware dispatch
-            _wakeWithCommand(postWords.join(' ')); break;
-          } else if (postWords.length === 0) {
-            // "Alkra" or "Hi Alkra" alone — open chat and listen
-            wakeWordDetected(); break;
+          isProcessing = true;
+          if (postWords.length > 0) {
+            // "Alkra open Kumar" — context-aware direct dispatch
+            _wakeWithCommand(postWords.join(' '));
+          } else {
+            // "Alkra" or "Hi Alkra" alone — open chatbot, ready to listen
+            wakeWordDetected();
           }
-          // postWords has content but not final yet — wait for final
+          break;
         }
       };
       wakeRec.onstart = function () {
-        // When mic activates (user may have just granted permission), try to unlock TTS.
+        // Show mic-active glow on FAB so user knows we're always listening
+        var fab = document.getElementById('alkraBtn');
+        if (fab) fab.classList.add('wake-on');
+        // Unlock TTS on first mic grant
         if (SS) {
           var u = new SpeechSynthesisUtterance('');
           u.volume = 0;
@@ -772,11 +790,15 @@
         }
       };
       wakeRec.onend = function () {
-        if (wakeActive) setTimeout(_rebuildWakeRec, 300);
+        var fab = document.getElementById('alkraBtn');
+        if (fab) fab.classList.remove('wake-on');
+        if (wakeActive && !listeningPaused) setTimeout(_rebuildWakeRec, 300);
       };
       wakeRec.onerror = function (ev) {
+        var fab = document.getElementById('alkraBtn');
+        if (fab) fab.classList.remove('wake-on');
         if (ev.error === 'not-allowed') { wakeActive = false; return; }
-        if (wakeActive) setTimeout(_rebuildWakeRec, 1000);
+        if (wakeActive && !listeningPaused) setTimeout(_rebuildWakeRec, 1000);
       };
       wakeRec.start();
     } catch (e) { wakeActive = false; }
@@ -785,6 +807,8 @@
   function stopWakeListener() {
     wakeActive = false;
     if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; }
+    var fab = document.getElementById('alkraBtn');
+    if (fab) fab.classList.remove('wake-on');
   }
 
   // 360° wheel segment → term table (maps spoken words to segment index 0-13)
@@ -845,15 +869,14 @@
   }
 
   // Dispatch a command that arrived WITH the wake word in the same utterance.
-  // Runs without opening the chatbot panel.
+  // wakeRec keeps running throughout — no stop/start needed.
   function _wakeWithCommand(command) {
-    stopWakeListener();
     var t = command.toLowerCase();
 
     // "close the chatbot" — explicit close
     if (/close.*chat(bot)?|chatbot.*close|chat.*close/i.test(t)) {
       if (isOpen) window.alkraClose();
-      else setTimeout(startWakeListener, 400);
+      setTimeout(function () { isProcessing = false; }, 500);
       return;
     }
 
@@ -865,7 +888,7 @@
 
     if (wheelOpen) {
       _processWheelCommand(t);
-      setTimeout(startWakeListener, 800);
+      setTimeout(function () { isProcessing = false; }, 800);
       return;
     }
     if (popupOpen) {
@@ -873,41 +896,45 @@
       if (!handled) {
         // Popup open but unknown command → open chatbot to clarify
         if (!isOpen) openChat();
-        _processVoiceCommand(command);
+        _processVoiceCommand(command); // clears isProcessing inside
       } else {
-        setTimeout(startWakeListener, 800);
+        setTimeout(function () { isProcessing = false; }, 800);
       }
       return;
     }
 
     // No popup — open chatbot and process normally
     if (!isOpen) openChat();
-    _processVoiceCommand(command);
+    _processVoiceCommand(command); // clears isProcessing inside
   }
 
   function wakeWordDetected() {
-    stopWakeListener();
     if (!isOpen) openChat();
     addMsg('bot',
       '<b>Hi! I\'m Alkra</b> &#129302; &#128075;<br>' +
       '<small style="color:#6b7280">Listening… say your command in English or Telugu.</small>'
     );
     setSt('Listening…');
-    setTimeout(startVoiceCommand, 300); // no welcome speech — straight to listening
+    // wakeRec (always-on) picks up the next command automatically
+    setTimeout(function () { isProcessing = false; }, 400);
   }
 
   // ── Voice command: one-shot, auto-process, auto-close ─────────
   function startVoiceCommand() {
     if (!SR) {
       addMsg('bot', 'Voice input needs Chrome or Edge. Please type your command.');
-      var inp0 = document.getElementById('alkraInput');
-      if (inp0) inp0.focus();
       return;
     }
+    // Toggle off if already running
     if (micActive && micRec) { micRec.abort(); return; }
 
+    // Pause the always-on wakeRec — Chrome only allows one recognizer at a time
+    var wasWakeActive = wakeActive;
+    if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; }
+    wakeActive = false;
+
     micRec = new SR();
-    micRec.lang            = 'te-IN'; // Telugu-IN; also recognises English & mixed speech
+    micRec.lang            = 'te-IN';
     micRec.continuous      = false;
     micRec.interimResults  = true;
     micRec.maxAlternatives = 1;
@@ -927,6 +954,7 @@
         var spoken = result[0].transcript;
         micActive = false; micRec = null;
         setMicBtnState(false);
+        isProcessing = true;
         _processVoiceCommand(spoken);
       }
     };
@@ -934,18 +962,20 @@
     micRec.onerror = function (ev) {
       micActive = false; micRec = null;
       setMicBtnState(false);
-      setSt('Online');
       if (ev.error === 'not-allowed') {
         addMsg('bot', '&#128274; Mic blocked — allow microphone access in your browser.');
       } else if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
         addMsg('bot', 'Mic error: ' + ev.error + '. Please type instead.');
       }
+      // Resume always-on listener
+      if (wasWakeActive) { wakeActive = true; _rebuildWakeRec(); }
     };
 
     micRec.onend = function () {
       micActive = false; micRec = null;
       setMicBtnState(false);
-      setSt('Online');
+      // Resume always-on listener
+      if (wasWakeActive) setTimeout(function () { wakeActive = true; _rebuildWakeRec(); }, 500);
     };
 
     try {
@@ -954,6 +984,7 @@
       micActive = false; micRec = null;
       setMicBtnState(false);
       addMsg('bot', 'Could not start mic: ' + ex.message);
+      if (wasWakeActive) { wakeActive = true; _rebuildWakeRec(); }
     }
   }
 
@@ -1019,9 +1050,9 @@
             (wOv && wOv.style.display !== 'none') || sdpBg) {
           showTyping(function () {
             dispatchAction({ type: 'closePopup', params: {} });
-            addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Anything else?</small>');
+            addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Listening…</small>');
             setSt('Listening…');
-            setTimeout(startVoiceCommand, 1200);
+            setTimeout(function () { isProcessing = false; }, 600);
           });
           return;
         }
@@ -1037,24 +1068,17 @@
         if (intents) {
           intents.forEach(function (intent) { dispatchAction(intent); });
           var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
-          // closePopup: chatbot stays open for another command
-          // all others (openOfficer, showTab, show360, filters…): chatbot closes
-          var stayOpen = intents.every(function (i) { return i.type === 'closePopup'; });
-          if (stayOpen) {
-            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Anything else?</small>');
-            setSt('Listening…');
-            setTimeout(startVoiceCommand, 1200);
-          } else {
-            addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Closing…</small>');
-            setTimeout(window.alkraClose, 1600);
-          }
+          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening…</small>');
+          setSt('Listening…');
+          // wakeRec (always-on) resumes listening automatically
+          setTimeout(function () { isProcessing = false; }, 800);
         } else {
           addMsg('bot',
             'I didn\'t catch that. &#129300;<br>' +
-            '<small style="color:#6b7280">Listening again — English లేదా Telugu లో చెప్పండి…</small>'
+            '<small style="color:#6b7280">Say your command in English or Telugu…</small>'
           );
           setSt('Listening…');
-          setTimeout(startVoiceCommand, 1800);
+          setTimeout(function () { isProcessing = false; }, 1000);
         }
       });
     });
@@ -1137,7 +1161,29 @@
     input.placeholder = 'Type a command…';
     input.autocomplete = 'off';
     input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); handleInput(input.value); }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        // Resume listening after typed command submitted
+        listeningPaused = false;
+        isProcessing = false;
+        handleInput(input.value);
+      }
+    });
+    // Pause voice listening while user is actively typing
+    input.addEventListener('input', function () {
+      if (!listeningPaused) {
+        listeningPaused = true;
+        isProcessing = true;
+        setSt('Typing… (voice paused)');
+      }
+    });
+    // Resume when input loses focus without submitting
+    input.addEventListener('blur', function () {
+      if (listeningPaused && !input.value.trim()) {
+        listeningPaused = false;
+        isProcessing = false;
+        setSt('Listening…');
+      }
     });
     // Mic button
     var micBtn = document.createElement('button');
@@ -1307,21 +1353,20 @@
   function openChat() {
     if (isOpen) return;
     isOpen = true;
-    stopWakeListener();
+    // wakeRec keeps running — it switches to command mode when isOpen=true
     var panel = document.getElementById('alkraPanel');
     if (panel) panel.classList.add('open');
     var fab = document.getElementById('alkraBtn');
     if (fab) fab.classList.add('open');
-    setSt('Online');
-    setTimeout(function () {
-      var inp = document.getElementById('alkraInput');
-      if (inp) inp.focus();
-    }, 300);
+    setSt('Listening…');
+    // Don't auto-focus input — chatbot is voice-first; click input to type
   }
 
   window.alkraClose = function () {
     isOpen = false;
-    // Stop any in-progress mic or speech
+    isProcessing = false;
+    listeningPaused = false;
+    // Stop any in-progress manual mic or speech
     if (micActive && micRec) { try { micRec.abort(); } catch (e) {} micRec = null; micActive = false; }
     if (SS) SS.cancel();
     var panel = document.getElementById('alkraPanel');
@@ -1329,8 +1374,8 @@
     var fab = document.getElementById('alkraBtn');
     if (fab) fab.classList.remove('open', 'listening');
     setSt('Filter Assistant');
-    // Re-arm wake word listener after panel closes
-    setTimeout(startWakeListener, 600);
+    // wakeRec is always-on — if it somehow stopped, restart it
+    if (!wakeActive) setTimeout(startWakeListener, 400);
   };
 
   window.alkraToggle = function () { isOpen ? window.alkraClose() : openChat(); };
@@ -1347,9 +1392,8 @@
 
   function _init() {
     buildUI();
-    // Start wake-word listener after a short delay
-    // (gives Chrome time to set up; prompts mic permission on first use)
-    setTimeout(startWakeListener, 1500);
+    // Start always-on listener immediately — prompts mic permission on first load
+    setTimeout(startWakeListener, 600);
   }
 
   if (document.readyState === 'loading') {
