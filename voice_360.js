@@ -28,8 +28,24 @@
   var isProcessing    = false; // true while a voice command is being handled
   var listeningPaused = false; // true while user is actively typing
   var isHidden        = false; // FAB + panel hidden but voice still active
-  var _cmdTimer       = null;  // debounce timer — waits for complete phrase before processing
-  var _cmdBuffer      = '';    // accumulates final results within the debounce window
+  var _cmdTimer         = null;  // debounce timer — waits for complete phrase
+  var _cmdBuffer        = '';    // accumulates final results within debounce window
+  var _recLang          = 'en-IN'; // switches to te-IN when chatbot opens (Telugu commands)
+  var _processingGuard  = null;  // auto-reset isProcessing after 8 s if it gets stuck
+
+  // ── Processing guard helpers ─────────────────────────────────
+  // Prevents isProcessing from getting permanently stuck (e.g. if a callback never fires)
+  function _lockProcessing() {
+    clearTimeout(_processingGuard);
+    isProcessing = true;
+    _processingGuard = setTimeout(function () {
+      isProcessing = false; _cmdBuffer = '';
+    }, 4000);
+  }
+  function _unlockProcessing() {
+    clearTimeout(_processingGuard);
+    isProcessing = false;
+  }
 
   // ── Robot SVG icon ───────────────────────────────────────────
   // Inspired by the round-headed robot with cyan ear cups, dark face plate,
@@ -319,8 +335,21 @@
       return [{ type: 'showTab', params: { tab: 'svc',  label: 'Service Records' } }];
 
     // ── Open 360° wheel popup ───────────────────────────────────────────────
-    if (/\bshow\s+(?:360|three\s*sixty|wheel|profile\s*view)\b/i.test(t))
+    if (/\b(?:show|open)\s+(?:360|three\s*sixty|wheel|profile\s*view|360\s*degree|360\s*profile)\b/i.test(t))
       return [{ type: 'show360', params: {} }];
+
+    // ── Open 360° wheel segment when the wheel overlay is already open ──────
+    // Must come before openOfficer so "open eoffice" routes to the wheel, not officer search
+    var _wovNow = document.getElementById('wheelOverlay');
+    if (_wovNow && _wovNow.classList.contains('open')) {
+      var _wcmd = t.replace(/^(?:open|show)\s+/i, '').trim();
+      for (var _wsi = 0; _wsi < WHEEL_TERMS.length; _wsi++) {
+        for (var _wti = 0; _wti < WHEEL_TERMS[_wsi].length; _wti++) {
+          if (_wcmd.indexOf(WHEEL_TERMS[_wsi][_wti]) !== -1 || t.indexOf(WHEEL_TERMS[_wsi][_wti]) !== -1)
+            return [{ type: 'openWheelSegment', params: { idx: _wsi } }];
+        }
+      }
+    }
 
     // Service switch
     var m = t.match(/\b(ias|ips|ifs)\b/);
@@ -443,15 +472,17 @@
 
     // ── Open officer detail popup ────────────────────────────────
     // "open Kumar" / "open officer Ravi Kumar" / "open profile of Sharma"
+    // Wheel-segment names are already intercepted above (when wheel is open),
+    // so reaching here means the phrase is safe to treat as an officer name.
     var openOfficerM = t.match(/^open\s+(?:officer\s+|profile\s+(?:of\s+)?|detail\s+(?:of\s+)?)?(.{2,})$/);
     if (openOfficerM) {
       intents.push({ type: 'openOfficer', params: { name: openOfficerM[1].trim() } });
     }
 
-    // ── Name search — only when nothing else matched ──────────────
+    // ── Name search — only when the user explicitly says "search" / "find" ──
+    // Never trigger on bare phrases to avoid false searches on every unknown command
     if (intents.length === 0) {
-      m = t.match(/(?:search|find|look\s*for|show\s*officer|officer\s*named?|name)\s+([a-z\s]{2,})/);
-      if (!m) m = t.match(/^([a-z][a-z\s]{2,})$/); // bare name as last resort
+      m = t.match(/\b(?:search|find|look\s*for)\s+([a-z\s]{2,})/);
       if (m) intents.push({ type: 'name', params: { value: m[1].trim() } });
     }
 
@@ -472,6 +503,12 @@
       case 'postType':    return 'Post Type: ' + intent.params.value;
       case 'name':        return 'Searching for "' + intent.params.value + '"';
       case 'openOfficer': return 'Opening profile: ' + intent.params.name;
+      case 'openWheelSegment': {
+        var _segLabels = ['e-Office','Swarna AP','GSDP','GoI Funds','Public Perception',
+          'Innovations','Digitalisation','New Policies','De Regularisation','Integrity Index',
+          'Party Feedback','Media Feedback','Leadership Skills','CMO Score'];
+        return 'Opening 360° segment: ' + (_segLabels[intent.params.idx] || 'segment ' + intent.params.idx);
+      }
       case 'silentMode':    return 'Working silently — say "show me your face" to return';
       case 'showFace':      return 'Welcome back!';
       case 'closePopup':    return 'Popup closed';
@@ -641,6 +678,15 @@
         if (btn360) btn360.click();
         break;
       }
+      case 'openWheelSegment': {
+        if (window.openWheelSegment) {
+          window.openWheelSegment(intent.params.idx);
+        } else {
+          var _wSegs = document.querySelectorAll('#wheelSvg .seg-group');
+          if (_wSegs[intent.params.idx]) _wSegs[intent.params.idx].click();
+        }
+        break;
+      }
       case 'silentMode': {
         // Hide the UI immediately — voice keeps running
         setTimeout(window.alkraHide, 400); // slight delay so "Done!" message is briefly visible
@@ -776,19 +822,36 @@
     _rebuildWakeRec();
   }
 
+  // Switch recognizer language and restart (en-IN=wake mode, te-IN=command mode)
+  function _switchRecLang(lang) {
+    _recLang = lang;
+    var badge = document.getElementById('alkraLangBadge');
+    if (badge) badge.textContent = lang === 'te-IN' ? 'EN+TE' : 'EN';
+    // Set wakeActive=false FIRST so the onend handler does not fire a second _rebuildWakeRec
+    wakeActive = false;
+    if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; }
+    // Now exactly one rebuild is scheduled
+    wakeActive = true;
+    setTimeout(_rebuildWakeRec, 350);
+  }
+
   function _rebuildWakeRec() {
     if (!wakeActive) return;
     try {
       wakeRec                = new SR();
       wakeRec.continuous     = true;
-      wakeRec.interimResults = true;  // interim results give faster wake-word response
-      wakeRec.lang           = 'en-IN'; // English-India; reliable for "Hi Alkra" + Indian English commands
+      wakeRec.interimResults = true;
+      wakeRec.lang           = _recLang; // en-IN (wake mode) or te-IN (command mode)
       wakeRec.onresult = function (ev) {
         if (isProcessing || listeningPaused) return;
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
           var isFinal = ev.results[i].isFinal;
           var raw     = ev.results[i][0].transcript.trim();
           var tl      = raw.toLowerCase();
+          // Skip very low-confidence or too-short results (noise guard)
+          var conf = ev.results[i][0].confidence;
+          if (isFinal && raw.length < 3) continue;
+          if (isFinal && conf !== undefined && conf < 0.28) continue;
 
           // ── COMMAND MODE: chatbot is open ──────────────────────────
           if (isOpen) {
@@ -808,64 +871,73 @@
 
             if (!stripped) {
               // Pure greeting — acknowledge without searching
-              isProcessing = true;
+              _lockProcessing();
               addMsg('bot', '&#129302; I\'m listening! Say your command.');
               setSt('Listening…');
               _cmdBuffer = '';
               clearTimeout(_cmdTimer);
-              setTimeout(function () { isProcessing = false; }, 500);
+              setTimeout(_unlockProcessing, 500);
               return;
             }
 
             // Debounce: Chrome's continuous recogniser can split "district collector"
-            // into two separate final results. Accumulate for 650 ms; if more speech
-            // arrives within that window, append it and restart the timer.
+            // into two final results. Accumulate 650 ms; restart timer on each new fragment.
             _cmdBuffer = (_cmdBuffer ? _cmdBuffer + ' ' : '') + stripped;
             clearTimeout(_cmdTimer);
             _cmdTimer = setTimeout(function () {
               var phrase = _cmdBuffer.trim();
               _cmdBuffer = '';
-              if (phrase && !isProcessing && !listeningPaused) {
-                isProcessing = true;
-                _processVoiceCommand(phrase);
+              if (!phrase) return;
+              if (listeningPaused) return;
+              if (isProcessing) {
+                // Processing still busy — retry once after a short wait
+                setTimeout(function () {
+                  if (phrase && !isProcessing && !listeningPaused) {
+                    _lockProcessing();
+                    _processVoiceCommand(phrase);
+                  }
+                }, 500);
+                return;
               }
+              _lockProcessing();
+              _processVoiceCommand(phrase);
             }, 650);
             return;
           }
 
           // ── "Bye Alkra" — close chatbot (or no-op if already closed) ──
           if (/\b(bye|goodbye)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
-            if (isOpen) { isProcessing = true; window.alkraClose(); setTimeout(function () { isProcessing = false; }, 500); }
+            if (isOpen) { _lockProcessing(); window.alkraClose(); setTimeout(_unlockProcessing, 500); }
             break; // never open chatbot for a farewell
           }
 
           // ── "Work silently" — hide UI, keep listening & executing ──
           if (/\bwork\s+silently\b|\bsilent\s+mode\b|\bdo\s+the\s+work\s+silently\b|\bwork\s+in\s+background\b/i.test(tl)) {
-            isProcessing = true;
+            _lockProcessing();
             window.alkraHide();
-            setTimeout(function () { isProcessing = false; }, 600);
+            setTimeout(_unlockProcessing, 600);
             break;
           }
           // ── "Show me your face" — restore UI ──
           if (/\bshow\s+(me\s+)?your\s+face\b|\bshow\s+face\b|\bcome\s+back\b/i.test(tl)) {
-            isProcessing = true;
+            _lockProcessing();
             window.alkraShow();
             if (!isOpen) openChat();
-            setTimeout(function () { isProcessing = false; }, 600);
+            setTimeout(_unlockProcessing, 600);
             break;
           }
 
           // ── HIDE / SHOW commands (work even when panel is hidden) ──
           if (/\b(hide|dismiss|vanish)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
-            isProcessing = true;
+            _lockProcessing();
             window.alkraHide();
-            setTimeout(function () { isProcessing = false; }, 600);
+            setTimeout(_unlockProcessing, 600);
             break;
           }
           if (/\b(show|display|reveal|open)\b/.test(tl) && /\b(alkra|elcra|alcra|alka)\b/.test(tl)) {
-            isProcessing = true;
+            _lockProcessing();
             window.alkraShow();
-            setTimeout(function () { isProcessing = false; }, 600);
+            setTimeout(_unlockProcessing, 600);
             break;
           }
 
@@ -886,12 +958,12 @@
 
           if (postWords.length > 0 && isFinal) {
             // "Alkra open Kumar" — compound command on final result
-            isProcessing = true;
+            _lockProcessing();
             _wakeWithCommand(postWords.join(' '));
             break;
           } else if (postWords.length === 0) {
             // "Alkra" or "Hi Alkra" alone — wake immediately even on interim
-            isProcessing = true;
+            _lockProcessing();
             wakeWordDetected();
             break;
           }
@@ -913,13 +985,16 @@
       wakeRec.onend = function () {
         var fab = document.getElementById('alkraBtn');
         if (fab) fab.classList.remove('wake-on');
-        if (wakeActive && !listeningPaused) setTimeout(_rebuildWakeRec, 300);
+        // Always restart — do NOT gate on listeningPaused here.
+        // onresult already ignores results when listeningPaused; if we skip restart
+        // here, Chrome killing the recogniser after ~60 s of quiet leaves us deaf forever.
+        if (wakeActive) setTimeout(_rebuildWakeRec, 300);
       };
       wakeRec.onerror = function (ev) {
         var fab = document.getElementById('alkraBtn');
         if (fab) fab.classList.remove('wake-on');
         if (ev.error === 'not-allowed') { wakeActive = false; return; }
-        if (wakeActive && !listeningPaused) setTimeout(_rebuildWakeRec, 1000);
+        if (wakeActive) setTimeout(_rebuildWakeRec, 1000);
       };
       wakeRec.start();
     } catch (e) { wakeActive = false; }
@@ -997,34 +1072,34 @@
     // "Alkra work silently" / "Alkra do the work silently"
     if (/work\s+silently|silent\s+mode|do\s+the\s+work\s+silently|work\s+in\s+background/i.test(t)) {
       window.alkraHide();
-      setTimeout(function () { isProcessing = false; }, 600);
+      setTimeout(_unlockProcessing, 600);
       return;
     }
     // "Alkra show me your face" / "Alkra come back"
     if (/show\s+(me\s+)?your\s+face|show\s+face|come\s+back/i.test(t)) {
       window.alkraShow();
       if (!isOpen) openChat();
-      setTimeout(function () { isProcessing = false; }, 600);
+      setTimeout(_unlockProcessing, 600);
       return;
     }
     // "Alkra hide" — hide chatbot, voice keeps listening
     if (/^hide\b|^dismiss\b|^vanish\b/.test(t)) {
       window.alkraHide();
-      setTimeout(function () { isProcessing = false; }, 600);
+      setTimeout(_unlockProcessing, 600);
       return;
     }
     // "Alkra show" — restore chatbot
     if (/^show\b|^display\b|^reveal\b/.test(t)) {
       window.alkraShow();
       if (!isOpen) openChat();
-      setTimeout(function () { isProcessing = false; }, 600);
+      setTimeout(_unlockProcessing, 600);
       return;
     }
 
     // "close the chatbot" — explicit close
     if (/close.*chat(bot)?|chatbot.*close|chat.*close/i.test(t)) {
       if (isOpen) window.alkraClose();
-      setTimeout(function () { isProcessing = false; }, 500);
+      setTimeout(_unlockProcessing, 500);
       return;
     }
 
@@ -1041,18 +1116,18 @@
         var wCBt = document.getElementById('wheelClose');
         if (wCBt) wCBt.click();
         else { var wOvT = document.getElementById('wheelOverlay'); if (wOvT) wOvT.classList.remove('open'); }
-        setTimeout(function () { isProcessing = false; }, 800);
+        setTimeout(_unlockProcessing, 800);
         return;
       }
       // "Close [segment name]" → close only the segment popup, not the whole wheel
       if (/\bclose\b/i.test(t)) {
         document.querySelectorAll('.sdp-popup-bg').forEach(function (bg) { bg.remove(); });
-        setTimeout(function () { isProcessing = false; }, 800);
+        setTimeout(_unlockProcessing, 800);
         return;
       }
       // "Open [segment]" → open that segment
       _processWheelCommand(t);
-      setTimeout(function () { isProcessing = false; }, 800);
+      setTimeout(_unlockProcessing, 800);
       return;
     }
     if (popupOpen) {
@@ -1062,7 +1137,7 @@
         if (!isOpen) openChat();
         _processVoiceCommand(command); // clears isProcessing inside
       } else {
-        setTimeout(function () { isProcessing = false; }, 800);
+        setTimeout(_unlockProcessing, 800);
       }
       return;
     }
@@ -1082,7 +1157,7 @@
     );
     setSt('Listening…');
     // wakeRec (always-on) picks up the next command automatically
-    setTimeout(function () { isProcessing = false; }, 400);
+    setTimeout(_unlockProcessing, 400);
   }
 
   // ── Voice command: one-shot, auto-process, auto-close ─────────
@@ -1216,9 +1291,9 @@
             (wOv && wOv.style.display !== 'none') || sdpBg) {
           showTyping(function () {
             dispatchAction({ type: 'closePopup', params: {} });
-            addMsg('bot', '&#9989; Popup closed.<br><small style="color:#6b7280">Listening…</small>');
+            addMsg('bot', '&#9989; Popup closed.<br><small style="color:#7dd3fc">Listening…</small>');
             setSt('Listening…');
-            setTimeout(function () { isProcessing = false; }, 600);
+            setTimeout(_unlockProcessing, 600);
           });
           return;
         }
@@ -1234,17 +1309,16 @@
         if (intents) {
           intents.forEach(function (intent) { dispatchAction(intent); });
           var lines = intents.map(function (i) { return '&#9989; ' + esc(describeIntent(i)); }).join('<br>');
-          addMsg('bot', lines + '<br><small style="color:#6b7280">Done! Listening…</small>');
+          addMsg('bot', lines + '<br><small style="color:#7dd3fc">Done! Listening…</small>');
           setSt('Listening…');
-          // wakeRec (always-on) resumes listening automatically
-          setTimeout(function () { isProcessing = false; }, 800);
+          setTimeout(_unlockProcessing, 800);
         } else {
           addMsg('bot',
-            'I didn\'t catch that. &#129300;<br>' +
-            '<small style="color:#6b7280">Speak in English, or press &#127908; for Telugu.</small>'
+            '&#129300; Didn\'t catch that.<br>' +
+            '<small style="color:#7dd3fc">Speak in English or Telugu — both work!</small>'
           );
           setSt('Listening…');
-          setTimeout(function () { isProcessing = false; }, 1000);
+          setTimeout(_unlockProcessing, 1000);
         }
       });
     });
@@ -1297,6 +1371,7 @@
         '<div>' +
           '<div class="alkra-name">Alkra</div>' +
           '<div class="alkra-st" id="alkraSt">Filter Assistant</div>' +
+          '<span class="alkra-lang-badge" id="alkraLangBadge">EN</span>' +
         '</div>' +
       '</div>' +
       '<div class="alkra-hdr-actions">' +
@@ -1346,11 +1421,12 @@
         setSt('Typing… (voice paused)');
       }
     });
-    // Resume when input loses focus without submitting
+    // Resume when input loses focus — always reset, even if input still has text.
+    // Keeping listeningPaused=true after blur stops wakeRec from restarting indefinitely.
     input.addEventListener('blur', function () {
-      if (listeningPaused && !input.value.trim()) {
+      if (listeningPaused) {
         listeningPaused = false;
-        isProcessing = false;
+        _unlockProcessing();
         setSt('Listening…');
       }
     });
@@ -1522,20 +1598,20 @@
   function openChat() {
     if (isOpen) return;
     isOpen = true;
-    // wakeRec keeps running — it switches to command mode when isOpen=true
     var panel = document.getElementById('alkraPanel');
     if (panel) panel.classList.add('open');
     var fab = document.getElementById('alkraBtn');
     if (fab) fab.classList.add('open');
     setSt('Listening…');
-    // Don't auto-focus input — chatbot is voice-first; click input to type
+    // wakeRec stays on en-IN — Telugu commands are translated via Google Translate API
   }
 
   window.alkraClose = function () {
     isOpen = false;
     isProcessing = false;
     listeningPaused = false;
-    clearTimeout(_cmdTimer); _cmdBuffer = ''; // discard any partial phrase
+    clearTimeout(_cmdTimer); _cmdBuffer = ''; // discard partial phrase
+    _unlockProcessing();
     // Stop any in-progress manual mic or speech
     if (micActive && micRec) { try { micRec.abort(); } catch (e) {} micRec = null; micActive = false; }
     if (SS) SS.cancel();
@@ -1544,8 +1620,7 @@
     var fab = document.getElementById('alkraBtn');
     if (fab) fab.classList.remove('open', 'listening');
     setSt('Filter Assistant');
-    // wakeRec is always-on — if it somehow stopped, restart it
-    if (!wakeActive) setTimeout(startWakeListener, 400);
+    // wakeRec was never switched off en-IN, so no language reset needed
   };
 
   window.alkraToggle = function () { isOpen ? window.alkraClose() : openChat(); };
@@ -1587,6 +1662,12 @@
     buildUI();
     // Start always-on listener immediately — prompts mic permission on first load
     setTimeout(startWakeListener, 600);
+    // Health check every 5 s: if wakeRec should be running but isn't, revive it.
+    // Chrome can silently kill the continuous recogniser (tab hidden, network blip, etc.)
+    // and the onend handler may have been blocked from restarting by a stale state.
+    setInterval(function () {
+      if (wakeActive && !wakeRec) _rebuildWakeRec();
+    }, 5000);
   }
 
   if (document.readyState === 'loading') {
