@@ -93,6 +93,26 @@
     .btn-ghost    { background: #e5e7eb; color: #374151; }
     .btn-sm { padding: 4px 11px; font-size: 12px; }
 
+    /* ── Searchable select for mapping tab ── */
+    .map-sel-wrap { position:relative; width:100%; }
+    .map-sel-input { width:100%; padding:6px 8px; border:1.5px solid #c7d2fe; border-radius:6px; font-size:12.5px; background:white; outline:none; box-sizing:border-box; color:#1e1b4b; }
+    .map-sel-input:focus { border-color:#4338ca; box-shadow:0 0 0 3px rgba(67,56,202,0.1); }
+    .map-sel-drop { position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:white; border:1.5px solid #4338ca; border-top:none; border-radius:0 0 8px 8px; z-index:500; display:none; box-shadow:0 8px 24px rgba(67,56,202,0.15); }
+    .map-sel-drop.open { display:block; }
+    .map-sel-opt { padding:7px 10px; font-size:12.5px; cursor:pointer; color:#1e1b4b; border-bottom:1px solid #f1f5f9; }
+    .map-sel-opt:last-child { border-bottom:none; }
+    .map-sel-opt:hover { background:#eef0fb; color:#4338ca; }
+    .map-sel-opt.selected { background:#e0e7ff; font-weight:700; color:#3730a3; }
+    /* Status radio group */
+    .map-status-group { display:flex; flex-direction:column; gap:5px; }
+    .map-status-label { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; padding:4px 7px; border-radius:6px; border:1.5px solid #e5e7eb; transition:background 0.15s,border-color 0.15s; }
+    .map-status-label:hover { background:#f1f5f9; }
+    .map-status-label.sec-active  { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; }
+    .map-status-label.hod-active  { background:#f0fdf4; border-color:#22c55e; color:#166534; }
+    /* Locked HoD input */
+    .map-sel-input.locked { background:#eff6ff !important; color:#6366f1 !important; font-style:italic; cursor:not-allowed; }
+    .map-sel-input.locked::placeholder { color:#93c5fd; }
+
     /* ---- Data Table ---- */
     .data-table-wrap { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
@@ -280,6 +300,7 @@
   <button class="tab-btn" onclick="showTab('data',this)">&#128196; Data Management</button>
   <button class="tab-btn" onclick="showTab('users',this)">&#128101; Users</button>
   <button class="tab-btn" onclick="showTab('control',this)">&#9881; Module Control</button>
+  <button class="tab-btn" onclick="showTab('mapping',this)">&#128506; Officer Posts &mdash; Dept Mapping</button>
 </div>
 
 <div class="content">
@@ -650,6 +671,69 @@
 
   </div><!-- #tab-control -->
 
+  <!-- ============================================================
+       TAB 5: Officer Posts — Dept & HoD Mapping
+       ============================================================ -->
+  <div class="tab-panel" id="tab-mapping">
+
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128506; Officer Posts &mdash; Department &amp; HoD Mapping</h3>
+        <div class="toolbar">
+          <select id="mapSvcFilter" onchange="loadDeptMapping()">
+            <option value="IAS">IAS</option>
+            <option value="IPS">IPS</option>
+            <option value="IFS">IFS</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#374151;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="mapShowUnmapped" checked onchange="renderDeptMapping()"> Unmapped only
+          </label>
+          <input type="text" id="mapSearch" placeholder="Search officer / post…"
+                 oninput="renderDeptMapping()" style="width:180px;">
+          <button class="btn btn-ghost btn-sm" onclick="loadDeptMapping()">&#8635; Refresh</button>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div id="mapProgressWrap" style="padding:14px 20px;background:linear-gradient(135deg,#f5f3ff,#eef0fb);border-bottom:1px solid #e0e7ff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+          <span style="font-size:14px;font-weight:800;color:#1e1b4b;" id="mapProgressLabel">Loading…</span>
+          <span style="font-size:12px;color:#64748b;font-weight:600;" id="mapProgressStat"></span>
+        </div>
+        <div style="height:12px;background:#e0e7ff;border-radius:6px;overflow:hidden;">
+          <div id="mapProgressBar"
+               style="height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:6px;
+                      transition:width 0.6s ease;width:0%;"></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="data-table-wrap">
+        <table class="data-table" id="mapTable">
+          <thead>
+            <tr>
+              <th style="width:42px;">#</th>
+              <th style="min-width:190px;">Officer</th>
+              <th style="min-width:190px;">Post Name</th>
+              <th style="width:130px;">Status</th>
+              <th style="min-width:200px;">Department</th>
+              <th style="min-width:200px;">HoD</th>
+              <th style="width:80px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="mapTbody">
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;">
+              Select a service type and click Refresh to begin mapping.
+            </td></tr>
+            <!-- placeholder uses 6 cols now -->
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="mapPagination"></div>
+    </div>
+
+  </div><!-- #tab-mapping -->
+
 </div><!-- .content -->
 
 <!-- ============================================================
@@ -1017,6 +1101,7 @@ function showTab(name, btn) {
   if (name === 'data')    { loadOfficers(); loadPostTypeAdmin(); }
   if (name === 'users')   { loadResetRequests(); loadUsers(); }
   if (name === 'control') loadModuleControl();
+  if (name === 'mapping') loadDeptMapping();
 }
 
 // ================================================================
@@ -2535,15 +2620,42 @@ async function _fetchAllRows(tableName) {
 // ================================================================
 
 const MC_MODULES = [
-  { name: 'self_appraisal', label: 'Self Appraisal (Officers)',  table: 'self_appraisal',  icon: '📝' },
-  { name: 'eoffice',        label: 'E-Office Performance',       table: 'eoffice_data',    icon: '🖥' },
-  { name: 'goifunds',       label: 'GoI Funds Utilisation',      table: 'goifunds_data',   icon: '💰' },
-  { name: 'perception',     label: 'Perception Score',           table: 'perception_data', icon: '🔭' },
-  { name: 'integrity',      label: 'Integrity Index',            table: 'integrity_data',  icon: '🔍' },
-  { name: 'party',          label: 'Party Feedback',             table: 'party_data',      icon: '🎭' },
-  { name: 'media',          label: 'Media Feedback',             table: 'media_data',      icon: '📰' },
-  { name: 'swarna',         label: 'Swarna AP KPI',             table: 'swarna_data',     icon: '⭐' },
-  { name: 'gsdp',           label: 'GSDP Contribution',         table: 'gsdp_data',       icon: '📊' }
+  // Each module is split into 3 per-service rows. groupStart emits a visual section header.
+  { name: 'self_appraisal_IAS', label: 'Self Appraisal — IAS', table: 'self_appraisal',  icon: '📝', svc: 'IAS', groupStart: '📝 Self Appraisal (Officers)' },
+  { name: 'self_appraisal_IPS', label: 'Self Appraisal — IPS', table: 'self_appraisal',  icon: '📝', svc: 'IPS' },
+  { name: 'self_appraisal_IFS', label: 'Self Appraisal — IFS', table: 'self_appraisal',  icon: '📝', svc: 'IFS' },
+
+  { name: 'eoffice_IAS',        label: 'E-Office — IAS',        table: 'eoffice_data',    icon: '🖥', svc: 'IAS', groupStart: '🖥 E-Office Performance' },
+  { name: 'eoffice_IPS',        label: 'E-Office — IPS',        table: 'eoffice_data',    icon: '🖥', svc: 'IPS' },
+  { name: 'eoffice_IFS',        label: 'E-Office — IFS',        table: 'eoffice_data',    icon: '🖥', svc: 'IFS' },
+
+  { name: 'goifunds_IAS',       label: 'GoI Funds — IAS',       table: 'goifunds_data',   icon: '💰', svc: 'IAS', groupStart: '💰 GoI Funds Utilisation' },
+  { name: 'goifunds_IPS',       label: 'GoI Funds — IPS',       table: 'goifunds_data',   icon: '💰', svc: 'IPS' },
+  { name: 'goifunds_IFS',       label: 'GoI Funds — IFS',       table: 'goifunds_data',   icon: '💰', svc: 'IFS' },
+
+  { name: 'perception_IAS',     label: 'Perception — IAS',      table: 'perception_data', icon: '🔭', svc: 'IAS', groupStart: '🔭 Perception Score' },
+  { name: 'perception_IPS',     label: 'Perception — IPS',      table: 'perception_data', icon: '🔭', svc: 'IPS' },
+  { name: 'perception_IFS',     label: 'Perception — IFS',      table: 'perception_data', icon: '🔭', svc: 'IFS' },
+
+  { name: 'integrity_IAS',      label: 'Integrity — IAS',       table: 'integrity_data',  icon: '🔍', svc: 'IAS', groupStart: '🔍 Integrity Index' },
+  { name: 'integrity_IPS',      label: 'Integrity — IPS',       table: 'integrity_data',  icon: '🔍', svc: 'IPS' },
+  { name: 'integrity_IFS',      label: 'Integrity — IFS',       table: 'integrity_data',  icon: '🔍', svc: 'IFS' },
+
+  { name: 'party_IAS',          label: 'Party Feedback — IAS',  table: 'party_data',      icon: '🎭', svc: 'IAS', groupStart: '🎭 Party Feedback' },
+  { name: 'party_IPS',          label: 'Party Feedback — IPS',  table: 'party_data',      icon: '🎭', svc: 'IPS' },
+  { name: 'party_IFS',          label: 'Party Feedback — IFS',  table: 'party_data',      icon: '🎭', svc: 'IFS' },
+
+  { name: 'media_IAS',          label: 'Media Feedback — IAS',  table: 'media_data',      icon: '📰', svc: 'IAS', groupStart: '📰 Media Feedback' },
+  { name: 'media_IPS',          label: 'Media Feedback — IPS',  table: 'media_data',      icon: '📰', svc: 'IPS' },
+  { name: 'media_IFS',          label: 'Media Feedback — IFS',  table: 'media_data',      icon: '📰', svc: 'IFS' },
+
+  { name: 'swarna_IAS',         label: 'Swarna AP KPI — IAS',   table: 'swarna_data',     icon: '⭐', svc: 'IAS', groupStart: '⭐ Swarna AP KPI' },
+  { name: 'swarna_IPS',         label: 'Swarna AP KPI — IPS',   table: 'swarna_data',     icon: '⭐', svc: 'IPS' },
+  { name: 'swarna_IFS',         label: 'Swarna AP KPI — IFS',   table: 'swarna_data',     icon: '⭐', svc: 'IFS' },
+
+  { name: 'gsdp_IAS',           label: 'GSDP Contribution — IAS', table: 'gsdp_data',     icon: '📊', svc: 'IAS', groupStart: '📊 GSDP Contribution' },
+  { name: 'gsdp_IPS',           label: 'GSDP Contribution — IPS', table: 'gsdp_data',     icon: '📊', svc: 'IPS' },
+  { name: 'gsdp_IFS',           label: 'GSDP Contribution — IFS', table: 'gsdp_data',     icon: '📊', svc: 'IFS' },
 ];
 
 let _mcData = []; // cached module_control rows
@@ -2578,6 +2690,17 @@ function renderControlTable(rows) {
     '</tr></thead><tbody>';
 
   MC_MODULES.forEach(mod => {
+    // Emit a group-header row before the first sub-row of a group
+    if (mod.groupStart) {
+      html +=
+        '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+          '<td colspan="6" style="padding:8px 14px;font-size:12px;font-weight:800;color:#3730a3;' +
+                                 'letter-spacing:0.5px;text-transform:uppercase;border-top:2px solid #c7d2fe;">' +
+            mod.groupStart +
+          '</td>' +
+        '</tr>';
+    }
+
     const row = rows.find(r => r.module_name === mod.name) || {};
     const isPaused   = !!row.is_paused;
     const hasDeadline = !!row.deadline;
@@ -2587,10 +2710,12 @@ function renderControlTable(rows) {
       : '<span style="background:#dcfce7;color:#14532d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ Open</span>';
 
     const deadlineVal = row.deadline ? new Date(row.deadline).toISOString().slice(0,16) : '';
+    const subRowStyle = mod.svc ? 'background:#fafbff;' : '';
+    const labelPad    = mod.svc ? 'padding-left:24px;' : '';
 
     html +=
-      '<tr id="mc-row-' + mod.name + '">' +
-        '<td><strong>' + mod.icon + ' ' + esc(mod.label) + '</strong></td>' +
+      '<tr id="mc-row-' + mod.name + '" style="' + subRowStyle + '">' +
+        '<td style="' + labelPad + '"><strong>' + mod.icon + ' ' + esc(mod.label) + '</strong></td>' +
         '<td>' +
           '<input type="datetime-local" id="mc-dl-' + mod.name + '" value="' + deadlineVal + '" ' +
                  'style="width:100%;padding:6px 8px;border:1.5px solid #c7d2fe;border-radius:7px;font-size:12px;">' +
@@ -2693,9 +2818,9 @@ async function renderReports() {
     // Fetch all rows (service_type, identity_no, entered_at) from each module table in parallel
     const results = await Promise.all(MC_MODULES.map(async mod => {
       try {
-        const { data, error } = await _supabase
-          .from(mod.table)
-          .select('service_type, identity_no, entered_at');
+        let q = _supabase.from(mod.table).select('service_type, identity_no, entered_at');
+        if (mod.svc) q = q.eq('service_type', mod.svc); // per-service modules: filter at DB level
+        const { data, error } = await q;
         if (error) throw error;
         const rows = data || [];
 
@@ -2751,10 +2876,11 @@ async function renderReports() {
             : daysLeft + ' day' + (Math.abs(daysLeft) === 1 ? '' : 's') + ' remaining · closes ' + fmtDate(row.deadline))
         : '📅 No deadline set';
 
-      // Per-service breakdown rows
+      // Per-service breakdown rows (for per-service modules show only that service)
+      const svcsToShow = mod.svc ? [mod.svc] : ['IAS','IPS','IFS'];
       const svcRows = error
         ? '<td colspan="5" style="color:#dc2626;font-size:12px;">⚠ ' + esc(error) + '</td>'
-        : ['IAS','IPS','IFS'].map(svc => {
+        : svcsToShow.map(svc => {
             const d   = svcData[svc];
             const off = d.officers.size;
             const rec = d.records;
@@ -2910,6 +3036,364 @@ async function csvUpload() {
     },
     'danger'
   );
+}
+
+// ================================================================
+// Officer Posts — Department & HoD Mapping
+// ================================================================
+let _mapData     = [];      // officer_post_dates rows (head offices only)
+let _mapOfficers = {};      // identity_no → name
+let _deptHodData = [];      // all department_hod rows
+let _mapPage     = 1;
+let _mapPageRows = {};      // idx → unique row object for current page render
+const MAP_PAGE_SIZE = 30;
+
+async function loadDeptMapping() {
+  const svc   = document.getElementById('mapSvcFilter').value;
+  const tbody = document.getElementById('mapTbody');
+  if (tbody) tbody.innerHTML =
+    '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6366f1;">&#8987; Loading…</td></tr>';
+  updateMapProgress(0, 0);
+
+  try {
+    const [pdRes, ofrRes, deptRes] = await Promise.all([
+      _supabase.from('officer_post_dates')
+        .select('id,identity_no,post_name,office_type,department,hod,office_status')
+        .ilike('office_type', '%head%office%')
+        .order('identity_no').order('post_name'),
+      _supabase.from('officers')
+        .select('identity_no,name_of_officer')
+        .eq('service_type', svc)
+        .eq('is_retired', false)
+        .eq('is_transferred_from_ap', false),
+      _supabase.from('department_hod')
+        .select('department,hod')
+        .order('department').order('hod')
+    ]);
+
+    if (pdRes.error)   throw pdRes.error;
+    if (ofrRes.error)  throw ofrRes.error;
+    if (deptRes.error) throw deptRes.error;
+
+    _mapOfficers = {};
+    (ofrRes.data || []).forEach(o => { _mapOfficers[o.identity_no] = o.name_of_officer || o.identity_no; });
+    _deptHodData = deptRes.data || [];
+
+    const svcIds = new Set(Object.keys(_mapOfficers));
+    _mapData = (pdRes.data || []).filter(r => svcIds.has(r.identity_no));
+
+    _mapPage = 1;
+    renderDeptMapping();
+  } catch(err) {
+    if (tbody) tbody.innerHTML =
+      `<tr><td colspan="7" style="color:#dc2626;text-align:center;padding:20px;">&#10060; ${esc(err.message)}</td></tr>`;
+    showToast('Error loading mapping data: ' + err.message, true);
+  }
+}
+
+function updateMapProgress(mapped, total) {
+  const pct  = total > 0 ? Math.round(mapped / total * 100) : 0;
+  const bar  = document.getElementById('mapProgressBar');
+  const lbl  = document.getElementById('mapProgressLabel');
+  const stat = document.getElementById('mapProgressStat');
+  if (bar)  bar.style.width = pct + '%';
+  if (lbl)  lbl.textContent = `${mapped} of ${total} posts mapped (${pct}%)`;
+  if (stat) stat.textContent = `Unmapped: ${total - mapped}  |  Mapped: ${mapped}`;
+  if (bar)  bar.style.background =
+    pct >= 80 ? 'linear-gradient(90deg,#059669,#34d399)' :
+    pct >= 40 ? 'linear-gradient(90deg,#d97706,#fbbf24)' :
+                'linear-gradient(90deg,#dc2626,#f87171)';
+}
+
+function renderDeptMapping() {
+  const search       = (document.getElementById('mapSearch')?.value || '').trim().toLowerCase();
+  const unmappedOnly = document.getElementById('mapShowUnmapped')?.checked;
+
+  // ── Deduplicate by (identity_no, post_name) ──────────────────────
+  const seenKeys = new Set();
+  const uniqueData = [];
+  _mapData.forEach(r => {
+    const key = r.identity_no + '||' + r.post_name;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      uniqueData.push(Object.assign({}, r)); // clone
+    } else {
+      // Merge: keep dept/hod if already set on first-seen entry
+      const ex = uniqueData.find(x => x.identity_no === r.identity_no && x.post_name === r.post_name);
+      if (ex) {
+        if (!ex.department    && r.department)    ex.department    = r.department;
+        if (!ex.hod           && r.hod)           ex.hod           = r.hod;
+        if (!ex.office_status && r.office_status) ex.office_status = r.office_status;
+      }
+    }
+  });
+
+  // Overall progress from unique combos
+  const mappedAll = uniqueData.filter(r => !!(r.department || r.hod)).length;
+  updateMapProgress(mappedAll, uniqueData.length);
+
+  // Sort: unmapped first, mapped to bottom
+  let rows = uniqueData.sort((a, b) => {
+    const aM = !!(a.department || a.hod), bM = !!(b.department || b.hod);
+    return aM !== bM ? (aM ? 1 : -1) : 0;
+  });
+
+  if (unmappedOnly) rows = rows.filter(r => !(r.department || r.hod));
+  if (search)       rows = rows.filter(r =>
+    (_mapOfficers[r.identity_no] || '').toLowerCase().includes(search) ||
+    (r.post_name || '').toLowerCase().includes(search)
+  );
+
+  const total    = rows.length;
+  const start    = (_mapPage - 1) * MAP_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + MAP_PAGE_SIZE);
+
+  // Store page rows for save lookup
+  _mapPageRows = {};
+  pageRows.forEach((r, i) => { _mapPageRows[start + i] = r; });
+
+  const tbody = document.getElementById('mapTbody');
+  if (!total) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:#64748b;">
+      ${unmappedOnly ? '&#10003; All posts have been mapped!' : 'No posts found.'}</td></tr>`;
+    renderMapPagination(0); return;
+  }
+
+  tbody.innerHTML = pageRows.map((r, i) => {
+    const idx      = start + i;
+    const isMapped = !!(r.department || r.hod);
+    const status   = r.office_status || '';
+    const secChk   = status === 'Secretariat' ? 'checked' : '';
+    const hodChk   = status === 'HoD'         ? 'checked' : '';
+    return `<tr id="map-row-${idx}" style="${isMapped ? 'background:#f0fdf4;opacity:0.72;' : ''}">
+      <td style="text-align:center;color:#94a3b8;font-size:12px;">${idx + 1}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px;">${esc(_mapOfficers[r.identity_no] || r.identity_no)}</div>
+        <div style="font-size:11px;color:#6366f1;margin-top:2px;">${esc(r.identity_no)}</div>
+      </td>
+      <td style="font-size:12px;font-weight:600;word-break:break-word;">
+        ${esc(r.post_name || '')}
+        ${r.office_type ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">${esc(r.office_type)}</div>` : ''}
+      </td>
+      <td>
+        <div class="map-status-group">
+          <label class="map-status-label ${status === 'Secretariat' ? 'sec-active' : ''}" id="lbl-sec-${idx}">
+            <input type="radio" name="status-${idx}" value="Secretariat" ${secChk}
+              onchange="onMapStatusChange(${idx},'Secretariat')"> Secretariat
+          </label>
+          <label class="map-status-label ${status === 'HoD' ? 'hod-active' : ''}" id="lbl-hod-${idx}">
+            <input type="radio" name="status-${idx}" value="HoD" ${hodChk}
+              onchange="onMapStatusChange(${idx},'HoD')"> HoD
+          </label>
+        </div>
+      </td>
+      <td>${buildMapSearchSel('dept', idx, r.department || '')}</td>
+      <td>${buildMapSearchSel('hod',  idx, r.hod        || '')}</td>
+      <td><button class="btn btn-success btn-sm" onclick="saveDeptMapping(${idx})">&#10003; Save</button></td>
+    </tr>`;
+  }).join('');
+
+  // Apply Secretariat lock for rows that already have it selected
+  pageRows.forEach((r, i) => {
+    if (r.office_status === 'Secretariat') applyMapHodLock(start + i, true);
+  });
+
+  renderMapPagination(total);
+}
+
+// ── Status radio: Secretariat locks HoD, mirrors Department ───────
+function onMapStatusChange(idx, status) {
+  // Toggle active classes on labels
+  const secLbl = document.getElementById(`lbl-sec-${idx}`);
+  const hodLbl = document.getElementById(`lbl-hod-${idx}`);
+  if (secLbl) secLbl.classList.toggle('sec-active', status === 'Secretariat');
+  if (hodLbl) hodLbl.classList.toggle('hod-active', status === 'HoD');
+
+  if (status === 'Secretariat') {
+    applyMapHodLock(idx, true);
+    // Mirror current Department text into HoD
+    mirrorDeptToHod(idx);
+  } else {
+    applyMapHodLock(idx, false);
+  }
+}
+
+function applyMapHodLock(idx, locked) {
+  const hodInput = document.getElementById(`input-hod-${idx}`);
+  if (!hodInput) return;
+  if (locked) {
+    hodInput.classList.add('locked');
+    hodInput.readOnly = true;
+    hodInput.placeholder = 'Auto-filled from Department';
+  } else {
+    hodInput.classList.remove('locked');
+    hodInput.readOnly = false;
+    hodInput.placeholder = 'Search HoD…';
+  }
+}
+
+function mirrorDeptToHod(idx) {
+  const dept   = document.getElementById(`map-dept-${idx}`)?.value || '';
+  const hHidden = document.getElementById(`map-hod-${idx}`);
+  const hInput  = document.getElementById(`input-hod-${idx}`);
+  if (hHidden) hHidden.value = dept;
+  if (hInput)  hInput.value  = dept;
+}
+
+// ── Searchable select component ───────────────────────────────────
+function buildMapSearchSel(type, idx, currentVal) {
+  return `<div class="map-sel-wrap">
+    <input type="text" id="input-${type}-${idx}" class="map-sel-input"
+      placeholder="Search ${type === 'dept' ? 'Department' : 'HoD'}…"
+      value="${esc(currentVal)}"
+      autocomplete="off"
+      oninput="refreshMapDrop('${type}',${idx},this.value)"
+      onfocus="openMapDrop('${type}',${idx},this.value)"
+      onblur="closeMapDrop('${type}',${idx})">
+    <input type="hidden" id="map-${type}-${idx}" value="${esc(currentVal)}">
+    <div class="map-sel-drop" id="drop-${type}-${idx}"></div>
+  </div>`;
+}
+
+function openMapDrop(type, idx, query) {
+  refreshMapDrop(type, idx, query || '');
+  const drop = document.getElementById(`drop-${type}-${idx}`);
+  if (drop) drop.classList.add('open');
+}
+
+function closeMapDrop(type, idx) {
+  setTimeout(function() {
+    const drop = document.getElementById(`drop-${type}-${idx}`);
+    if (drop) drop.classList.remove('open');
+    // If typed text doesn't match the hidden value, restore it
+    const hidden = document.getElementById(`map-${type}-${idx}`);
+    const input  = document.getElementById(`input-${type}-${idx}`);
+    if (hidden && input && input.value !== hidden.value) input.value = hidden.value;
+  }, 200);
+}
+
+function refreshMapDrop(type, idx, query) {
+  const drop    = document.getElementById(`drop-${type}-${idx}`);
+  if (!drop) return;
+  drop.classList.add('open');
+
+  const curVal  = document.getElementById(`map-${type}-${idx}`)?.value || '';
+  const q       = (query || '').toLowerCase().trim();
+
+  // Get allowed values (respecting linked selection)
+  const linkedDept = document.getElementById(`map-dept-${idx}`)?.value || '';
+  const linkedHod  = document.getElementById(`map-hod-${idx}`)?.value  || '';
+
+  let items;
+  if (type === 'dept') {
+    items = linkedHod
+      ? [...new Set(_deptHodData.filter(r => r.hod === linkedHod).map(r => r.department))].sort()
+      : [...new Set(_deptHodData.map(r => r.department))].sort();
+  } else {
+    items = linkedDept
+      ? [...new Set(_deptHodData.filter(r => r.department === linkedDept).map(r => r.hod))].sort()
+      : [...new Set(_deptHodData.map(r => r.hod))].sort();
+  }
+
+  if (q) items = items.filter(v => v.toLowerCase().includes(q));
+
+  drop.innerHTML = items.length
+    ? items.map(v => `<div class="map-sel-opt${v === curVal ? ' selected' : ''}"
+        data-val="${esc(v)}"
+        onmousedown="selectMapOpt('${type}',${idx},this.dataset.val)">${esc(v)}</div>`).join('')
+    : '<div style="padding:8px 10px;color:#94a3b8;font-size:12px;cursor:default;">No matches</div>';
+}
+
+function selectMapOpt(type, idx, value) {
+  const hidden = document.getElementById(`map-${type}-${idx}`);
+  const input  = document.getElementById(`input-${type}-${idx}`);
+  const drop   = document.getElementById(`drop-${type}-${idx}`);
+  if (hidden) hidden.value = value;
+  if (input)  input.value  = value;
+  if (drop)   drop.classList.remove('open');
+
+  // Secretariat mode: selecting a Department mirrors the SAME text into HoD
+  const isSecretariat = !!document.querySelector(`input[name="status-${idx}"][value="Secretariat"]:checked`);
+  if (isSecretariat && type === 'dept') {
+    mirrorDeptToHod(idx);
+    return;
+  }
+  // In Secretariat mode HoD is locked; ignore direct HoD selections
+  if (isSecretariat && type === 'hod') return;
+
+  // Normal mode — auto-fill the linked dropdown when there is a single match
+  const other   = type === 'dept' ? 'hod' : 'dept';
+  const matches = type === 'dept'
+    ? [...new Set(_deptHodData.filter(r => r.department === value).map(r => r.hod))].sort()
+    : [...new Set(_deptHodData.filter(r => r.hod === value).map(r => r.department))].sort();
+
+  if (matches.length === 1) {
+    const oHidden = document.getElementById(`map-${other}-${idx}`);
+    const oInput  = document.getElementById(`input-${other}-${idx}`);
+    if (oHidden) oHidden.value = matches[0];
+    if (oInput)  oInput.value  = matches[0];
+  }
+  refreshMapDrop(other, idx, '');
+  const oDrop = document.getElementById(`drop-${other}-${idx}`);
+  if (oDrop) oDrop.classList.remove('open');
+}
+
+// ── Save — updates ALL rows with the same (identity_no, post_name) ─
+async function saveDeptMapping(idx) {
+  const r    = _mapPageRows[idx];
+  if (!r) return;
+
+  const status = document.querySelector(`input[name="status-${idx}"]:checked`)?.value || null;
+
+  // Secretariat mode: mirror Department into HoD before reading values
+  if (status === 'Secretariat') mirrorDeptToHod(idx);
+
+  const dept = document.getElementById(`map-dept-${idx}`)?.value || null;
+  const hod  = document.getElementById(`map-hod-${idx}`)?.value  || null;
+
+  if (!status) { showToast('Select a Status (Secretariat or HoD) first.', true); return; }
+  if (!dept && !hod) { showToast('Select at least a Department or HoD before saving.', true); return; }
+
+  const { error } = await _supabase
+    .from('officer_post_dates')
+    .update({ department: dept, hod: hod, office_status: status })
+    .eq('identity_no', r.identity_no)
+    .eq('post_name',   r.post_name)
+    .ilike('office_type', '%head%office%');
+
+  if (error) { showToast('Save failed: ' + error.message, true); return; }
+
+  showToast(`Mapping saved for "${r.post_name}".`);
+
+  // Update all in-memory rows with this combination
+  _mapData.forEach(row => {
+    if (row.identity_no === r.identity_no && row.post_name === r.post_name) {
+      row.department = dept; row.hod = hod; row.office_status = status;
+    }
+  });
+
+  renderDeptMapping();
+}
+
+function renderMapPagination(total) {
+  const pages = Math.ceil(total / MAP_PAGE_SIZE) || 1;
+  const el    = document.getElementById('mapPagination');
+  if (!el) return;
+  let html = `<span class="info">${total} unique posts | Page ${_mapPage} of ${pages}</span>`;
+  if (_mapPage > 1)     html += `<button onclick="_mapPage--;renderDeptMapping()">&#8592; Prev</button>`;
+  const s = Math.max(1, _mapPage - 2), e = Math.min(pages, _mapPage + 2);
+  for (let i = s; i <= e; i++)
+    html += `<button class="${i === _mapPage ? 'active' : ''}" onclick="_mapPage=${i};renderDeptMapping()">${i}</button>`;
+  if (_mapPage < pages) html += `<button onclick="_mapPage++;renderDeptMapping()">Next &#8594;</button>`;
+  el.innerHTML = html;
+}
+
+function fmtMapDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate() + '-' + m[d.getMonth()] + '-' + d.getFullYear();
 }
 </script>
 </body>

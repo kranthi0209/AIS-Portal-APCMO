@@ -211,6 +211,21 @@
     .b360-home:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,70,229,0.55); }
     .b360-home i { width: 14px; height: 14px; }
 
+    /* Live button */
+    .b360-live-btn {
+      height: 30px; padding: 0 13px;
+      background: linear-gradient(135deg, #059669, #065f46);
+      border: none; border-radius: 8px; color: white;
+      font-size: 11.5px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      white-space: nowrap; flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(5,150,105,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    .b360-live-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(5,150,105,0.6); }
+    .b360-live-btn i { width: 14px; height: 14px; }
+
     /* Sort direction toggle button */
     .b360-sortdir {
       height: 28px;
@@ -766,6 +781,73 @@
       #sortSelect360 { min-width: 95px; max-width: 120px; }
       .b360-select { min-width: 70px; max-width: 110px; }
     }
+
+    /* ================================================================
+       DEMO NOTICE MODAL
+    ================================================================ */
+    #demoNotice {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(10, 8, 30, 0.88);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .demo-box {
+      background: linear-gradient(160deg, #0f0c29 0%, #1e1b4b 60%, #312e81 100%);
+      border: 1.5px solid rgba(165, 180, 252, 0.35);
+      border-radius: 24px;
+      width: min(92vw, 480px);
+      padding: 36px 32px 28px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.75), 0 0 0 1px rgba(165,180,252,0.1);
+      text-align: center;
+      animation: demoZoom 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes demoZoom {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .demo-icon {
+      font-size: 48px; line-height: 1; margin-bottom: 14px;
+    }
+    .demo-title {
+      font-size: 20px; font-weight: 900; color: #e0e7ff;
+      letter-spacing: -0.3px; margin-bottom: 8px;
+    }
+    .demo-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1c0a00; font-size: 10px; font-weight: 900;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 20px; margin-bottom: 14px;
+    }
+    .demo-desc {
+      font-size: 13.5px; color: #a5b4fc; line-height: 1.65;
+      margin-bottom: 24px;
+    }
+    .demo-desc strong { color: #e0e7ff; }
+    .demo-actions {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .demo-btn-live {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #059669, #065f46);
+      border: none; border-radius: 12px; color: white;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+      font-family: 'Inter', Arial, sans-serif;
+      box-shadow: 0 4px 18px rgba(5,150,105,0.5);
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .demo-btn-live:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(5,150,105,0.65); }
+    .demo-btn-continue {
+      width: 100%; padding: 11px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(165,180,252,0.28);
+      border-radius: 12px; color: #a5b4fc;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: 'Inter', Arial, sans-serif;
+      transition: background 0.18s, color 0.18s;
+    }
+    .demo-btn-continue:hover { background: rgba(255,255,255,0.13); color: #e0e7ff; }
 
     /* ================================================================
        PHOTO POPUP — override z-index for fullscreen context
@@ -1334,6 +1416,11 @@
     <i data-lucide="rotate-ccw"></i><span class="b360-btnlabel">Reset</span>
   </button>
 
+  <!-- Live Dashboard -->
+  <button class="b360-live-btn" id="liveNavBtn" onclick="navTo('360_live.html?service=' + (new URLSearchParams(location.search).get('service')||'IAS').toUpperCase())">
+    <i data-lucide="radio"></i><span class="b360-btnlabel">Live</span>
+  </button>
+
   <!-- Home -->
   <button class="b360-home" onclick="navTo('landing.html')">
     <i data-lucide="house"></i><span class="b360-btnlabel">Home</span>
@@ -1572,5 +1659,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script src="script_360.js"></script>
 <script src="voice_360.js"></script>
+
+<!-- ================================================================
+     DEMO NOTICE MODAL
+================================================================ -->
+<div id="demoNotice">
+  <div class="demo-box">
+    <div class="demo-icon">&#127917;</div>
+    <div class="demo-title">You are viewing the Demo Page</div>
+    <span class="demo-badge">Demo Data</span>
+    <div class="demo-desc">
+      The 360° scores and performance wheel on this page are generated with
+      <strong>dummy data</strong> for demonstration purposes only.<br><br>
+      Switch to the <strong>Live Data</strong> page to see real e-Office
+      performance scores calculated from actual data.
+    </div>
+    <div class="demo-actions">
+      <button class="demo-btn-live" id="demoGoLiveBtn">
+        &#128161; Switch to Live Data Page
+      </button>
+      <button class="demo-btn-continue" onclick="document.getElementById('demoNotice').style.display='none'">
+        Continue with Demo &rarr;
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  document.getElementById('demoGoLiveBtn').onclick = function () {
+    document.getElementById('demoNotice').style.display = 'none';
+    window.navTo('360_live.html?service=' + svc);
+  };
+  // Close on backdrop click
+  document.getElementById('demoNotice').addEventListener('click', function (e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+})();
+</script>
 </body>
 </html>

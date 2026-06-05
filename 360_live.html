@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIS 360° Live Dashboard</title>
+  <link rel="stylesheet" href="style_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin:0; padding:0; background:#eef0fb; font-family:'Inter',Arial,sans-serif; overflow:hidden; }
+
+    /* ── Top bar ── */
+    #bar360 { position:fixed; top:0; left:0; right:0; min-height:54px; height:auto; background:linear-gradient(135deg,#0f0c29 0%,#1e1b4b 40%,#312e81 70%,#4338ca 100%); display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; padding:7px 14px; z-index:200; box-shadow:0 3px 18px rgba(15,12,41,0.7); border-bottom:1px solid rgba(165,180,252,0.25); }
+    .b360-title { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(165,180,252,0.3); border-radius:22px; padding:3px 10px 3px 6px; white-space:nowrap; flex-shrink:0; }
+    .b360-badge { font-size:9px; font-weight:900; letter-spacing:1.5px; padding:2px 7px; border-radius:12px; text-transform:uppercase; }
+    .b360-badge-live { background:linear-gradient(135deg,#059669,#047857); color:#f0fdf4; }
+    .b360-title-text { font-size:12px; font-weight:700; color:#e0e7ff; letter-spacing:-0.2px; }
+    .b360-svc-group { display:flex; gap:4px; flex-shrink:0; }
+    .b360-svc-btn { height:28px; padding:0 11px; border:1.5px solid rgba(165,180,252,0.35); border-radius:18px; background:transparent; color:#a5b4fc; font-size:11.5px; font-weight:700; cursor:pointer; transition:all 0.18s; font-family:'Inter',Arial,sans-serif; white-space:nowrap; }
+    .b360-svc-btn:hover { background:rgba(255,255,255,0.12); color:white; border-color:rgba(165,180,252,0.6); }
+    .b360-svc-btn.active { background:white; color:#1e1b4b; border-color:white; box-shadow:0 2px 10px rgba(255,255,255,0.28); }
+    .b360-div { width:1px; height:30px; background:rgba(165,180,252,0.25); flex-shrink:0; }
+    .b360-fl { font-size:8.5px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; color:#818cf8; white-space:nowrap; flex-shrink:0; }
+    .b360-select { height:28px; background:rgba(255,255,255,0.09); border:1px solid rgba(165,180,252,0.28); border-radius:6px; color:#e0e7ff; font-size:11.5px; font-weight:600; padding:0 8px; cursor:pointer; outline:none; transition:background 0.2s; min-width:100px; max-width:160px; font-family:'Inter',Arial,sans-serif; }
+    .b360-select:focus { background:rgba(255,255,255,0.16); border-color:rgba(165,180,252,0.6); }
+    .b360-select option { background:#1e1b4b; color:white; }
+    .b360-search { height:28px; background:rgba(255,255,255,0.09); border:1px solid rgba(165,180,252,0.28); border-radius:6px; color:#e0e7ff; font-size:11.5px; padding:0 10px; outline:none; width:145px; transition:background 0.2s,width 0.28s; font-family:'Inter',Arial,sans-serif; }
+    .b360-search::placeholder { color:rgba(165,180,252,0.45); font-size:11px; }
+    .b360-search:focus { background:rgba(255,255,255,0.16); border-color:rgba(165,180,252,0.6); width:175px; }
+    .b360-spacer { flex:1; min-width:4px; }
+    .b360-count { font-size:11px; font-weight:800; color:#e0e7ff; background:rgba(255,255,255,0.1); border:1px solid rgba(165,180,252,0.22); padding:3px 13px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .b360-exit { height:30px; padding:0 13px; background:linear-gradient(135deg,#dc2626,#991b1b); border:none; border-radius:8px; color:white; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; box-shadow:0 2px 10px rgba(220,38,38,0.4); transition:transform 0.15s,box-shadow 0.15s; flex-shrink:0; font-family:'Inter',Arial,sans-serif; }
+    .b360-exit:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(220,38,38,0.55); }
+    .b360-home { height:30px; padding:0 13px; background:linear-gradient(135deg,#4f46e5,#3730a3); border:none; border-radius:8px; color:white; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; box-shadow:0 2px 10px rgba(79,70,229,0.4); transition:transform 0.15s,box-shadow 0.15s; flex-shrink:0; font-family:'Inter',Arial,sans-serif; }
+    .b360-home:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(79,70,229,0.55); }
+    .b360-sortdir { height:28px; padding:0 12px; background:rgba(255,255,255,0.09); border:1px solid rgba(165,180,252,0.35); border-radius:6px; color:#e0e7ff; font-size:11.5px; font-weight:800; cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:'Inter',Arial,sans-serif; transition:background 0.18s,border-color 0.18s; letter-spacing:0.3px; }
+    .b360-sortdir:hover { background:rgba(255,255,255,0.18); border-color:rgba(165,180,252,0.65); }
+    .b360-std-btn { height:30px; padding:0 13px; background:linear-gradient(135deg,#7c3aed,#4c1d95); border:none; border-radius:8px; color:white; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0; box-shadow:0 2px 10px rgba(124,58,237,0.45); transition:transform 0.15s,box-shadow 0.15s; font-family:'Inter',Arial,sans-serif; }
+    .b360-std-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(124,58,237,0.6); }
+    .b360-std-btn i { width:14px; height:14px; }
+    .b360-reset { height:30px; padding:0 13px; background:linear-gradient(135deg,#ca8a04,#713f12); border:none; border-radius:8px; color:white; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; box-shadow:0 2px 10px rgba(202,138,4,0.4); transition:transform 0.15s,box-shadow 0.15s; flex-shrink:0; font-family:'Inter',Arial,sans-serif; }
+    .b360-reset:hover { transform:translateY(-1px); }
+    .b360-weights-btn { height:28px; padding:0 11px; background:linear-gradient(135deg,rgba(99,102,241,0.28),rgba(124,58,237,0.28)); border:1px solid rgba(165,180,252,0.42); border-radius:6px; color:#c4b5fd; font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:'Inter',Arial,sans-serif; transition:background 0.18s,border-color 0.18s; }
+    .b360-weights-btn:hover { background:linear-gradient(135deg,rgba(99,102,241,0.55),rgba(124,58,237,0.55)); border-color:rgba(165,180,252,0.7); color:white; }
+    /* ── Officer card ── */
+    .c360 { background:#fff; border:1px solid #c7d2fe; border-top:3px solid #818cf8; border-radius:8px; overflow:hidden; cursor:pointer; transition:transform 0.16s,box-shadow 0.16s,border-top-color 0.16s; text-align:center; position:relative; }
+    .c360:hover { transform:translateY(-4px) scale(1.04); box-shadow:0 8px 22px rgba(67,56,202,0.28); z-index:2; }
+    .c360 img { width:100%; height:86px; object-fit:cover; object-position:top center; display:block; background:#ede9fe; }
+    .c360-body  { padding:3px 5px 6px; }
+    .c360-sno   { font-size:8px; font-weight:800; color:#a5b4fc; letter-spacing:0.3px; line-height:1.5; }
+    .c360-name  { font-size:9.5px; font-weight:700; color:#1e1b4b; line-height:1.25; word-break:break-word; margin:1px 0; }
+    .c360-batch { font-size:10.5px; font-weight:800; color:#4338ca; letter-spacing:0.2px; }
+    .c360-score { font-size:8.5px; font-weight:800; border-radius:4px; padding:1px 5px; margin-top:2px; letter-spacing:0.1px; }
+
+    /* ── Grid wrap ── */
+    #grid360wrap { position:fixed; top:var(--bar360-h,54px); left:0; right:0; bottom:0; overflow-y:auto; background:#eef0fb; padding:10px; }
+    #grid360 { display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:7px; }
+
+    /* ── Data status strip ── */
+    #liveStatusStrip { background:linear-gradient(135deg,#0f172a,#1e293b); border-radius:12px; padding:10px 16px; margin-bottom:10px; display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; }
+    .ls-title { font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; flex-shrink:0; }
+    .ls-pill { padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+    .ls-live    { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.35); }
+    .ls-pending { background:rgba(100,116,139,0.15); color:#94a3b8; border:1px solid rgba(100,116,139,0.3); }
+
+    /* ── Range strip ── */
+    #rangeStrip { position:sticky; top:0; z-index:10; background:linear-gradient(to bottom,#eef0fb 80%,rgba(238,240,251,0)); border-bottom:1.5px solid #c7d2fe; padding:10px 6px 14px; display:flex; gap:20px; align-items:flex-start; margin:-10px -10px 10px; box-shadow:0 4px 14px rgba(99,102,241,0.1); }
+    .rs-group { flex:1; min-width:0; }
+    .rs-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+    .rs-icon { font-size:10.5px; font-weight:800; color:#3730a3; letter-spacing:0.2px; display:flex; align-items:center; gap:4px; }
+    .rs-val { font-size:11px; font-weight:800; color:#4f46e5; background:#e0e7ff; padding:1px 9px; border-radius:10px; white-space:nowrap; }
+    .rs-track-wrap { position:relative; height:22px; }
+    .rs-track { position:absolute; top:50%; left:0; right:0; height:6px; transform:translateY(-50%); background:#c7d2fe; border-radius:3px; }
+    .rs-fill  { position:absolute; top:0; height:100%; background:linear-gradient(90deg,#4f46e5,#7c3aed); border-radius:3px; }
+    .rs-input { position:absolute; top:50%; width:100%; height:0; transform:translateY(-50%); -webkit-appearance:none; appearance:none; background:transparent; pointer-events:none; }
+    .rs-input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:#4f46e5; border:2.5px solid white; box-shadow:0 2px 6px rgba(79,70,229,0.45); cursor:pointer; pointer-events:all; }
+
+    /* ── Weights popup ── */
+    #weightsOverlay { position:fixed; inset:0; background:rgba(10,8,30,0.85); backdrop-filter:blur(14px); z-index:900; display:none; align-items:center; justify-content:center; }
+    .weights-box { background:linear-gradient(160deg,#0f0c29 0%,#1e1b4b 100%); border:1.5px solid rgba(165,180,252,0.3); border-radius:22px; width:min(94vw,520px); max-height:88vh; display:flex; flex-direction:column; box-shadow:0 40px 100px rgba(0,0,0,0.75); overflow:hidden; }
+    .weights-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; border-bottom:1px solid rgba(165,180,252,0.18); flex-shrink:0; }
+    .weights-title { font-size:14px; font-weight:800; color:#e0e7ff; }
+    .weights-subtitle { font-size:10px; font-weight:600; color:#818cf8; margin-top:2px; }
+    .weights-close { background:rgba(255,255,255,0.08); border:1px solid rgba(165,180,252,0.28); border-radius:50%; width:30px; height:30px; color:#c4b5fd; font-size:15px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:background 0.18s,transform 0.2s; }
+    .weights-close:hover { background:rgba(220,38,38,0.28); color:white; transform:rotate(90deg); }
+    .weights-body { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+    .weight-row { display:grid; grid-template-columns:26px 1fr auto auto; align-items:center; gap:8px; }
+    .weight-icon { font-size:16px; text-align:center; }
+    .weight-label { font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .weight-slider { width:100%; height:5px; cursor:pointer; border-radius:3px; -webkit-appearance:none; appearance:none; background:rgba(165,180,252,0.2); }
+    .weight-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; cursor:pointer; border:2px solid white; box-shadow:0 0 6px rgba(0,0,0,0.4); }
+    .weight-val { min-width:24px; text-align:right; font-size:13px; font-weight:800; color:#e0e7ff; }
+    .weights-footer { display:flex; gap:10px; padding:14px 18px; border-top:1px solid rgba(165,180,252,0.18); flex-shrink:0; }
+    .weights-btn-reset { flex:1; height:38px; background:rgba(255,255,255,0.07); border:1px solid rgba(165,180,252,0.3); border-radius:10px; color:#a5b4fc; font-size:12px; font-weight:700; cursor:pointer; font-family:'Inter',Arial,sans-serif; }
+    .weights-btn-apply { flex:2; height:38px; background:linear-gradient(135deg,#4f46e5,#7c3aed); border:none; border-radius:10px; color:white; font-size:12px; font-weight:800; cursor:pointer; font-family:'Inter',Arial,sans-serif; box-shadow:0 4px 16px rgba(79,70,229,0.5); }
+
+    /* ── Detail popup ── */
+    #detailOverlay { position:fixed; inset:0; background:rgba(60,30,0,0.75); backdrop-filter:blur(20px); z-index:700; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+    #detailOverlay.open { opacity:1; pointer-events:all; }
+    .detail-box { position:relative; background:linear-gradient(160deg,#fffbeb 0%,#fef3c7 60%,#fde68a 100%); border:2px solid #f59e0b; border-radius:22px; box-shadow:0 0 0 4px rgba(245,158,11,0.18),0 40px 90px rgba(60,30,0,0.55),inset 0 1px 0 rgba(255,255,255,0.7); width:min(94vw,880px); max-height:87vh; display:flex; flex-direction:column; overflow:hidden; transform:scale(0.78) translateY(30px); transition:transform 0.42s cubic-bezier(0.175,0.885,0.32,1.275); }
+    #detailOverlay.open .detail-box { transform:scale(1) translateY(0); }
+    .detail-close { position:absolute; top:11px; right:13px; width:28px; height:28px; background:rgba(245,158,11,0.18); border:1.5px solid #f59e0b; border-radius:50%; color:#92400e; font-size:15px; line-height:26px; text-align:center; cursor:pointer; z-index:10; transition:background 0.2s,transform 0.2s; }
+    .detail-close:hover { background:rgba(220,38,38,0.18); color:#b91c1c; transform:rotate(90deg); }
+    .detail-header { display:flex; gap:16px; align-items:flex-start; padding:16px 20px 12px; flex-shrink:0; border-bottom:1.5px solid rgba(245,158,11,0.35); }
+    .detail-photo-wrap { flex-shrink:0; width:86px; height:86px; border-radius:50%; border:3px solid #d97706; overflow:hidden; box-shadow:0 4px 18px rgba(120,53,15,0.35); background:#fef3c7; }
+    .detail-photo-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+    .detail-basic { flex:1; min-width:0; padding-right:30px; }
+    .detail-name { font-size:17px; font-weight:900; color:#78350f; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .detail-cadre { font-size:11px; font-weight:700; color:#b45309; margin-bottom:8px; }
+    .detail-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:3px 14px; }
+    .dfield { font-size:10.5px; color:#78350f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dfield strong { color:#451a03; }
+    .detail-tabs { display:flex; border-bottom:1.5px solid rgba(245,158,11,0.35); flex-shrink:0; }
+    .detail-tab { flex:1; padding:9px 6px; background:transparent; border:none; cursor:pointer; font-size:11.5px; font-weight:700; color:#92400e; border-bottom:2.5px solid transparent; transition:background 0.18s,border-color 0.18s; font-family:'Inter',Arial,sans-serif; }
+    .detail-tab:hover { background:rgba(245,158,11,0.1); }
+    .detail-tab.active { color:#78350f; border-bottom-color:#f59e0b; background:rgba(245,158,11,0.14); }
+    .detail-tab-content { flex:1; overflow-y:auto; padding:14px 20px; min-height:0; }
+    .detail-tab-panel { display:none; } .detail-tab-panel.active { display:block; }
+    .dno-data { font-size:12px; color:#92400e; padding:10px 0; }
+    .dsvc-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+    .dsvc-label { width:160px; flex-shrink:0; font-size:11px; font-weight:700; color:#78350f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dsvc-track { flex:1; height:14px; background:rgba(245,158,11,0.18); border-radius:7px; overflow:hidden; }
+    .dsvc-bar { height:100%; border-radius:7px; background:linear-gradient(90deg,#f59e0b,#b45309); }
+    .dsvc-yrs { width:60px; text-align:right; font-size:10.5px; font-weight:800; color:#92400e; flex-shrink:0; }
+    .dhcm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:10px; }
+    .dhcm-card { display:flex; flex-direction:column; align-items:center; text-align:center; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:14px; padding:12px 6px 8px; cursor:default; transition:transform 0.15s,box-shadow 0.15s; }
+    .dhcm-card:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(120,53,15,0.22); }
+    .dhcm-avatar { width:54px; height:54px; border-radius:50%; border:2.5px solid #d97706; overflow:hidden; margin-bottom:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .dhcm-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .dhcm-name { font-size:9.5px; font-weight:700; color:#78350f; line-height:1.3; margin-bottom:4px; }
+    .dhcm-yrs { font-size:12px; font-weight:900; color:#b45309; }
+    .detail-footer { padding:10px 20px; flex-shrink:0; border-top:1.5px solid rgba(245,158,11,0.35); display:flex; justify-content:center; gap:12px; }
+    .detail-btn-wheel { padding:9px 28px; background:linear-gradient(135deg,#78350f,#b45309); color:#fde68a; font-size:13px; font-weight:800; border:1.5px solid #f59e0b; border-radius:24px; cursor:pointer; font-family:'Inter',Arial,sans-serif; box-shadow:0 3px 14px rgba(120,53,15,0.45); transition:transform 0.15s,box-shadow 0.15s; }
+    .detail-btn-wheel:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(120,53,15,0.55); }
+    .dsvc-timeline { display:flex; flex-direction:column; gap:6px; }
+    .dsvc-record { display:flex; align-items:center; gap:10px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.28); border-radius:11px; padding:8px 12px; transition:background 0.15s,transform 0.15s; }
+    .dsvc-record:hover { background:rgba(245,158,11,0.2); transform:translateX(3px); }
+    .dsvc-rec-avatar { width:38px; height:38px; border-radius:50%; border:2px solid #d97706; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .dsvc-rec-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .dsvc-rec-period { flex-shrink:0; width:168px; }
+    .dsvc-rec-from { font-size:11px; font-weight:800; color:#78350f; line-height:1.4; }
+    .dsvc-rec-dur  { font-size:9.5px; color:#b45309; font-weight:700; margin-top:1px; }
+    .dsvc-rec-info { flex:1; min-width:0; }
+    .dsvc-rec-post { font-size:11px; font-weight:700; color:#451a03; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dsvc-rec-tags { display:flex; gap:5px; margin-top:3px; flex-wrap:wrap; }
+    .dsvc-rec-tag  { font-size:9px; font-weight:700; padding:2px 7px; border-radius:9px; background:rgba(245,158,11,0.22); color:#78350f; border:1px solid rgba(245,158,11,0.4); white-space:nowrap; }
+
+    /* ── Wheel popup ── */
+    #wheelOverlay { position:fixed; inset:0; background:rgba(60,30,0,0.72); backdrop-filter:blur(18px); z-index:800; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+    #wheelOverlay.open { opacity:1; pointer-events:all; }
+    .wheel-box { position:relative; background:linear-gradient(160deg,#fffbeb 0%,#fef3c7 55%,#fde68a 100%); border:2px solid #f59e0b; border-radius:22px; box-shadow:0 0 0 4px rgba(245,158,11,0.18),0 40px 90px rgba(60,30,0,0.55),inset 0 1px 0 rgba(255,255,255,0.7); padding:14px 14px 8px; display:flex; flex-direction:column; align-items:center; transform:scale(0.72) translateY(30px); transition:transform 0.45s cubic-bezier(0.175,0.885,0.32,1.275); }
+    #wheelOverlay.open .wheel-box { transform:scale(1) translateY(0); }
+    .wheel-officer-name { font-size:16px; font-weight:900; color:#78350f; text-align:center; letter-spacing:0.2px; margin-bottom:2px; }
+    .wheel-rank-bar { display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:6px; flex-wrap:wrap; }
+    .rank-badge { background:linear-gradient(135deg,#78350f 0%,#b45309 100%); color:#fde68a; font-size:15px; font-weight:900; padding:5px 18px; border-radius:22px; border:1.5px solid #f59e0b; box-shadow:0 2px 12px rgba(120,53,15,0.55); letter-spacing:0.4px; white-space:nowrap; }
+    .avg-badge  { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); color:#451a03; font-size:14px; font-weight:800; padding:5px 18px; border-radius:22px; border:1.5px solid #fbbf24; box-shadow:0 2px 12px rgba(245,158,11,0.45); white-space:nowrap; }
+    .wheel-close { position:absolute; top:11px; right:13px; width:28px; height:28px; background:rgba(245,158,11,0.18); border:1.5px solid #f59e0b; border-radius:50%; color:#92400e; font-size:15px; line-height:26px; text-align:center; cursor:pointer; transition:background 0.2s,color 0.2s,transform 0.2s; z-index:10; }
+    .wheel-close:hover { background:rgba(220,38,38,0.18); color:#b91c1c; transform:rotate(90deg); }
+    #wheelSvg { display:block; overflow:visible; width:min(88vmin,640px); height:min(88vmin,640px); }
+    .wheel-content-row { display:flex; align-items:center; justify-content:center; }
+
+    /* Segment detail popup */
+    .sdp-popup-bg { position:absolute; inset:0; background:rgba(30,15,0,0.5); z-index:20; display:flex; align-items:center; justify-content:center; animation:sdpBgIn 0.2s ease both; }
+    @keyframes sdpBgIn { from{opacity:0} to{opacity:1} }
+    .sdp-popup { position:relative; width:min(90vw,460px); max-height:82vh; background:linear-gradient(160deg,#fffbeb 0%,#fef3c7 55%,#fde68a 100%); border:2px solid var(--sdp-color,#f59e0b); border-radius:20px; box-shadow:0 0 0 4px rgba(245,158,11,0.2),0 32px 80px rgba(60,30,0,0.6); overflow:hidden; animation:sdpPopupIn 0.38s cubic-bezier(0.34,1.56,0.64,1) both; display:flex; flex-direction:column; }
+    @keyframes sdpPopupIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+    .sdp-popup-close { position:absolute; top:11px; right:13px; width:28px; height:28px; background:rgba(245,158,11,0.18); border:1.5px solid #f59e0b; border-radius:50%; color:#92400e; font-size:14px; line-height:26px; text-align:center; cursor:pointer; z-index:5; transition:background 0.2s,color 0.2s,transform 0.2s; font-family:'Inter',Arial,sans-serif; }
+    .sdp-popup-close:hover { background:rgba(220,38,38,0.2); color:#b91c1c; transform:rotate(90deg); }
+    .sdp-popup-header { display:flex; align-items:center; gap:14px; padding:18px 50px 14px 18px; border-bottom:1.5px solid rgba(245,158,11,0.3); flex-shrink:0; }
+    .sdp-popup-body { flex:1; overflow-y:auto; }
+    .sdp-metric-row { display:flex; align-items:center; gap:6px; padding:3px 11px; }
+    .sdp-metric-label { font-size:8px; font-weight:700; color:#78350f; width:100px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sdp-metric-track { flex:1; height:6px; background:rgba(245,158,11,0.15); border-radius:3px; overflow:hidden; }
+    .sdp-metric-bar { height:100%; border-radius:3px; width:0%; transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1); }
+    .sdp-metric-val { font-size:8.5px; font-weight:900; color:#92400e; width:22px; text-align:right; flex-shrink:0; }
+    .sdp-expand-hint { font-size:8.5px; font-weight:700; color:#92400e; text-align:center; padding:6px 11px; background:rgba(245,158,11,0.12); border-top:1px solid rgba(245,158,11,0.22); letter-spacing:0.2px; }
+    .photo-popup-overlay { z-index:500; }
+    .photo-popup-box     { max-width:540px; }
+
+    /* ── View toggle ── */
+    .b360-view-group { display:flex; gap:3px; flex-shrink:0; }
+    .b360-view-btn { height:28px; padding:0 11px; border:1.5px solid rgba(165,180,252,0.35); border-radius:18px; background:transparent; color:#a5b4fc; font-size:11px; font-weight:700; cursor:pointer; transition:all 0.18s; font-family:'Inter',Arial,sans-serif; white-space:nowrap; display:flex; align-items:center; gap:5px; }
+    .b360-view-btn:hover { background:rgba(255,255,255,0.12); color:white; border-color:rgba(165,180,252,0.6); }
+    .b360-view-btn.active { background:white; color:#1e1b4b; border-color:white; box-shadow:0 2px 10px rgba(255,255,255,0.28); }
+
+    /* ── eOffice table wrap ── */
+    #eofficeTableWrap { position:fixed; top:var(--bar360-h,54px); left:0; right:0; bottom:0; overflow-y:auto; background:#eef0fb; padding:10px; display:none; }
+
+    /* ── eOffice table card ── */
+    .eo-card { background:white; border-radius:14px; overflow:hidden; box-shadow:0 2px 16px rgba(67,56,202,0.12); border:1px solid #e0e7ff; }
+    .eo-card-header { background:linear-gradient(135deg,#1e1b4b,#3730a3); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .eo-card-title { font-size:14px; font-weight:800; color:#e0e7ff; display:flex; align-items:center; gap:8px; }
+    .eo-live-dot { width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.8); animation:eoPulse 1.8s ease-in-out infinite; flex-shrink:0; }
+    @keyframes eoPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.55;transform:scale(1.45)} }
+    .eo-meta { font-size:11px; color:#a5b4fc; font-weight:600; white-space:nowrap; }
+    .eo-refresh-btn { height:26px; padding:0 12px; background:rgba(255,255,255,0.12); border:1px solid rgba(165,180,252,0.35); border-radius:8px; color:#e0e7ff; font-size:11px; font-weight:700; cursor:pointer; font-family:'Inter',Arial,sans-serif; transition:background 0.18s; white-space:nowrap; }
+    .eo-refresh-btn:hover { background:rgba(255,255,255,0.22); }
+
+    /* ── eOffice table ── */
+    .eo-table-wrap { overflow-x:auto; }
+    .eo-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .eo-table th { background:linear-gradient(135deg,#1e1b4b,#3730a3); color:#c7d2fe; padding:10px 14px; font-size:11.5px; font-weight:700; white-space:nowrap; text-align:left; user-select:none; }
+    .eo-table th.sortable { cursor:pointer; transition:background 0.18s; }
+    .eo-table th.sortable:hover { background:linear-gradient(135deg,#312e81,#4338ca); color:white; }
+    .eo-table th .sort-icon { display:inline-block; margin-left:5px; opacity:0.45; font-size:10px; transition:opacity 0.15s; }
+    .eo-table th.sort-asc  .sort-icon,
+    .eo-table th.sort-desc .sort-icon { opacity:1; color:#fbbf24; }
+    .eo-table td { padding:9px 14px; border-bottom:1px solid #e0e7ff; color:#1e293b; vertical-align:middle; white-space:nowrap; }
+    .eo-table tr:last-child td { border-bottom:none; }
+    .eo-table tr:hover td { background:#eef0fb; }
+    .eo-table tr:nth-child(even) td { background:#f8f9ff; }
+    .eo-table tr:nth-child(even):hover td { background:#eef0fb; }
+
+    /* column-specific styles */
+    .eo-slno { text-align:center; font-size:11px; font-weight:800; color:#a5b4fc; width:40px; }
+    .eo-photo-cell { text-align:center; width:58px; padding:4px 8px !important; }
+    .eo-thumb { width:44px; height:56px; object-fit:cover; object-position:top center; border-radius:7px; border:2px solid #c7d2fe; display:block; margin:0 auto; background:#ede9fe; }
+    .eo-thumb-ph { width:44px; height:56px; border-radius:7px; border:2px solid #c7d2fe; background:#e0e7ff; display:flex; align-items:center; justify-content:center; margin:0 auto; font-size:22px; color:#818cf8; }
+    .eo-name { font-size:11.5px; color:#374151; }
+    .eo-table td.eo-name { white-space:normal; word-break:break-word; line-height:1.5; min-width:120px; max-width:180px; }
+    .eo-num  { text-align:center; font-weight:700; font-variant-numeric:tabular-nums; }
+    .eo-pending-high { color:#dc2626; background:#fef2f2; border-radius:6px; padding:2px 8px; }
+    .eo-pending-mid  { color:#d97706; background:#fffbeb; border-radius:6px; padding:2px 8px; }
+    .eo-pending-low  { color:#059669; background:#f0fdf4; border-radius:6px; padding:2px 8px; }
+    .eo-time { text-align:center; font-variant-numeric:tabular-nums; }
+    .eo-time-fast { color:#059669; font-weight:700; }
+    .eo-time-slow { color:#dc2626; font-weight:700; }
+
+    /* empty / loading states */
+    .eo-empty { text-align:center; padding:40px 20px; color:#94a3b8; font-size:14px; }
+
+    /* clickable rows */
+    .eo-table tbody tr { cursor:pointer; }
+    .eo-table tbody tr:hover td { background:#dde4ff !important; }
+
+    /* no-movement rows */
+    .eo-row-nodata td { background:#fffbeb !important; opacity:0.82; }
+    .eo-row-nodata:hover td { background:#fef3c7 !important; opacity:1; }
+    .eo-no-movement-cell {
+      color:#92400e; font-size:12px; font-weight:700;
+      background:linear-gradient(90deg,rgba(251,191,36,0.18),rgba(245,158,11,0.08));
+      border-left:3px solid #f59e0b;
+      padding:6px 14px !important;
+      letter-spacing:0.1px;
+    }
+
+    /* ── Post-wise popup ── */
+    #eoPostPopup { position:fixed; inset:0; background:rgba(15,12,41,0.75); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:850; display:none; align-items:center; justify-content:center; }
+    #eoPostPopup.open { display:flex; }
+    .eo-post-box { background:white; border-radius:18px; width:min(96vw,1120px); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 32px 80px rgba(15,12,41,0.55); animation:eoPopIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes eoPopIn { from{transform:scale(0.82);opacity:0} to{transform:scale(1);opacity:1} }
+    .eo-post-header { background:linear-gradient(135deg,#1e1b4b,#3730a3); padding:14px 20px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-shrink:0; }
+    .eo-post-photo-wrap { flex-shrink:0; width:60px; height:74px; border-radius:9px; border:2.5px solid rgba(165,180,252,0.5); overflow:hidden; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
+    .eo-post-photo-wrap img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+    .eo-post-photo-ph { font-size:28px; color:#a5b4fc; }
+    .eo-post-hinfo { flex:1; min-width:0; }
+    .eo-post-hname { font-size:15px; font-weight:800; color:#e0e7ff; line-height:1.3; word-break:break-word; }
+    .eo-post-hid   { font-size:11px; font-weight:600; color:#818cf8; margin-top:3px; }
+    .eo-post-hpost { font-size:11px; color:#c7d2fe; margin-top:3px; line-height:1.4; word-break:break-word; }
+    .eo-post-hmeta { font-size:10.5px; color:#a5b4fc; margin-top:4px; }
+    .eo-post-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(165,180,252,0.4); color:#e0e7ff; font-size:15px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:background 0.18s,transform 0.2s; font-family:'Inter',Arial,sans-serif; }
+    .eo-post-close:hover { background:rgba(220,38,38,0.35); color:white; transform:rotate(90deg); }
+    .eo-post-body { flex:1; overflow-y:auto; }
+    .eo-post-empty { text-align:center; padding:40px; color:#94a3b8; font-size:14px; }
+    /* allow popup table headers to wrap */
+    #eoPostPopupTable th { white-space:normal; word-break:break-word; line-height:1.4; vertical-align:bottom; }
+    /* post popup table — 9 columns, balanced to fit 1120px box */
+    /* col 1 Post Name · col 2-3 Dates · col 4-7 Counts · col 8-9 Times      */
+    /* 200  +  90 + 90  +  4×82  +  2×115  =  200+180+328+230 = 938px + gaps */
+    #eoPostPopupTable { table-layout:fixed; width:100%; }
+    #eoPostPopupTable th, #eoPostPopupTable td { padding:7px 9px; font-size:11.5px; text-transform:uppercase; letter-spacing:0.3px; overflow:hidden; }
+    /* col 1 — Post Name */
+    #eoPostPopupTable th:nth-child(1), #eoPostPopupTable td:nth-child(1) { width:200px; white-space:normal; word-break:break-word; line-height:1.5; font-weight:700; text-align:left; }
+    /* col 2-3 — Start / End Date */
+    #eoPostPopupTable th:nth-child(2), #eoPostPopupTable td:nth-child(2),
+    #eoPostPopupTable th:nth-child(3), #eoPostPopupTable td:nth-child(3) { width:90px; text-align:center; white-space:normal; word-break:break-word; line-height:1.4; }
+    /* col 4-7 — numeric counts */
+    #eoPostPopupTable th:nth-child(4), #eoPostPopupTable td:nth-child(4),
+    #eoPostPopupTable th:nth-child(5), #eoPostPopupTable td:nth-child(5),
+    #eoPostPopupTable th:nth-child(6), #eoPostPopupTable td:nth-child(6),
+    #eoPostPopupTable th:nth-child(7), #eoPostPopupTable td:nth-child(7) { width:82px; text-align:center; font-variant-numeric:tabular-nums; }
+    /* col 8-9 — time (needs wrapping for "X Days Y Hrs Z Mins") */
+    #eoPostPopupTable th:nth-child(8), #eoPostPopupTable td:nth-child(8),
+    #eoPostPopupTable th:nth-child(9), #eoPostPopupTable td:nth-child(9) { width:115px; text-align:center; white-space:normal; word-break:break-word; line-height:1.5; }
+
+    /* ── Score methodology modal ── */
+    #eoScoreModal { position:fixed; inset:0; background:rgba(10,8,30,0.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:950; display:none; align-items:center; justify-content:center; }
+    #eoScoreModal.open { display:flex; }
+    .eo-score-modal-box { background:linear-gradient(160deg,#0f0c29 0%,#1e1b4b 100%); border:1.5px solid rgba(165,180,252,0.3); border-radius:20px; width:min(96vw,640px); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 40px 100px rgba(0,0,0,0.7); animation:eoPopIn 0.25s ease-out both; }
+    .eo-score-mhdr { display:flex; align-items:center; justify-content:space-between; padding:16px 22px 12px; border-bottom:1px solid rgba(165,180,252,0.2); flex-shrink:0; }
+    .eo-score-mhdr-title { font-size:15px; font-weight:800; color:#e0e7ff; }
+    .eo-score-mhdr-sub   { font-size:10.5px; color:#818cf8; margin-top:2px; }
+    .eo-score-mclose { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(165,180,252,0.3); color:#c4b5fd; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.18s,transform 0.2s; font-family:'Inter',Arial,sans-serif; }
+    .eo-score-mclose:hover { background:rgba(220,38,38,0.35); color:white; transform:rotate(90deg); }
+    .eo-score-mbody { flex:1; overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:14px; }
+    .eo-score-method-note { font-size:11.5px; color:#a5b4fc; line-height:1.6; background:rgba(99,102,241,0.1); border-radius:10px; padding:10px 14px; border:1px solid rgba(165,180,252,0.18); }
+    .eo-score-metric-row { display:flex; align-items:flex-start; gap:12px; padding:10px 14px; background:rgba(255,255,255,0.04); border-radius:10px; border:1px solid rgba(165,180,252,0.12); }
+    .eo-score-wt { flex-shrink:0; width:48px; height:48px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg,#4f46e5,#7c3aed); box-shadow:0 3px 12px rgba(79,70,229,0.45); }
+    .eo-score-wt-num  { font-size:14px; font-weight:900; color:white; line-height:1; }
+    .eo-score-wt-pct  { font-size:9px;  font-weight:700; color:#c4b5fd; }
+    .eo-score-minfo   { flex:1; min-width:0; }
+    .eo-score-mname   { font-size:12.5px; font-weight:800; color:#e0e7ff; margin-bottom:2px; }
+    .eo-score-mformula{ font-size:10.5px; color:#818cf8; font-style:italic; }
+    .eo-score-dir     { flex-shrink:0; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+    .eo-score-dir-up  { background:rgba(5,150,105,0.2); color:#34d399; border:1px solid rgba(52,211,153,0.3); }
+    .eo-score-dir-dn  { background:rgba(220,38,38,0.2);  color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+    .eo-score-mfooter { padding:12px 22px; border-top:1px solid rgba(165,180,252,0.15); flex-shrink:0; font-size:10.5px; color:#818cf8; line-height:1.6; }
+    .eo-score-info-btn { height:26px; padding:0 12px; background:rgba(99,102,241,0.22); border:1px solid rgba(165,180,252,0.38); border-radius:8px; color:#c4b5fd; font-size:11px; font-weight:700; cursor:pointer; font-family:'Inter',Arial,sans-serif; transition:background 0.18s; white-space:nowrap; }
+    .eo-score-info-btn:hover { background:rgba(99,102,241,0.45); color:white; }
+
+    /* ── Responsive ── */
+    @media (max-width:1280px) { .b360-fl { display:none; } }
+    @media (max-width:980px)  { .b360-search { width:110px; } .b360-select { min-width:80px; font-size:10.5px; } }
+    @media (max-width:760px)  { .b360-title-text { display:none; } .b360-svc-btn { padding:0 8px; font-size:10.5px; } .b360-search { width:90px; } .b360-btnlabel { display:none; } }
+    @media (max-width:580px)  { .b360-div { display:none; } .b360-count { display:none; } }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Filter Bar ── -->
+<div id="bar360">
+  <div class="b360-title">
+    <span class="b360-badge b360-badge-live">LIVE</span>
+    <span class="b360-title-text" id="b360TitleText">AIS Officers — Live</span>
+  </div>
+  <div class="b360-svc-group">
+    <button id="svcIAS" class="b360-svc-btn" onclick="switchSvc('IAS')">IAS</button>
+    <button id="svcIPS" class="b360-svc-btn" onclick="switchSvc('IPS')">IPS</button>
+    <button id="svcIFS" class="b360-svc-btn" onclick="switchSvc('IFS')">IFS</button>
+  </div>
+  <div class="b360-div"></div>
+  <span class="b360-fl">Cadre</span>
+  <select class="b360-select" id="fCadre" onchange="applyAllFilters()"><option value="">All Cadres</option></select>
+  <span class="b360-fl">Source</span>
+  <select class="b360-select" id="fSource" onchange="applyAllFilters()"><option value="">All Sources</option></select>
+  <span class="b360-fl">Domicile</span>
+  <select class="b360-select" id="fDomicile" onchange="applyAllFilters()"><option value="">All Domiciles</option></select>
+  <span class="b360-fl">Post Type</span>
+  <select class="b360-select" id="fPostType" onchange="applyAllFilters()" style="min-width:120px;max-width:200px;"><option value="">All Post Types</option></select>
+  <input type="text" class="b360-search" id="searchName360" placeholder="&#128269; Search name..." oninput="applyAllFilters()">
+  <div class="b360-div"></div>
+  <span class="b360-fl">Sort By</span>
+  <select class="b360-select" id="sortSelect360" onchange="applySort360()" style="min-width:130px;max-width:180px;">
+    <option value="seniority">Seniority</option>
+    <option value="score_weighted">&#9878; Weighted Score</option>
+    <option value="score_0">e-Office Score</option>
+    <option value="score_1">Swarna AP Score</option>
+    <option value="score_2">GSDP Score</option>
+    <option value="score_3">GoI Funds Score</option>
+    <option value="score_4">Public Perception</option>
+    <option value="score_5">Innovations Score</option>
+    <option value="score_6">Digitalisation Score</option>
+    <option value="score_7">New Policies Score</option>
+    <option value="score_8">De-Regularisation</option>
+    <option value="score_9">Integrity Index</option>
+    <option value="score_10">Party Feedback</option>
+    <option value="score_11">Media Feedback</option>
+    <option value="score_12">Leadership Skills</option>
+    <option value="score_13">CMO Score</option>
+  </select>
+  <button class="b360-sortdir" id="sortDirBtn" onclick="toggleSortDir()">&#8593; Asc</button>
+  <button class="b360-weights-btn" onclick="openWeightsPopup()">&#9878; Weights</button>
+  <div class="b360-div"></div>
+  <span class="b360-fl">View</span>
+  <div class="b360-view-group">
+    <button id="viewGridBtn"    class="b360-view-btn active" onclick="switchView('grid')">&#128248; Grid</button>
+    <button id="viewEofficeBtn" class="b360-view-btn"        onclick="switchView('eoffice')">&#128202; e-Office</button>
+  </div>
+  <div class="b360-spacer"></div>
+  <div class="b360-count" id="count360">Loading&hellip;</div>
+  <button class="b360-reset" onclick="reset360()"><i data-lucide="rotate-ccw"></i><span class="b360-btnlabel">Reset</span></button>
+  <button class="b360-std-btn" onclick="navTo('360.html?service=' + (new URLSearchParams(location.search).get('service')||'IAS').toUpperCase())">
+    <i data-lucide="rotate-3d"></i><span class="b360-btnlabel">360° Demo</span>
+  </button>
+  <button class="b360-home" onclick="navTo('landing.html')"><i data-lucide="house"></i><span class="b360-btnlabel">Home</span></button>
+  <button class="b360-exit" id="fsBtn360" onclick="toggleFullscreen360()"><i data-lucide="minimize-2"></i><span class="b360-btnlabel">Exit Fullscreen</span></button>
+</div>
+
+<!-- ── Grid Area ── -->
+<div id="grid360wrap">
+
+  <!-- Live data availability strip -->
+  <div id="liveStatusStrip">
+    <span class="ls-title">📡 Live Data Status:</span>
+    <span class="ls-pill ls-live">✅ e-Office Score</span>
+    <span class="ls-pill ls-live">✅ GoI (CSS) Funds Score</span>
+    <span class="ls-pill ls-live">✅ Public Perception Score</span>
+    <span class="ls-pill ls-pending">⏳ Swarna AP</span>
+    <span class="ls-pill ls-pending">⏳ GSDP</span>
+    <span class="ls-pill ls-pending">⏳ Self Appraisal Scores</span>
+    <span class="ls-pill ls-pending">⏳ Integrity</span>
+    <span class="ls-pill ls-pending">⏳ Party &amp; Media</span>
+    <span class="ls-pill ls-pending">⏳ CMO Score</span>
+  </div>
+
+  <!-- Range filter strip -->
+  <div id="rangeStrip">
+    <div class="rs-group">
+      <div class="rs-head">
+        <span class="rs-icon">&#127891; Batch</span>
+        <span class="rs-val" id="batchRangeLabel">—</span>
+      </div>
+      <div class="rs-track-wrap">
+        <div class="rs-track"><div class="rs-fill" id="batchFill"></div></div>
+        <input type="range" class="rs-input" id="batchLo" oninput="onSlider('batch')">
+        <input type="range" class="rs-input" id="batchHi" oninput="onSlider('batch')">
+      </div>
+    </div>
+    <div class="rs-group">
+      <div class="rs-head">
+        <span class="rs-icon">&#128197; Retirement Year</span>
+        <span class="rs-val" id="retireRangeLabel">—</span>
+      </div>
+      <div class="rs-track-wrap">
+        <div class="rs-track"><div class="rs-fill" id="retireFill"></div></div>
+        <input type="range" class="rs-input" id="retireLo" oninput="onSlider('retire')">
+        <input type="range" class="rs-input" id="retireHi" oninput="onSlider('retire')">
+      </div>
+    </div>
+  </div>
+
+  <!-- Officer grid -->
+  <div id="grid360">
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-size:15px;color:#6366f1;">
+      &#8987; Loading live officer data&hellip;
+    </div>
+  </div>
+
+</div>
+
+<!-- ── e-Office Live Data Table ── -->
+<div id="eofficeTableWrap">
+  <div class="eo-card">
+    <div class="eo-card-header">
+      <div class="eo-card-title">
+        <span class="eo-live-dot"></span>
+        &#128202; Live e-Office Data
+        <span id="eoDateLabel" style="font-size:11px;font-weight:600;color:#a5b4fc;margin-left:4px;"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="eo-meta" id="eoRowCount"></span>
+        <button class="eo-score-info-btn" onclick="openEoScoreModal()">&#9432; How Score is Calculated</button>
+        <button class="eo-refresh-btn" onclick="loadEofficeTable()">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="eo-table-wrap">
+      <table class="eo-table" id="eoTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="officer_id" onclick="sortEoffice('officer_id')" style="text-align:center;">Sl. No. <span class="sort-icon">&#9650;</span></th>
+            <th style="text-align:center;width:46px;">Photo</th>
+            <th class="sortable" data-col="name"             onclick="sortEoffice('name')">Officer Name <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="opening_balance"  onclick="sortEoffice('opening_balance')"  style="text-align:center;">Opening Balance <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="files_received"   onclick="sortEoffice('files_received')"   style="text-align:center;">Files Received <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="files_processed"  onclick="sortEoffice('files_processed')"  style="text-align:center;">Files Processed <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="files_pending"    onclick="sortEoffice('files_pending')"    style="text-align:center;">Files Pending <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="avg_time_mins"    onclick="sortEoffice('avg_time_mins')"    style="text-align:center;min-width:140px;">Avg Time <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="median_time_mins" onclick="sortEoffice('median_time_mins')" style="text-align:center;min-width:140px;">Median Time <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="eoScore" onclick="sortEoffice('eoScore')" style="text-align:center;min-width:80px;background:linear-gradient(135deg,#312e81,#4338ca);">Score<br><span style="font-size:9px;font-weight:600;opacity:0.75;">(0–100)</span> <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="eoRank"  onclick="sortEoffice('eoRank')"  style="text-align:center;width:60px;background:linear-gradient(135deg,#312e81,#4338ca);">Rank <span class="sort-icon">&#9651;</span></th>
+          </tr>
+        </thead>
+        <tbody id="eoTbody">
+          <tr><td colspan="11" class="eo-empty">&#8987; Loading e-Office data&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Score Methodology Modal ── -->
+<div id="eoScoreModal">
+  <div class="eo-score-modal-box">
+    <div class="eo-score-mhdr">
+      <div>
+        <div class="eo-score-mhdr-title">&#9432; How the e-Office Score is Calculated</div>
+        <div class="eo-score-mhdr-sub">TOPSIS · Winsorized · Peer-relative · Dynamically recalculated on filter</div>
+      </div>
+      <button class="eo-score-mclose" onclick="closeEoScoreModal()">&#10006;</button>
+    </div>
+    <div class="eo-score-mbody">
+      <div class="eo-score-method-note">
+        <strong style="color:#fbbf24;">Method: TOPSIS</strong> &nbsp;(Technique for Order of Preference by Similarity to Ideal Solution)<br><br>
+        The score measures how <em>geometrically close</em> each officer is to the <strong style="color:#34d399;">ideal best performer</strong> compared to the <strong style="color:#f87171;">ideal worst performer</strong> across all 6 metrics simultaneously.
+        <br><br>
+        <strong style="color:#e0e7ff;">Score = D⁻ ÷ (D⁺ + D⁻) × 100</strong><br>
+        <span style="font-size:10px;">D⁺ = distance from ideal best &nbsp;|&nbsp; D⁻ = distance from ideal worst</span><br><br>
+        Score <strong style="color:#34d399;">100</strong> = as close to ideal best as possible on all metrics.<br>
+        Score <strong style="color:#f87171;">0</strong> = as far from ideal best as possible.<br><br>
+        <strong style="color:#fbbf24;">Winsorization:</strong> Before scoring, each metric is capped at the 5th–95th percentile within the peer group. This prevents one extreme outlier from distorting the reference points for everyone else.
+      </div>
+      <div id="eoScoreMetricRows"></div>
+      <div class="eo-score-method-note" style="margin-top:4px;">
+        <strong style="color:#fbbf24;">&#9650; Peer-Relative &amp; Dynamic:</strong> The ideal best and ideal worst reference points are computed from the <em>currently filtered group</em> of officers. Every time you apply a filter (Cadre, Domicile, Post Type, etc.), the scores recalculate within that subgroup. An officer's score reflects their standing among their <em>peers</em> — not against a fixed absolute target.
+        <br><br>
+        <strong style="color:#a5b4fc;">Breakdown tooltip:</strong> Hover over any score to see each officer's percentile rank on all 6 individual metrics — useful for identifying specific strengths and improvement areas.
+      </div>
+    </div>
+    <div class="eo-score-mfooter">
+      TOPSIS Score = D⁻ ÷ (D⁺ + D⁻) × 100 &nbsp;|&nbsp; Clearance 28% · Backlog 17% · Median Speed 18% · Avg Speed 12% · Volume 10% · Days Active 10% · Consistency 5% &nbsp;|&nbsp; Winsorized 5th–95th %ile · Overlapping post periods merged
+    </div>
+  </div>
+</div>
+
+<!-- ── Post-wise popup (opens when an e-Office row is clicked) ── -->
+<div id="eoPostPopup">
+  <div class="eo-post-box">
+    <div class="eo-post-header">
+      <div class="eo-post-photo-wrap" id="eoPostPopupPhotoWrap">
+        <span class="eo-post-photo-ph">&#128100;</span>
+      </div>
+      <div class="eo-post-hinfo">
+        <div class="eo-post-hname" id="eoPostPopupName"></div>
+        <div class="eo-post-hid"   id="eoPostPopupId"></div>
+        <div class="eo-post-hpost" id="eoPostPopupPost"></div>
+        <div class="eo-post-hmeta" id="eoPostPopupMeta"></div>
+      </div>
+      <button class="eo-post-close" onclick="closeEoPostPopup()">&#10006;</button>
+    </div>
+    <div class="eo-post-body">
+      <div class="eo-table-wrap">
+        <table class="eo-table" id="eoPostPopupTable">
+          <thead>
+            <tr>
+              <th>Post Name</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Opening Balance</th>
+              <th>Files Received</th>
+              <th>Files Processed</th>
+              <th>Files Pending</th>
+              <th>Avg Time</th>
+              <th>Median Time</th>
+            </tr>
+          </thead>
+          <tbody id="eoPostPopupTbody">
+            <tr><td colspan="9" class="eo-post-empty">&#8987; Loading&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Photo popup -->
+<div id="photo-popup" class="photo-popup-overlay">
+  <div class="photo-popup-box">
+    <span class="photo-popup-close" onclick="document.getElementById('photo-popup').classList.remove('open')">&#10006;</span>
+    <div id="photo-popup-details"></div>
+  </div>
+</div>
+
+<!-- Officer Detail popup -->
+<div id="detailOverlay">
+  <div class="detail-box">
+    <button class="detail-close" id="detailClose">&#10006;</button>
+    <div class="detail-header">
+      <div class="detail-photo-wrap"><img id="detailPhoto" src="" alt="Officer Photo"></div>
+      <div class="detail-basic">
+        <div class="detail-name"  id="detailName"></div>
+        <div class="detail-cadre" id="detailCadre"></div>
+        <div class="detail-grid"  id="detailGrid"></div>
+      </div>
+    </div>
+    <div class="detail-tabs">
+      <button class="detail-tab active" onclick="switchDetailTab('dept')">&#128200; Department-wise</button>
+      <button class="detail-tab"        onclick="switchDetailTab('cat')">&#127991; Category-wise</button>
+      <button class="detail-tab"        onclick="switchDetailTab('hcm')">&#128081; Chief Minister-wise</button>
+      <button class="detail-tab"        onclick="switchDetailTab('svc')">&#128203; Service Record</button>
+    </div>
+    <div class="detail-tab-content">
+      <div class="detail-tab-panel active" id="detailPanelDept"></div>
+      <div class="detail-tab-panel"        id="detailPanelCat"></div>
+      <div class="detail-tab-panel"        id="detailPanelHcm"></div>
+      <div class="detail-tab-panel"        id="detailPanelSvc"></div>
+    </div>
+    <div class="detail-footer">
+      <button class="detail-btn-wheel" id="detailBtnWheel">&#9899; View 360° Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wheel popup -->
+<div id="wheelOverlay">
+  <div class="wheel-box" id="wheelBox">
+    <button class="wheel-close" id="wheelClose">&#10006;</button>
+    <div class="wheel-officer-name" id="wheelName"></div>
+    <div class="wheel-rank-bar" id="wheelRankBar">
+      <span class="rank-badge" id="wheelRankBadge">Overall Rank #—</span>
+      <span class="avg-badge"  id="wheelAvgBadge">Weighted Avg: —/10</span>
+    </div>
+    <div class="wheel-content-row">
+      <svg id="wheelSvg" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+</div>
+
+<!-- Weights popup -->
+<div id="weightsOverlay">
+  <div class="weights-box">
+    <div class="weights-header">
+      <div>
+        <div class="weights-title">&#9878; Set Parameter Weights</div>
+        <div class="weights-subtitle">Drag each bar to assign importance (0 = ignore, 10 = max)</div>
+      </div>
+      <button class="weights-close" onclick="closeWeightsPopup()">&#10006;</button>
+    </div>
+    <div class="weights-body" id="weightsBody"></div>
+    <div class="weights-footer">
+      <button class="weights-btn-reset" onclick="resetWeights()">&#8635; Reset Equal</button>
+      <button class="weights-btn-apply" onclick="applyWeights()">&#10003; Apply &amp; Sort</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap -->
+<script>
+(function () {
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var labels = { IAS:'IAS Officers — Live', IPS:'IPS Officers — Live', IFS:'IFS Officers — Live' };
+  document.getElementById('b360TitleText').textContent = labels[svc] || 'AIS Officers — Live';
+  document.title = 'AIS 360° Live — ' + svc;
+  var btn = document.getElementById('svc' + svc);
+  if (btn) btn.classList.add('active');
+})();
+
+window.navTo = function (url) {
+  try { sessionStorage.setItem('ais_fs_mode','1'); } catch(e) {}
+  function go() { location.href = url; }
+  if (document.fullscreenElement) { go(); return; }
+  var el = document.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) { Promise.resolve(req.call(el)).then(go).catch(go); } else { go(); }
+};
+
+window.switchSvc = function (s) { window.navTo('360_live.html?service=' + s); };
+
+window.reset360 = function () {
+  ['fCadre','fSource','fDomicile','fPostType'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  var search = document.getElementById('searchName360');
+  if (search) search.value = '';
+  if (typeof resetSort360 === 'function')        resetSort360();
+  if (typeof resetRangeSliders === 'function')   resetRangeSliders();
+  if (typeof applyFilters360 === 'function')     applyFilters360();
+};
+
+window.toggleFullscreen360 = function () {
+  if (!document.fullscreenElement) {
+    try { sessionStorage.setItem('ais_fs_mode','1'); } catch(e) {}
+    document.documentElement.requestFullscreen().catch(function(){});
+  } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+    document.exitFullscreen().catch(function(){});
+  }
+};
+
+document.addEventListener('fullscreenchange', function () {
+  var btn = document.getElementById('fsBtn360');
+  if (!btn) return;
+  if (document.fullscreenElement) {
+    btn.innerHTML = '<i data-lucide="minimize-2"></i><span class="b360-btnlabel">Exit Fullscreen</span>';
+  } else {
+    try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+    btn.innerHTML = '<i data-lucide="maximize-2"></i><span class="b360-btnlabel">Enter Fullscreen</span>';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  var btn = document.getElementById('fsBtn360');
+  var wantFs = false;
+  try { wantFs = !!sessionStorage.getItem('ais_fs_mode'); } catch(e) {}
+  if (document.fullscreenElement) {
+    if (btn) btn.innerHTML = '<i data-lucide="minimize-2"></i><span class="b360-btnlabel">Exit Fullscreen</span>';
+  } else if (wantFs) {
+    document.documentElement.requestFullscreen().catch(function(){});
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  var bar = document.getElementById('bar360');
+  var root = document.documentElement;
+  function syncBarH() { root.style.setProperty('--bar360-h', bar.offsetHeight + 'px'); }
+  if (bar) { syncBarH(); new ResizeObserver(syncBarH).observe(bar); }
+});
+</script>
+
+<script>
+// ================================================================
+// View toggle: Grid  ↔  e-Office Table
+// ================================================================
+var _currentView = 'grid';
+
+window.switchView = function (view) {
+  _currentView = view;
+  var grid    = document.getElementById('grid360wrap');
+  var eoWrap  = document.getElementById('eofficeTableWrap');
+  var btnGrid = document.getElementById('viewGridBtn');
+  var btnEo   = document.getElementById('viewEofficeBtn');
+
+  [grid, eoWrap].forEach(function(el) { if (el) el.style.display = 'none'; });
+  [btnGrid, btnEo].forEach(function(b) { if (b) b.classList.remove('active'); });
+
+  if (view === 'eoffice') {
+    if (eoWrap)  eoWrap.style.display = 'block';
+    if (btnEo)   btnEo.classList.add('active');
+    loadEofficeTable();
+  } else {
+    if (grid)    grid.style.display = 'block';
+    if (btnGrid) btnGrid.classList.add('active');
+  }
+};
+
+// Applies both the grid filters AND the e-Office table filters
+window.applyAllFilters = function () {
+  if (typeof applyFilters360 === 'function') applyFilters360();
+  if (_currentView === 'eoffice') renderEofficeTable();
+};
+
+// ================================================================
+// e-Office table data + render
+// ================================================================
+var _eoData       = [];
+var _eoOfficerMap = {};   // identity_no → {name, cadre, source, domicile, postType}
+var _eoSortCol    = 'officer_id';
+var _eoSortDir    = 'asc';
+var _eoNameMap = {};   // identity_no → officer name
+
+function _eoEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ================================================================
+// Unique days worked — merges overlapping date intervals so each
+// calendar day is counted only once across all the officer's posts.
+// ================================================================
+function computeUniqueDays(intervals, refDate) {
+  if (!intervals || !intervals.length) return 0;
+  var cap = refDate ? new Date(refDate) : new Date();
+
+  // Parse and cap open-ended intervals at refDate
+  var parsed = [];
+  intervals.forEach(function(iv) {
+    var f = new Date(iv.from_date);
+    if (isNaN(f.getTime())) return;
+    var t = iv.to_date ? new Date(iv.to_date) : new Date(cap);
+    if (t > cap) t = new Date(cap);
+    if (f > cap) return; // post starts after reference date — skip
+    if (t >= f) parsed.push({ f: f, t: t });
+  });
+
+  if (!parsed.length) return 0;
+
+  // Sort by start date ascending
+  parsed.sort(function(a, b) { return a.f - b.f; });
+
+  // Merge overlapping / adjacent intervals (day-level: gap ≤ 1 day is merged)
+  var merged = [{ f: parsed[0].f, t: parsed[0].t }];
+  for (var i = 1; i < parsed.length; i++) {
+    var last = merged[merged.length - 1];
+    var cur  = parsed[i];
+    // +1 day tolerance: adjacent posts (end Mon, start Tue) merge cleanly
+    var gapMs = cur.f - last.t;
+    if (gapMs <= 86400000) {
+      if (cur.t > last.t) last.t = cur.t;
+    } else {
+      merged.push({ f: cur.f, t: cur.t });
+    }
+  }
+
+  // Sum total unique calendar days
+  var totalMs = 0;
+  merged.forEach(function(iv) { totalMs += Math.max(0, iv.t - iv.f); });
+  return Math.round(totalMs / 86400000);
+}
+
+// ================================================================
+// e-Office Scoring — TOPSIS with Winsorization (0-100 scale)
+//
+// Method: Technique for Order of Preference by Similarity to
+//         Ideal Solution (TOPSIS) — standard multi-criteria
+//         decision analysis used in public-sector KPI evaluation.
+//
+// All 6 raw data values are used:
+// Metric                  Weight  Type
+// ──────────────────────────────────────────────────────────────
+// 1. Clearance Rate         30%   Benefit  (higher is better)
+// 2. Backlog Reduction      20%   Benefit  (higher is better)
+// 3. Median Processing Time 20%   Cost     (lower  is better)
+// 4. Avg Processing Time    15%   Cost     (lower  is better)
+// 5. Volume Handled         10%   Benefit  (higher is better)
+// 6. Consistency Index       5%   Benefit  (higher is better)
+// ──────────────────────────────────────────────────────────────
+// Score = D⁻ / (D⁺ + D⁻) × 100
+//   D⁺ = Euclidean distance from ideal BEST  (lower D⁺ = better)
+//   D⁻ = Euclidean distance from ideal WORST (higher D⁻ = better)
+//
+// Extreme values are winsorized at the 5th–95th percentile
+// before normalization to prevent outliers from compressing
+// all other scores.
+//
+// Scores recalculate automatically for the current filtered
+// peer group — filters change the ideal best/worst reference
+// points, so scores reflect relative standing within that group.
+// ================================================================
+
+// Weights sum to exactly 1.00
+// 7 metrics using all available data including unique days worked
+var EO_SCORE_WEIGHTS = [
+  { key:'_m1', label:'Clearance Rate',         w:0.28, dir: 1,
+    formula:'Files Processed ÷ (Opening Balance + Files Received) — % of all available files disposed' },
+  { key:'_m2', label:'Backlog Reduction',       w:0.17, dir: 1,
+    formula:'(Opening Balance − Files Pending) ÷ Opening Balance — did the officer reduce inherited backlog?' },
+  { key:'_m3', label:'Median Processing Speed', w:0.18, dir:-1,
+    formula:'Median time per file (mins) — robust to outlier files; lower = faster' },
+  { key:'_m4', label:'Avg Processing Speed',    w:0.12, dir:-1,
+    formula:'Average time per file (mins) — sensitive to slow files; lower = faster' },
+  { key:'_m5', label:'Volume Handled',          w:0.10, dir: 1,
+    formula:'log(Files Received + 1) — log-scaled workload; rewards high-volume posts fairly' },
+  { key:'_m6', label:'Days Active',             w:0.10, dir: 1,
+    formula:'Unique calendar days worked (overlapping post periods merged) — measures sustained engagement in the system' },
+  { key:'_m7', label:'Consistency Index',       w:0.05, dir: 1,
+    formula:'1 − |Avg − Median| ÷ (Avg + Median + 1) — uniform processing speed; 1 = perfectly consistent' }
+];
+
+function computeEoScores(data) {
+  var active = data.filter(function(r) { return !r.noData; });
+  var N = active.length;
+  var M = EO_SCORE_WEIGHTS.length;
+
+  if (!N) {
+    data.forEach(function(r) { r.eoScore=0; r.eoRank=1; r.eoScoreBreakdown=''; r._mPct=[]; });
+    return;
+  }
+
+  // ── Step 1: Raw metrics ─────────────────────────────────────────
+  active.forEach(function(r) {
+    var avail = r.opening_balance + r.files_received;
+    var at    = r.avg_time_mins    != null ? parseFloat(r.avg_time_mins)    : 0;
+    var mt    = r.median_time_mins != null ? parseFloat(r.median_time_mins) : 0;
+    r._raw = [
+      avail > 0 ? r.files_processed / avail : 0,           // m1 clearance rate
+      r.opening_balance > 0                                  // m2 backlog reduction
+        ? (r.opening_balance - r.files_pending) / r.opening_balance
+        : (r.files_pending === 0 ? 1 : 0),
+      mt,                                                    // m3 median time (cost)
+      at,                                                    // m4 avg time (cost)
+      Math.log(r.files_received + 1),                       // m5 volume
+      r.unique_days || 0,                                    // m6 unique days active
+      1 - Math.abs(at - mt) / (at + mt + 1)                 // m7 consistency
+    ];
+  });
+
+  // ── Step 2: Winsorise each metric at 5th–95th percentile ────────
+  // Prevents one extreme officer from dominating the reference points
+  for (var j = 0; j < M; j++) {
+    var jj   = j;
+    var vals = active.map(function(r){ return r._raw[jj]; }).slice().sort(function(a,b){return a-b;});
+    var lo   = vals[Math.max(0,          Math.floor(0.05 * (N - 1)))];
+    var hi   = vals[Math.min(N - 1,      Math.ceil( 0.95 * (N - 1)))];
+    active.forEach(function(r){ r._raw[jj] = Math.max(lo, Math.min(hi, r._raw[jj])); });
+  }
+
+  // ── Step 3: Compute per-metric percentile ranks for the breakdown
+  active.forEach(function(r){ r._mPct = new Array(M).fill(0); });
+  for (var j2 = 0; j2 < M; j2++) {
+    var jj2 = j2;
+    var dir2 = EO_SCORE_WEIGHTS[j2].dir;
+    // Sort: worst first (position 0 = 0%ile), best last (position N-1 = 100%ile)
+    var sorted = active.slice().sort(function(a, b) {
+      return dir2 === 1 ? a._raw[jj2] - b._raw[jj2] : b._raw[jj2] - a._raw[jj2];
+    });
+    sorted.forEach(function(r, i) {
+      r._mPct[jj2] = Math.round(i / (N > 1 ? N - 1 : 1) * 100);
+    });
+  }
+
+  // ── Step 4: Vector normalisation — r_ij = x_ij / ‖x_j‖ ─────────
+  // Puts all metrics on the same geometric scale
+  var colNorm = new Array(M).fill(0);
+  active.forEach(function(r){ r._raw.forEach(function(v,j){ colNorm[j] += v * v; }); });
+  colNorm = colNorm.map(function(s){ return Math.sqrt(s) || 1; });
+  active.forEach(function(r){
+    r._norm = r._raw.map(function(v, j){ return v / colNorm[j]; });
+  });
+
+  // ── Step 5: Weighted normalised matrix — v_ij = w_j × r_ij ─────
+  active.forEach(function(r){
+    r._wn = r._norm.map(function(v, j){ return EO_SCORE_WEIGHTS[j].w * v; });
+  });
+
+  // ── Step 6: Ideal best (A⁺) and ideal worst (A⁻) ────────────────
+  var Ap = new Array(M), Am = new Array(M);
+  for (var j3 = 0; j3 < M; j3++) {
+    var jj3 = j3;
+    var col = active.map(function(r){ return r._wn[jj3]; });
+    var mn  = Math.min.apply(null, col);
+    var mx  = Math.max.apply(null, col);
+    if (EO_SCORE_WEIGHTS[j3].dir === 1) { Ap[j3]=mx; Am[j3]=mn; }
+    else                                 { Ap[j3]=mn; Am[j3]=mx; }
+  }
+
+  // ── Step 7: Separation distances D⁺ and D⁻ ─────────────────────
+  active.forEach(function(r) {
+    var dp=0, dm=0;
+    r._wn.forEach(function(v,j){ dp += Math.pow(v-Ap[j],2); dm += Math.pow(v-Am[j],2); });
+    r._dp = Math.sqrt(dp);
+    r._dm = Math.sqrt(dm);
+  });
+
+  // ── Step 8: Closeness coefficient → score ──────────────────────
+  // C = D⁻ / (D⁺ + D⁻) × 100  ;  C=100 → closest to ideal best
+  active.forEach(function(r) {
+    var denom    = r._dp + r._dm;
+    r.eoScore    = denom > 0
+      ? Math.min(100, Math.max(0, Math.round(r._dm / denom * 100)))
+      : 50;
+    r.eoScoreBreakdown = EO_SCORE_WEIGHTS
+      .map(function(cfg, j){ return cfg.label + ': ' + r._mPct[j] + '%ile'; })
+      .join(' | ');
+  });
+
+  // ── Step 9: Rank by TOPSIS score descending ────────────────────
+  active.slice().sort(function(a,b){ return b.eoScore - a.eoScore; })
+    .forEach(function(r, i){ r.eoRank = i + 1; });
+
+  // Officers with no file movement: score 0, rank last
+  data.filter(function(r){ return r.noData; }).forEach(function(r){
+    r.eoScore=0; r.eoRank=active.length+1;
+    r.eoScoreBreakdown='No file movement data'; r._mPct=[];
+  });
+}
+
+function eoScoreBadge(score, noData) {
+  if (noData) return '<span style="font-size:11px;color:#94a3b8;">—</span>';
+  var bg, fg;
+  if      (score >= 80) { bg='#f0fdf4'; fg='#166534'; }
+  else if (score >= 60) { bg='#eff6ff'; fg='#1d4ed8'; }
+  else if (score >= 40) { bg='#fffbeb'; fg='#92400e'; }
+  else                  { bg='#fef2f2'; fg='#991b1b'; }
+  return '<span style="display:inline-block;font-size:13px;font-weight:900;background:' + bg +
+         ';color:' + fg + ';border-radius:8px;padding:2px 10px;letter-spacing:0.2px;">' + score + '</span>';
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  var dt = new Date(d);
+  if (isNaN(dt.getTime())) return String(d);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+}
+
+function fmtMins(mins) {
+  if (mins == null) return '—';
+  var total = Math.round(parseFloat(mins));
+  if (isNaN(total) || total < 0) return '—';
+  var d = Math.floor(total / 1440);
+  var h = Math.floor((total % 1440) / 60);
+  var m = total % 60;
+  var parts = [];
+  if (d > 0) parts.push(d + ' Day' + (d !== 1 ? 's' : ''));
+  if (h > 0) parts.push(h + ' Hr'  + (h !== 1 ? 's' : ''));
+  if (m > 0 || parts.length === 0) parts.push(m + ' Min' + (m !== 1 ? 's' : ''));
+  return parts.join(' ');
+}
+
+async function loadEofficeTable() {
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var tbody = document.getElementById('eoTbody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="eo-empty">&#8987; Loading&hellip;</td></tr>';
+
+  try {
+    // Fetch eoffice data, officer metadata, and post-date ranges in parallel
+    var results = await Promise.all([
+      _supabase
+        .from('eoffice_live_data')
+        .select('identity_no,data_date,opening_balance,files_received,files_processed,files_pending,avg_time_mins,median_time_mins')
+        .eq('service_type', svc)
+        .order('data_date', { ascending: false }),
+      _supabase
+        .from('officers')
+        .select('id,identity_no,name_of_officer,cadre,source_of_recruitment,domicile,post_type,photo_url,current_posting')
+        .eq('service_type', svc)
+        .eq('is_retired', false)
+        .eq('is_transferred_from_ap', false),
+      _supabase
+        .from('officer_post_dates')
+        .select('identity_no,from_date,to_date')
+        .order('identity_no')
+        .order('from_date')
+    ]);
+
+    var eoResult  = results[0];
+    var ofrResult = results[1];
+    var pdResult  = results[2];
+
+    if (eoResult.error)  throw new Error('eoffice_live_data: ' + eoResult.error.message);
+    if (ofrResult.error) throw new Error('officers: ' + ofrResult.error.message);
+    // pdResult error is non-fatal — scoring just uses 0 days if table is absent/empty
+
+    // Build officer metadata map (for filtering)
+    _eoNameMap = {};
+    _eoOfficerMap = {};
+    (ofrResult.data || []).forEach(function(o) {
+      if (!o.identity_no) return;
+      var key = String(o.identity_no);
+      _eoNameMap[key] = o.name_of_officer || '';
+      _eoOfficerMap[key] = {
+        officerId:      o.id || 0,
+        name:           o.name_of_officer       || '',
+        cadre:          (o.cadre                || '').trim(),
+        source:         (o.source_of_recruitment|| '').trim(),
+        domicile:       (o.domicile             || '').trim(),
+        postType:       (o.post_type            || '').trim(),
+        photoUrl:       o.photo_url             || '',
+        currentPosting: (o.current_posting      || '').trim()
+      };
+    });
+
+    // Build unique-days map: group officer_post_dates by identity_no
+    // then merge overlapping intervals to count each calendar day once
+    var _pdGrouped = {};
+    if (!pdResult.error && pdResult.data) {
+      pdResult.data.forEach(function(row) {
+        var k = String(row.identity_no);
+        if (!_pdGrouped[k]) _pdGrouped[k] = [];
+        _pdGrouped[k].push(row);
+      });
+    }
+    var _uniqueDaysMap = {};
+    Object.keys(_pdGrouped).forEach(function(k) {
+      _uniqueDaysMap[k] = computeUniqueDays(_pdGrouped[k]);
+    });
+
+    // Use latest date per officer (rows already ordered desc by date)
+    var seen = {};
+    _eoData = [];
+    (eoResult.data || []).forEach(function(row) {
+      var key = String(row.identity_no);
+      if (!seen[key]) {
+        seen[key] = true;
+        _eoData.push({
+          identity_no:      key,
+          officer_id:       (_eoOfficerMap[key] || {}).officerId || 0,
+          name:             _eoNameMap[key] || key,
+          data_date:        row.data_date,
+          opening_balance:  row.opening_balance  || 0,
+          files_received:   row.files_received   || 0,
+          files_processed:  row.files_processed  || 0,
+          files_pending:    row.files_pending     || 0,
+          avg_time_mins:    row.avg_time_mins     != null ? parseFloat(row.avg_time_mins)    : null,
+          median_time_mins: row.median_time_mins  != null ? parseFloat(row.median_time_mins) : null,
+          unique_days:      _uniqueDaysMap[key]   || 0
+        });
+      }
+    });
+
+    // Append officers with NO eoffice data entry for this period
+    Object.keys(_eoOfficerMap).forEach(function(key) {
+      if (!seen[key]) {
+        _eoData.push({
+          identity_no:      key,
+          officer_id:       _eoOfficerMap[key].officerId || 0,
+          name:             _eoOfficerMap[key].name || key,
+          data_date:        null,
+          opening_balance:  0,
+          files_received:   0,
+          files_processed:  0,
+          files_pending:    0,
+          avg_time_mins:    null,
+          median_time_mins: null,
+          unique_days:      _uniqueDaysMap[key] || 0,
+          noData:           true
+        });
+      }
+    });
+
+    // Update date label from most recent row that has data
+    var eoDateEl = document.getElementById('eoDateLabel');
+    if (eoDateEl) {
+      var firstWithDate = _eoData.find(function(r) { return r.data_date; });
+      eoDateEl.textContent = firstWithDate ? '— ' + firstWithDate.data_date : '';
+    }
+
+    renderEofficeTable();
+  } catch(err) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="eo-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
+  }
+}
+
+function renderEofficeTable() {
+  // Apply top-bar filters
+  var cadreVal    = (document.getElementById('fCadre')?.value      || '').trim();
+  var sourceVal   = (document.getElementById('fSource')?.value     || '').trim();
+  var domVal      = (document.getElementById('fDomicile')?.value   || '').trim();
+  var postTypeVal = (document.getElementById('fPostType')?.value   || '').trim();
+  var nameVal     = (document.getElementById('searchName360')?.value || '').trim().toLowerCase();
+
+  var data = _eoData.filter(function(r) {
+    var om = _eoOfficerMap[r.identity_no] || {};
+    if (cadreVal    && om.cadre    !== cadreVal)    return false;
+    if (sourceVal   && om.source   !== sourceVal)   return false;
+    if (domVal      && om.domicile !== domVal)       return false;
+    if (postTypeVal && om.postType !== postTypeVal)  return false;
+    if (nameVal     && r.name.toLowerCase().indexOf(nameVal) === -1) return false;
+    return true;
+  });
+
+  // Recompute scores for the current filtered peer group
+  computeEoScores(data);
+
+  var col    = _eoSortCol;
+  var dir    = _eoSortDir;
+
+  // Sort
+  data.sort(function(a, b) {
+    var av = a[col], bv = b[col];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return dir === 'asc' ? -1 :  1;
+    if (av > bv) return dir === 'asc' ?  1 : -1;
+    return 0;
+  });
+
+  // Update sort header indicators
+  document.querySelectorAll('#eoTable th[data-col]').forEach(function(th) {
+    th.classList.remove('sort-asc', 'sort-desc');
+    var ico = th.querySelector('.sort-icon');
+    if (ico) ico.innerHTML = '&#9651;';
+    if (th.dataset.col === col) {
+      th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+      if (ico) ico.innerHTML = dir === 'asc' ? '&#9650;' : '&#9660;';
+    }
+  });
+
+  // Compute colour thresholds for pending and time
+  var pendingVals = data.map(function(r){ return r.files_pending; }).filter(function(v){ return v > 0; }).sort(function(a,b){return a-b;});
+  var p33 = pendingVals[Math.floor(pendingVals.length * 0.33)] || 0;
+  var p66 = pendingVals[Math.floor(pendingVals.length * 0.66)] || 0;
+  var timeVals = data.map(function(r){ return r.avg_time_mins; }).filter(function(v){ return v != null; }).sort(function(a,b){return a-b;});
+  var t66 = timeVals[Math.floor(timeVals.length * 0.66)] || 0;
+
+  var tbody = document.getElementById('eoTbody');
+  if (!data.length) {
+    var svc2 = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+    tbody.innerHTML = '<tr><td colspan="11" class="eo-empty">No e-Office data found for <strong>' + svc2 + '</strong> on the latest date.<br><span style="font-size:11px;color:#94a3b8;">Check: RLS policy on eoffice_live_data, or run seed_eoffice_live_20260605.sql</span></td></tr>';
+    var cnt = document.getElementById('eoRowCount');
+    if (cnt) cnt.textContent = '0 officers';
+    return;
+  }
+
+  var cnt = document.getElementById('eoRowCount');
+  var withData = data.filter(function(r){ return !r.noData; }).length;
+  var noDataCount = data.length - withData;
+  if (cnt) cnt.textContent = withData + ' officers' + (noDataCount > 0 ? '  •  ' + noDataCount + ' no movement' : '');
+
+  var rows = data.map(function(r, idx) {
+    var om       = _eoOfficerMap[r.identity_no] || {};
+    var idEsc    = _eoEsc(r.identity_no).replace(/'/g, "\\'");
+    var nmEsc    = _eoEsc(r.name).replace(/'/g, "\\'");
+    var photoHtml = om.photoUrl
+      ? '<img src="' + _eoEsc(om.photoUrl) + '" class="eo-thumb" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="eo-thumb-ph" style="display:none;">&#128100;</span>'
+      : '<span class="eo-thumb-ph">&#128100;</span>';
+    var slCell   = '<td class="eo-slno">' + (idx + 1) + '</td>';
+    var photoCell = '<td class="eo-photo-cell">' + photoHtml + '</td>';
+
+    if (r.noData) {
+      return '<tr class="eo-row-nodata" title="Click to view post-wise details" onclick="openEoPostPopup(\'' + idEsc + '\',\'' + nmEsc + '\')">' +
+        slCell + photoCell +
+        '<td class="eo-name">' + _eoEsc(r.name) + '</td>' +
+        '<td colspan="8" class="eo-no-movement-cell">&#9888;&nbsp; No File Movement recorded for this officer in the uploaded period</td>' +
+        '</tr>';
+    }
+
+    var pCls = r.files_pending === 0 ? 'eo-pending-low' : (r.files_pending > p66 ? 'eo-pending-high' : (r.files_pending > p33 ? 'eo-pending-mid' : 'eo-pending-low'));
+    var tCls = r.avg_time_mins == null ? '' : (r.avg_time_mins > t66 ? 'eo-time-slow' : 'eo-time-fast');
+    var at   = fmtMins(r.avg_time_mins);
+    var mt   = fmtMins(r.median_time_mins);
+    return '<tr title="Click to view post-wise details" onclick="openEoPostPopup(\'' + idEsc + '\',\'' + nmEsc + '\')">' +
+      slCell + photoCell +
+      '<td class="eo-name" title="' + _eoEsc(r.name) + '">' + _eoEsc(r.name) + '</td>' +
+      '<td class="eo-num">' + r.opening_balance.toLocaleString()  + '</td>' +
+      '<td class="eo-num">' + r.files_received.toLocaleString()   + '</td>' +
+      '<td class="eo-num">' + r.files_processed.toLocaleString()  + '</td>' +
+      '<td class="eo-num"><span class="' + pCls + '">' + r.files_pending.toLocaleString() + '</span></td>' +
+      '<td class="eo-time ' + tCls + '">' + at + '</td>' +
+      '<td class="eo-time">' + mt + '</td>' +
+      '<td style="text-align:center;" title="' + _eoEsc(r.eoScoreBreakdown || '') + '">' + eoScoreBadge(r.eoScore, false) + '</td>' +
+      '<td style="text-align:center;font-weight:800;color:#4338ca;">' + (r.eoRank || '—') + '</td>' +
+      '</tr>';
+  });
+
+  tbody.innerHTML = rows.join('');
+}
+
+window.sortEoffice = function(col) {
+  if (_eoSortCol === col) {
+    _eoSortDir = _eoSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _eoSortCol = col;
+    _eoSortDir = (col === 'officer_id' || col === 'name' || col === 'eoRank') ? 'asc' : 'desc';
+  }
+  renderEofficeTable();
+};
+
+// ================================================================
+// e-Office Post-wise POPUP (opens on row click)
+// ================================================================
+window.openEoPostPopup = async function (identityNo, officerName) {
+  var popup = document.getElementById('eoPostPopup');
+  var tbody = document.getElementById('eoPostPopupTbody');
+  var svc   = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var om    = _eoOfficerMap[identityNo] || {};
+
+  document.getElementById('eoPostPopupName').textContent = officerName || identityNo;
+  document.getElementById('eoPostPopupId').textContent   = 'Identity No: ' + identityNo;
+  document.getElementById('eoPostPopupPost').innerHTML = om.currentPosting
+    ? '&#128203;&nbsp;' + _eoEsc(om.currentPosting) : '';
+  document.getElementById('eoPostPopupMeta').textContent = [om.cadre, om.postType, om.domicile].filter(Boolean).join('  •  ');
+
+  // Set photo
+  var wrap = document.getElementById('eoPostPopupPhotoWrap');
+  if (om.photoUrl) {
+    wrap.innerHTML = '<img src="' + _eoEsc(om.photoUrl) + '" alt="' + _eoEsc(officerName) + '" onerror="this.parentNode.innerHTML=\'<span class=eo-post-photo-ph>&#128100;</span>\'">';
+  } else {
+    wrap.innerHTML = '<span class="eo-post-photo-ph">&#128100;</span>';
+  }
+
+  tbody.innerHTML = '<tr><td colspan="7" class="eo-post-empty">&#8987; Loading post-wise data&hellip;</td></tr>';
+  popup.classList.add('open');
+
+  try {
+    // Fetch e-office post metrics, table access check, and post date ranges in parallel
+    var bothResults = await Promise.all([
+      _supabase
+        .from('eoffice_live_post')
+        .select('post_name,opening_balance,files_received,files_processed,files_pending,avg_time_mins,median_time_mins,data_date')
+        .eq('identity_no', identityNo)
+        .order('data_date', { ascending: false })
+        .order('post_name'),
+      _supabase
+        .from('eoffice_live_post')
+        .select('identity_no')
+        .limit(1),
+      _supabase
+        .from('officer_post_dates')
+        .select('post_name,from_date,to_date')
+        .eq('identity_no', identityNo)
+        .order('from_date', { ascending: false })
+    ]);
+
+    var result      = bothResults[0];
+    var sampleCheck = bothResults[1];
+    var pdResult    = bothResults[2];
+
+    // Console diagnostics
+    console.log('[eoPost] metrics →', result.error || (result.data.length + ' rows'));
+    console.log('[eoPost] post dates →', pdResult.error || ((pdResult.data || []).length + ' rows'));
+
+    if (result.error) throw result.error;
+    var rows = result.data || [];
+
+    // Keep only latest date per post_name
+    var seen = {}, filtered = [];
+    rows.forEach(function(r) {
+      if (!seen[r.post_name]) { seen[r.post_name] = true; filtered.push(r); }
+    });
+
+    // Build post-date map: post_name → most recent {from_date, to_date}
+    var postDateMap = {};
+    if (!pdResult.error && pdResult.data) {
+      pdResult.data.forEach(function(pd) {
+        if (!postDateMap[pd.post_name]) {
+          postDateMap[pd.post_name] = pd; // already ordered desc by from_date
+        }
+      });
+    }
+
+    if (!filtered.length) {
+      var tableAccessible = !sampleCheck.error && sampleCheck.data && sampleCheck.data.length > 0;
+      var msg;
+      if (!tableAccessible) {
+        msg = '&#128274; Cannot read <strong>eoffice_live_post</strong> — RLS policy may be missing.<br>' +
+              '<span style="font-size:11px;color:#94a3b8;">Run <strong>supabase_rls_fix_all.sql</strong> in Supabase SQL Editor, then refresh.</span>';
+      } else {
+        msg = 'No post-wise entries found for Identity No: <strong>' + _eoEsc(identityNo) + '</strong><br>' +
+              '<span style="font-size:11px;color:#94a3b8;">Check that identity_no in eoffice_live_post matches exactly (case-sensitive).</span>';
+      }
+      tbody.innerHTML = '<tr><td colspan="9" class="eo-post-empty">' + msg + '</td></tr>';
+      return;
+    }
+
+    var pendingVals = filtered.map(function(r){ return r.files_pending || 0; }).sort(function(a,b){return a-b;});
+    var p66 = pendingVals[Math.floor(pendingVals.length * 0.66)] || 0;
+
+    tbody.innerHTML = filtered.map(function(r) {
+      var pCls = (r.files_pending||0) === 0 ? 'eo-pending-low' : ((r.files_pending||0) > p66 ? 'eo-pending-high' : 'eo-pending-mid');
+      var at   = fmtMins(r.avg_time_mins);
+      var mt   = fmtMins(r.median_time_mins);
+      var pd        = postDateMap[r.post_name] || {};
+      var startDate = pd.from_date ? fmtDate(pd.from_date) : '—';
+      var endDate   = pd.to_date   ? fmtDate(pd.to_date)   : (pd.from_date ? '<em style="color:#059669;font-style:normal;font-weight:700;">Present</em>' : '—');
+      return '<tr>' +
+        '<td style="font-weight:600;color:#1e1b4b;">' + _eoEsc(r.post_name) + '</td>' +
+        '<td style="font-size:11px;">' + startDate + '</td>' +
+        '<td style="font-size:11px;">' + endDate   + '</td>' +
+        '<td>' + (r.opening_balance||0).toLocaleString()  + '</td>' +
+        '<td>' + (r.files_received ||0).toLocaleString()  + '</td>' +
+        '<td>' + (r.files_processed||0).toLocaleString()  + '</td>' +
+        '<td><span class="' + pCls + '">' + (r.files_pending||0).toLocaleString() + '</span></td>' +
+        '<td>' + at + '</td>' +
+        '<td>' + mt + '</td>' +
+        '</tr>';
+    }).join('');
+  } catch(err) {
+    tbody.innerHTML = '<tr><td colspan="7" class="eo-post-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
+  }
+};
+
+// ── Score methodology modal ────────────────────────────────────────
+window.openEoScoreModal = function () {
+  var el = document.getElementById('eoScoreMetricRows');
+  if (el && !el.children.length) {
+    el.innerHTML = EO_SCORE_WEIGHTS.map(function(cfg, i) {
+      var pct  = Math.round(cfg.w * 100);
+      var dirHtml = cfg.dir === 1
+        ? '<span class="eo-score-dir eo-score-dir-up">&#8593; Higher better</span>'
+        : '<span class="eo-score-dir eo-score-dir-dn">&#8595; Lower better</span>';
+      return '<div class="eo-score-metric-row">' +
+        '<div class="eo-score-wt"><span class="eo-score-wt-num">' + pct + '</span><span class="eo-score-wt-pct">% weight</span></div>' +
+        '<div class="eo-score-minfo">' +
+          '<div class="eo-score-mname">' + (i + 1) + '. ' + cfg.label + '</div>' +
+          '<div class="eo-score-mformula">' + _eoEsc(cfg.formula) + '</div>' +
+        '</div>' + dirHtml + '</div>';
+    }).join('');
+  }
+  document.getElementById('eoScoreModal').classList.add('open');
+};
+
+window.closeEoScoreModal = function () {
+  document.getElementById('eoScoreModal').classList.remove('open');
+};
+
+document.getElementById('eoScoreModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEoScoreModal();
+});
+
+window.closeEoPostPopup = function () {
+  document.getElementById('eoPostPopup').classList.remove('open');
+};
+
+// Close on backdrop click
+document.getElementById('eoPostPopup').addEventListener('click', function(e) {
+  if (e.target === this) closeEoPostPopup();
+});
+
+</script>
+
+<script src="script_360_live.js"></script>
+<script src="voice_360.js"></script>
+</body>
+</html>
