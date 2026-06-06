@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoI (CSS) Funds Utilization — Scoring Methodology</title>
+<link rel="stylesheet" href="responsive_fit.css">
+<style>
+  :root{ --teal:#0f766e; --teal-d:#134e4a; --ink:#0f172a; --mut:#475569; --line:#cbd5e1;
+         --soft:#f0fdfa; --soft-b:#99f6e4; --warn:#fffbeb; --warn-b:#fde68a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Segoe UI',Inter,Arial,sans-serif; color:var(--ink);
+        background:#eef2f7; line-height:1.65; }
+  .wrap{ max-width:980px; margin:0 auto; padding:0 22px 80px; }
+  header.hero{ background:linear-gradient(135deg,#0d9488 0%,#0ea5e9 55%,#22c55e 100%);
+        color:#fff; padding:38px 22px 30px; }
+  header.hero .inner{ max-width:980px; margin:0 auto; }
+  header.hero h1{ margin:0 0 6px; font-size:27px; letter-spacing:0.2px; }
+  header.hero p{ margin:0; font-size:14px; opacity:0.95; }
+  h2{ margin:38px 0 10px; font-size:20px; color:var(--teal-d); border-bottom:2px solid var(--soft-b);
+      padding-bottom:6px; }
+  h3{ margin:24px 0 6px; font-size:16px; color:var(--teal); }
+  p,li{ font-size:14.3px; color:#1e293b; }
+  code,.var{ background:#0f172a; color:#7dd3fc; padding:1px 7px; border-radius:5px; font-size:13px;
+        font-family:'Consolas',monospace; }
+  .formula{ background:#0b1220; color:#e2e8f0; border-radius:12px; padding:16px 20px; margin:14px 0;
+        font-family:'Consolas','Courier New',monospace; font-size:14.5px; overflow-x:auto; line-height:1.9; }
+  .formula b{ color:#5eead4; }
+  .formula .hi{ color:#fde047; }
+  .note{ background:var(--soft); border:1px solid var(--soft-b); border-left:5px solid var(--teal);
+        border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:var(--teal-d); }
+  .warn{ background:var(--warn); border:1px solid var(--warn-b); border-left:5px solid #d97706;
+        border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:#78350f; }
+  table{ border-collapse:collapse; width:100%; margin:14px 0; font-size:13.3px; background:#fff;
+        border-radius:10px; overflow:hidden; box-shadow:0 1px 8px rgba(15,23,42,0.08); }
+  th,td{ border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top; }
+  th{ background:var(--teal-d); color:#fff; font-weight:700; }
+  tbody tr:nth-child(even){ background:#f8fafc; }
+  .pill{ display:inline-block; background:var(--teal); color:#fff; font-size:11px; font-weight:700;
+        padding:2px 9px; border-radius:20px; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 22px; margin:24px 0;
+        box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .toc a{ color:var(--teal); text-decoration:none; }
+  .toc a:hover{ text-decoration:underline; }
+  .toc ol{ margin:6px 0 0; padding-left:22px; } .toc li{ margin:3px 0; }
+  .ex{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:6px 20px 16px; margin:14px 0;
+        box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .ex h4{ color:var(--teal-d); margin:16px 0 6px; font-size:14.5px; }
+  .good{ color:#15803d; font-weight:700; } .bad{ color:#b91c1c; font-weight:700; }
+  dt{ font-weight:700; color:var(--teal-d); margin-top:12px; }
+  dd{ margin:2px 0 0; padding-left:0; color:#334155; font-size:13.8px; }
+  .foot{ margin-top:46px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--mut); }
+  @media print{ body{ background:#fff; } header.hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="inner">
+    <h1>🏦 GoI (CSS) Funds Utilization — Scoring Methodology</h1>
+    <p>How each AIS officer's GoI Centrally-Sponsored-Scheme fund performance is converted into a fair, unbiased score out of 100.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="toc">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; design principles</a></li>
+      <li><a href="#data">The raw data &amp; what each field means</a></li>
+      <li><a href="#mapping">Mapping funds to an officer (Office Status)</a></li>
+      <li><a href="#indicators">Step 1 — The four performance indicators</a></li>
+      <li><a href="#weights">Step 2 &amp; 3 — Weights &amp; the efficiency composite</a></li>
+      <li><a href="#tenure">Step 4 — Tenure-proportional weighting</a></li>
+      <li><a href="#difficulty">Step 5 — Fund-size (difficulty) normalization</a></li>
+      <li><a href="#final">Step 6 — The final score</a></li>
+      <li><a href="#district">District posts — handling only two fields</a></li>
+      <li><a href="#examples">Worked numerical examples</a></li>
+      <li><a href="#glossary">Glossary of statistical &amp; scientific terms</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="purpose">1 · Purpose &amp; design principles</h2>
+  <p>The Government of India releases funds for <b>Centrally Sponsored Schemes (CSS)</b> — roads, schools,
+  sanitation, welfare, etc. An officer's job is to <b>draw that money down, route it to the field, and spend
+  it on real outcomes</b> without letting it sit idle. This score measures exactly that.</p>
+  <p>Four principles guide the design:</p>
+  <table>
+    <thead><tr><th>Principle</th><th>What it means</th><th>How we achieve it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Efficiency, not raw amount</b></td><td>Spending ₹100 of ₹100 is perfect; spending ₹100 of ₹1,000 is poor.</td><td>Every indicator is a <b>ratio (percentage)</b>, so it is scale-free.</td></tr>
+      <tr><td><b>Difficulty matters</b></td><td>Spending a tiny fund well is <i>easier</i> than spending a huge fund well.</td><td>A <b>log-scaled volume factor</b> rewards larger funds (Step 5).</td></tr>
+      <tr><td><b>Time matters</b></td><td>An officer who held a post for 2 years owns its results more than one who held it 2 weeks.</td><td><b>Tenure-weighting</b> by days in post (Step 4).</td></tr>
+      <tr><td><b>Bounded &amp; comparable</b></td><td>Every officer must land on the same 0–100 ruler.</td><td>Each ratio is capped to [0, 100]; the composite is a weighted mean.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 2 -->
+  <h2 id="data">2 · The raw data &amp; what each field means</h2>
+  <p>Two source tables feed the score. All amounts are stored and shown in <b>₹ Crores</b>.</p>
+
+  <h3>A · Secretariat / HoD table <span class="pill">full detail</span></h3>
+  <p>Used for head-office posts. Each row is one scheme under one department/HoD:</p>
+  <table>
+    <thead><tr><th>Field</th><th>Symbol</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>GoI Allocation</td><td class="var">A</td><td>Total money the Centre <b>sanctioned</b> for the scheme.</td></tr>
+      <tr><td>Funds Transferred by GoI</td><td class="var">T</td><td>Money the Centre actually <b>released</b> for implementation.</td></tr>
+      <tr><td>Funds with Implementing Agencies</td><td class="var">I</td><td>Money currently <b>parked with agencies</b>, ready to be used.</td></tr>
+      <tr><td>Expenditure</td><td class="var">E</td><td>Money actually <b>spent</b> on the ground.</td></tr>
+      <tr><td>Untapped funds from GoI</td><td class="var">U</td><td>Sanctioned money <b>never drawn down</b> (left at the Centre).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>B · District table <span class="pill">two fields only</span></h3>
+  <p>Used for district-status posts. Aggregated <b>by district, irrespective of department</b>:</p>
+  <table>
+    <thead><tr><th>Field</th><th>Symbol</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Funds Available</td><td class="var">FA</td><td>Money in hand at the district for all schemes.</td></tr>
+      <tr><td>Expenditure</td><td class="var">E</td><td>Money actually spent in the district.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 3 -->
+  <h2 id="mapping">3 · Mapping funds to an officer (Office Status)</h2>
+  <p>An officer holds a sequence of <b>posts</b> over time. Each post carries an <b>Office Status</b> that decides
+  which fund rows belong to that post:</p>
+  <table>
+    <thead><tr><th>Office Status</th><th>Funds attributed to the post</th><th>Source table</th></tr></thead>
+    <tbody>
+      <tr><td><b>Secretariat</b></td><td>All schemes of that <b>Department</b>.</td><td>Sec/HoD table</td></tr>
+      <tr><td><b>HoD</b></td><td>All schemes whose <b>HoD</b> matches the post.</td><td>Sec/HoD table</td></tr>
+      <tr><td><b>HoD — Chief Secretary</b></td><td>Special case: <b>every</b> scheme (whole-of-government).</td><td>Sec/HoD table</td></tr>
+      <tr><td><b>District</b></td><td>All schemes in that <b>district</b>, any department.</td><td>District table</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Only officers present in the <b>Officers master table</b> are scored. If fund data exists for someone
+  not yet in the master, it stays hidden until that officer is added.</div>
+
+  <!-- 4 -->
+  <h2 id="indicators">4 · Step 1 — The four performance indicators</h2>
+  <p>For a <b>Secretariat/HoD</b> post we compute four efficiency ratios from its aggregated funds
+  (<span class="var">A, T, I, E, U</span>). Each is a percentage and capped to the range 0–100.</p>
+
+  <h3>A · Allocation Utilization Efficiency (AUE) — the headline test</h3>
+  <div class="formula"><b>AUE</b> = ( <span class="hi">Expenditure</span> ÷ <span class="hi">GoI Allocation</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( E ÷ A ) × 100</div>
+  <p>Of <i>everything</i> the Centre sanctioned, how much became real spending? This single ratio captures both
+  drawing the money <i>and</i> spending it, which is why it carries the highest weight.</p>
+
+  <h3>B · Fund Utilization Efficiency (FUE)</h3>
+  <div class="formula"><b>FUE</b> = ( <span class="hi">Expenditure</span> ÷ <span class="hi">Funds with Agencies</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( E ÷ I ) × 100</div>
+  <p>Of the money already <i>in agencies' hands</i>, how much was actually put to work rather than parked?</p>
+
+  <h3>C · Fund Transfer Efficiency (FTE)</h3>
+  <div class="formula"><b>FTE</b> = ( <span class="hi">Funds Transferred</span> ÷ <span class="hi">GoI Allocation</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( T ÷ A ) × 100</div>
+  <p>Of the money <i>promised</i>, how much did the officer succeed in drawing down? Leaving money at the Centre is a missed opportunity.</p>
+
+  <h3>D · Untapped Fund Score (UFS)</h3>
+  <p>First the <b>Untapped Funds Ratio</b> (lower is better):</p>
+  <div class="formula"><b>UFR</b> = ( <span class="hi">Untapped Funds</span> ÷ <span class="hi">Funds Transferred</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( U ÷ T ) × 100</div>
+  <p>Because a <i>lower</i> UFR is good, we flip it into a positive "higher-is-better" score:</p>
+  <div class="formula"><b>UFS</b> = 100 − UFR</div>
+  <div class="note"><b>Direction matters.</b> AUE, FUE, FTE and UFS are all "<b>higher is better</b>" after this flip,
+  so they can be safely blended in one weighted sum.</div>
+
+  <!-- 5 -->
+  <h2 id="weights">5 · Steps 2 &amp; 3 — Weights &amp; the efficiency composite</h2>
+  <p>The four indicators are combined by importance. Expenditure-against-allocation is the most consequential,
+  idle/untapped money the least:</p>
+  <table>
+    <thead><tr><th>Indicator</th><th>Symbol</th><th>Weight</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td>Allocation Utilization Efficiency</td><td>AUE</td><td><b>40%</b></td><td>End-to-end outcome — sanction to spending.</td></tr>
+      <tr><td>Fund Utilization Efficiency</td><td>FUE</td><td><b>30%</b></td><td>Did money in hand get used?</td></tr>
+      <tr><td>Fund Transfer Efficiency</td><td>FTE</td><td><b>20%</b></td><td>Did the officer draw the money down?</td></tr>
+      <tr><td>Untapped Fund Score</td><td>UFS</td><td><b>10%</b></td><td>Penalty for leaving sanctioned money behind.</td></tr>
+      <tr><td colspan="2"><b>Total</b></td><td><b>100%</b></td><td></td></tr>
+    </tbody>
+  </table>
+  <div class="formula"><b>Efficiency (ES)</b> = <span class="hi">0.40</span>·AUE + <span class="hi">0.30</span>·FUE + <span class="hi">0.20</span>·FTE + <span class="hi">0.10</span>·UFS</div>
+  <p>Because every term is already on a 0–100 scale and the weights sum to 1, the composite <span class="var">ES</span>
+  is automatically a number between <b>0 and 100</b> — no extra rescaling needed.</p>
+
+  <!-- 6 -->
+  <h2 id="tenure">6 · Step 4 — Tenure-proportional weighting</h2>
+  <p>An officer typically held several relevant posts. We do <b>not</b> treat them equally — a post held for two
+  years should count far more than one held for two weeks. So we compute each post's efficiency
+  <span class="var">ES<sub>p</sub></span> separately and take a <b>days-weighted average</b>:</p>
+  <div class="formula"><b>Officer ES</b> = Σ ( <span class="hi">ES<sub>p</sub> × days<sub>p</sub></span> ) ÷ Σ ( <span class="hi">days<sub>p</sub></span> )</div>
+  <p>where <span class="var">days<sub>p</sub></span> is the number of days the officer held post <i>p</i>
+  (from its <i>from-date</i> to its <i>to-date</i>, or to today if still serving). This is a classic
+  <b>weighted arithmetic mean</b>, the same technique used for the Public Perception and Swarnandhra KPI scores.</p>
+  <div class="note">Posts that carry <b>no</b> GoI funds (e.g. an unrelated posting) are skipped entirely — they neither
+  help nor hurt the score.</div>
+
+  <!-- 7 -->
+  <h2 id="difficulty">7 · Step 5 — Fund-size (difficulty) normalization</h2>
+  <p class="warn" style="font-size:14.3px;">⚖️ <b>The core fairness rule you asked for:</b> spending a small fund fully is
+  <i>easy</i>; spending a very large fund fully is <i>hard</i>. Two officers who both achieve 100% efficiency are
+  <b>not</b> equal if one managed ₹5 Crore and the other ₹5,000 Crore.</p>
+  <p>The efficiency ratios above are deliberately scale-free, so on their own they would treat those two officers
+  identically. To correct this we multiply each officer's efficiency by a <b>difficulty (volume) factor</b> derived
+  from the <b>total funds they were responsible for</b> (<span class="var">V</span> = total Allocation / Funds Available).</p>
+
+  <h3>Why a logarithm?</h3>
+  <p>Fund sizes are extremely skewed — a few officers handle thousands of crores, most handle far less. A raw
+  proportion would let one giant department dwarf everyone. Taking the <b>natural logarithm</b>
+  <span class="var">ln(V)</span> compresses that range so differences in <i>order of magnitude</i> (₹10 Cr vs
+  ₹100 Cr vs ₹1,000 Cr) are rewarded smoothly, without a single mega-fund hijacking the scale.</p>
+
+  <h3>Min–max normalization to a 0–1 weight</h3>
+  <p>Across the officers currently on screen, we map the smallest log-fund to 0 and the largest to 1:</p>
+  <div class="formula"><b>VW</b> = ( <span class="hi">ln(V) − ln(V<sub>min</sub>)</span> ) ÷ ( <span class="hi">ln(V<sub>max</sub>) − ln(V<sub>min</sub>)</span> )&nbsp;&nbsp;∈ [0, 1]</div>
+  <p>We then convert this to a multiplier that never drops below a floor, so a small-fund officer is
+  <b>discounted but not erased</b>:</p>
+  <div class="formula"><b>Difficulty factor</b> = <span class="hi">0.70</span> + ( 1 − 0.70 ) × VW&nbsp;&nbsp;∈ [0.70, 1.00]</div>
+  <ul>
+    <li>The officer handling the <b>largest</b> fund gets the full <b>×1.00</b>.</li>
+    <li>The officer handling the <b>smallest</b> fund gets <b>×0.70</b> — a 30% discount, reflecting the lower difficulty.</li>
+    <li>Everyone else scales smoothly in between.</li>
+  </ul>
+  <div class="note">The 0.70 floor is a deliberate choice: it ensures a genuinely excellent small-fund manager still
+  scores respectably, while a large-fund manager who performs equally well is ranked above them.</div>
+
+  <!-- 8 -->
+  <h2 id="final">8 · Step 6 — The final score</h2>
+  <div class="formula"><b>GoI Funds Score</b> = <span class="hi">Officer ES</span> × <span class="hi">Difficulty factor</span>&nbsp;&nbsp;(capped to 0–100)</div>
+  <p>Officers are then ranked by this score. Because the difficulty factor uses the <b>on-screen cohort</b>, the
+  comparison stays fair whenever you filter by cadre, source, domicile or post-type — everyone is always judged
+  against the group currently visible.</p>
+
+  <!-- 9 -->
+  <h2 id="district">9 · District posts — handling only two fields</h2>
+  <p>District data has <b>only two numbers</b>: Funds Available (<span class="var">FA</span>) and Expenditure
+  (<span class="var">E</span>). We therefore cannot compute FTE (no allocation-vs-transfer split), nor FUE, nor
+  untapped funds. The honest, defensible approach is a <b>single indicator</b> that mirrors the headline AUE:</p>
+  <div class="formula"><b>DUE</b> (District Utilization Efficiency) = ( <span class="hi">Expenditure</span> ÷ <span class="hi">Funds Available</span> ) × 100</div>
+  <p>This is treated as that post's efficiency <span class="var">ES<sub>p</sub></span>. It is then:</p>
+  <ul>
+    <li><b>Tenure-weighted</b> exactly like head-office posts (Step 4), and</li>
+    <li><b>Difficulty-scaled</b> using Funds Available as the volume <span class="var">V</span> (Step 5), so a district managing ₹2,000 Cr is not equated with one managing ₹20 Cr.</li>
+  </ul>
+  <div class="note"><b>Mixed careers blend cleanly.</b> If an officer held both head-office <i>and</i> district posts, each
+  post contributes its own efficiency (4-indicator for Sec/HoD, single DUE for District), and the tenure-weighted
+  average naturally combines them into one number before the difficulty factor is applied.</div>
+  <div class="warn"><b>Why not invent the missing district fields?</b> Fabricating "transferred" or "untapped" values we
+  don't have would manufacture false precision. Scoring districts on what is genuinely measured —
+  did the money in hand get spent? — keeps the result honest and comparable.</div>
+
+  <!-- 10 -->
+  <h2 id="examples">10 · Worked numerical examples</h2>
+
+  <div class="ex">
+    <h4>Example 1 — A Secretariat officer (single post, 2 years)</h4>
+    <p>Aggregated scheme funds: A = ₹800 Cr, T = ₹720 Cr, I = ₹300 Cr, E = ₹650 Cr, U = ₹80 Cr.</p>
+    <table>
+      <thead><tr><th>Indicator</th><th>Calculation</th><th>Value</th><th>Weight</th><th>Contribution</th></tr></thead>
+      <tbody>
+        <tr><td>AUE</td><td>650 ÷ 800 × 100</td><td>81.25</td><td>0.40</td><td>32.50</td></tr>
+        <tr><td>FUE</td><td>650 ÷ 300 × 100 → capped</td><td>100.00</td><td>0.30</td><td>30.00</td></tr>
+        <tr><td>FTE</td><td>720 ÷ 800 × 100</td><td>90.00</td><td>0.20</td><td>18.00</td></tr>
+        <tr><td>UFS</td><td>100 − (80 ÷ 720 × 100)</td><td>88.89</td><td>0.10</td><td>8.89</td></tr>
+        <tr><td colspan="4"><b>Efficiency ES</b></td><td><b>89.39</b></td></tr>
+      </tbody>
+    </table>
+    <p>Suppose this officer's ₹800 Cr is mid-large in the cohort, giving <span class="var">VW = 0.80</span>, so
+    Difficulty factor = 0.70 + 0.30×0.80 = <b>0.94</b>.<br>
+    <span class="good">Final score = 89.39 × 0.94 = 84.03 / 100.</span></p>
+  </div>
+
+  <div class="ex">
+    <h4>Example 2 — Why fund size changes everything</h4>
+    <p>Two officers each achieve a <b>perfect efficiency ES = 100</b>:</p>
+    <table>
+      <thead><tr><th>Officer</th><th>Fund handled (V)</th><th>VW (cohort)</th><th>Difficulty factor</th><th>Final score</th></tr></thead>
+      <tbody>
+        <tr><td>Officer X</td><td>₹12 Cr (smallest)</td><td>0.00</td><td>0.70</td><td class="bad">70.0</td></tr>
+        <tr><td>Officer Y</td><td>₹4,500 Cr (largest)</td><td>1.00</td><td>1.00</td><td class="good">100.0</td></tr>
+      </tbody>
+    </table>
+    <p>Both spent every rupee available, yet Officer Y — who did it with a fund <b>375× larger</b> — finishes
+    well ahead. This is precisely the bias-correction requested: <i>spending small money well is not the same
+    as spending big money well.</i></p>
+  </div>
+
+  <div class="ex">
+    <h4>Example 3 — A District Collector (single post)</h4>
+    <p>District aggregate: Funds Available = ₹260 Cr, Expenditure = ₹208 Cr.</p>
+    <div class="formula">DUE = 208 ÷ 260 × 100 = <b>80.0</b>&nbsp;&nbsp;→&nbsp;&nbsp;ES = 80.0</div>
+    <p>If ₹260 Cr gives <span class="var">VW = 0.45</span> in the cohort, Difficulty factor = 0.70 + 0.30×0.45 = 0.835.<br>
+    <span class="good">Final score = 80.0 × 0.835 = 66.8 / 100.</span></p>
+  </div>
+
+  <div class="ex">
+    <h4>Example 4 — Mixed career (tenure blending)</h4>
+    <p>An officer held a Secretariat post for <b>540 days</b> (ES = 89.4) and later a District post for
+    <b>180 days</b> (ES = 80.0).</p>
+    <div class="formula">Officer ES = (89.4 × 540 + 80.0 × 180) ÷ (540 + 180) = (48,276 + 14,400) ÷ 720 = <b>87.05</b></div>
+    <p>The longer, stronger Secretariat tenure rightly dominates. The difficulty factor (from total funds handled)
+    is then applied once to this blended efficiency.</p>
+  </div>
+
+  <!-- 11 -->
+  <h2 id="glossary">11 · Glossary of statistical &amp; scientific terms</h2>
+  <dl>
+    <dt>Efficiency ratio</dt>
+    <dd>An output divided by an input (e.g. Expenditure ÷ Allocation), expressed as a percentage. It is
+    <b>scale-free</b>: it measures <i>how well</i>, independent of <i>how much</i>.</dd>
+
+    <dt>Normalization</dt>
+    <dd>Re-expressing different quantities on one common scale so they can be compared or combined fairly. We use
+    two kinds: capping each ratio to 0–100, and min–max normalizing fund size to a 0–1 weight.</dd>
+
+    <dt>Min–max normalization</dt>
+    <dd>Rescaling values so the smallest becomes 0 and the largest becomes 1, using
+    <span class="var">(x − min) ÷ (max − min)</span>. Used here on the log of fund size.</dd>
+
+    <dt>Logarithm (natural log, ln)</dt>
+    <dd>A function that compresses very large numbers. Because fund sizes span several orders of magnitude, ln keeps
+    one giant fund from dominating, while still rewarding bigger responsibilities.</dd>
+
+    <dt>Weighted arithmetic mean</dt>
+    <dd>An average where some items count more than others. We weight each post's efficiency by its <b>tenure in
+    days</b>, so long postings influence the score more than brief ones.</dd>
+
+    <dt>Difficulty (volume) factor</dt>
+    <dd>A multiplier between 0.70 and 1.00 that scales an officer's efficiency by how large a fund they managed —
+    the mechanism that stops small-fund and large-fund performance being treated as equal.</dd>
+
+    <dt>Capping (clamping)</dt>
+    <dd>Forcing a value to stay within a fixed range. Every indicator is clamped to [0, 100] so an unusual data
+    point (e.g. expenditure temporarily exceeding the agency balance) cannot distort the score.</dd>
+
+    <dt>Cohort-relative scoring</dt>
+    <dd>The difficulty factor is computed against the officers <b>currently on screen</b>. Filtering the list
+    re-bases the comparison so everyone is always judged against their visible peers.</dd>
+
+    <dt>Direction of an indicator</dt>
+    <dd>"Higher-is-better" (benefit) vs "lower-is-better" (cost). The Untapped Funds Ratio is a cost, so we convert
+    it to the Untapped Fund Score (100 − UFR) before blending, keeping all four indicators in the same direction.</dd>
+  </dl>
+
+  <div class="foot">
+    AIS Officers 360° Dashboard — Andhra Pradesh CMO · GoI (CSS) Funds module.<br>
+    Final score = [ 0.40·AUE + 0.30·FUE + 0.20·FTE + 0.10·UFS ], tenure-weighted across posts,
+    multiplied by a 0.70–1.00 log-scaled fund-size difficulty factor, capped to 0–100.
+  </div>
+
+</div>
+</body>
+</html>

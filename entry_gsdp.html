@@ -347,6 +347,7 @@
       .dash-stat-grid { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="responsive_fit.css">
 </head>
 <body>
 
@@ -674,6 +675,7 @@ var _session       = null;
 var _period        = { from: '', to: '' };
 var _officers      = { IAS: null, IPS: null, IFS: null };
 var _activeService = 'IAS';
+var _svcGates      = { IAS: true, IPS: true, IFS: true }; // per-service gate state
 var _uploadState   = { IAS: null, IPS: null, IFS: null };
 var _recordsPage   = 1;
 var RECORDS_PER_PAGE = 20;
@@ -698,6 +700,7 @@ var CSV_KEYS = [
   var role = (_session.role || '').toLowerCase();
   if (role !== 'gsdp') { location.href = 'index.html'; return; }
   if (!await enforceModuleGate('gsdp')) return;
+  await checkServiceGates();
 
   document.getElementById('welcomeName').textContent = _session.email || '—';
   var now = new Date();
@@ -759,7 +762,41 @@ function editPeriod() {
 // ================================================================
 // SERVICE TABS
 // ================================================================
+async function checkServiceGates() {
+  var mod = 'gsdp';
+  try {
+    var { data } = await _supabase
+      .from('module_control')
+      .select('module_name, is_paused, deadline')
+      .in('module_name', [mod + '_IAS', mod + '_IPS', mod + '_IFS']);
+    var now = new Date();
+    _svcGates = { IAS: true, IPS: true, IFS: true };
+    (data || []).forEach(function(row) {
+      var svc = row.module_name.replace(mod + '_', '');
+      if (!!row.is_paused || (row.deadline && now > new Date(row.deadline))) _svcGates[svc] = false;
+    });
+  } catch(e) { _svcGates = { IAS: true, IPS: true, IFS: true }; }
+  applyServiceGates();
+}
+
+function applyServiceGates() {
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    var locked = !_svcGates[svc];
+    var btn = document.getElementById('svcTab-' + svc);
+    if (!btn) return;
+    btn.disabled = locked;
+    btn.style.opacity = locked ? '0.42' : '';
+    btn.style.cursor  = locked ? 'not-allowed' : '';
+    btn.title = locked ? svc + ' data entry is paused or deadline has passed.' : '';
+  });
+  if (!_svcGates[_activeService]) {
+    var first = ['IAS','IPS','IFS'].find(function(s) { return _svcGates[s]; });
+    if (first) showSvcTab(first);
+  }
+}
+
 function showSvcTab(svc) {
+  if (!_svcGates[svc]) { alert(svc + ' data entry is currently paused or deadline has passed.'); return; }
   _activeService = svc;
   ['IAS','IPS','IFS'].forEach(function(s) {
     document.getElementById('svcTab-' + s).classList.toggle('active', s === svc);

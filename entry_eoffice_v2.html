@@ -1,0 +1,3270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-Office Data Entry | AIS Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #eef0fb; min-height: 100vh; }
+
+    /* ── Overlays ── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 900; padding: 16px; overflow-y: auto;
+    }
+    .overlay.top-align { align-items: flex-start; padding-top: 24px; padding-bottom: 24px; }
+    .overlay.hidden { display: none; }
+    .modal {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(30,27,75,0.32);
+      width: 100%; padding: 32px; margin: auto;
+    }
+    .modal.sm { max-width: 520px; }
+    .modal.lg { max-width: 860px; }
+    .modal-title { font-size: 20px; font-weight: 800; color: #1e1b4b; margin-bottom: 6px; }
+    .modal-sub   { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+    .modal-hdr   {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 22px; padding-bottom: 16px; border-bottom: 2px solid #eef0fb;
+    }
+    .modal-hdr-title { font-size: 18px; font-weight: 800; color: #1e1b4b; flex: 1; }
+    .btn-x {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-size: 15px; cursor: pointer; color: #64748b;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+      font-family: 'Inter', sans-serif; flex-shrink: 0;
+    }
+    .btn-x:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+
+    /* ── Header ── */
+    .top-header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+      padding: 13px 24px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 4px 16px rgba(30,27,75,0.45); flex-wrap: wrap;
+    }
+    .btn-back {
+      padding: 8px 16px; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(165,180,252,0.4); border-radius: 8px;
+      color: #e0e7ff; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s; white-space: nowrap;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.22); }
+    .hdr-title-grp { flex: 1; min-width: 140px; }
+    .hdr-mod-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #a5b4fc; }
+    .hdr-mod-title { font-size: clamp(14px,1.6vw,20px); font-weight: 800; color: #fff; }
+    .period-badge {
+      padding: 6px 14px; background: rgba(165,180,252,0.18);
+      border: 1px solid rgba(165,180,252,0.35); border-radius: 20px;
+      color: #c7d2fe; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;
+      transition: background 0.18s;
+    }
+    .period-badge:hover { background: rgba(165,180,252,0.3); }
+    .period-badge.locked { cursor: not-allowed; }
+    .period-badge.locked:hover { background: rgba(165,180,252,0.18); }
+    .btn-hdr {
+      padding: 8px 14px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(165,180,252,0.35); border-radius: 8px;
+      color: #e0e7ff; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s; font-family: 'Inter', sans-serif; white-space: nowrap;
+    }
+    .btn-hdr:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Welcome bar ── */
+    .welcome-bar {
+      background: #fff; padding: 7px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #c7d2fe; font-size: 12px; color: #475569;
+    }
+    .welcome-bar strong { color: #1e1b4b; }
+
+    /* ── Tab bar ── */
+    .tab-bar { background: #fff; border-bottom: 2px solid #e2e8f0; display: flex; padding: 0 24px; }
+    .tab-btn {
+      padding: 11px 20px; background: none; border: none;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+    }
+    .tab-btn:hover { color: #4338ca; }
+    .tab-btn.active { color: #4338ca; border-bottom-color: #4338ca; }
+
+    /* ── Page ── */
+    .page { padding: 20px 24px 52px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 14px rgba(30,27,75,0.08);
+      padding: 22px 26px; margin-bottom: 18px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; color: #1e1b4b;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 2px solid #eef0fb;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    /* ── Stat grid ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 18px; }
+    .stat-card {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 18px 20px; border-left: 5px solid #e2e8f0;
+      position: relative; overflow: hidden;
+    }
+    .stat-card.blue  { border-left-color: #4338ca; --ac: #4338ca; }
+    .stat-card.green { border-left-color: #059669; --ac: #059669; }
+    .stat-card.amber { border-left-color: #d97706; --ac: #d97706; }
+    .stat-card.red   { border-left-color: #dc2626; --ac: #dc2626; }
+    .stat-card::after {
+      content: ''; position: absolute; top: -18px; right: -18px;
+      width: 74px; height: 74px; border-radius: 50%;
+      opacity: 0.07; background: var(--ac, #4338ca);
+    }
+    .stat-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+    .stat-num  { font-size: 30px; font-weight: 800; color: #1e1b4b; line-height: 1; margin-bottom: 4px; }
+    .stat-lbl  { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Progress ── */
+    .prog-wrap {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 14px rgba(30,27,75,0.08);
+      padding: 20px 26px; margin-bottom: 18px;
+    }
+    .prog-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .prog-title { font-size: 14px; font-weight: 700; color: #1e1b4b; }
+    .prog-count { font-size: 13px; font-weight: 700; color: #4338ca; }
+    .prog-bg   { background: #e2e8f0; border-radius: 8px; height: 14px; overflow: hidden; }
+    .prog-fill { background: linear-gradient(90deg, #4338ca, #6366f1); height: 100%; border-radius: 8px; transition: width 0.5s; }
+    .prog-fill.done { background: linear-gradient(90deg, #059669, #10b981); }
+    .prog-sub  { font-size: 12px; color: #64748b; margin-top: 8px; }
+
+    /* ── Service tabs ── */
+    .svc-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .svc-tab {
+      padding: 10px 22px; border-radius: 10px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+      color: #64748b; cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .svc-tab:hover { border-color: #a5b4fc; color: #4338ca; background: #eef2ff; }
+    .svc-tab.ias.active { background: linear-gradient(135deg,#d97706,#92400e); border-color: #d97706; color: #fff; }
+    .svc-tab.ips.active { background: linear-gradient(135deg,#dc2626,#991b1b); border-color: #dc2626; color: #fff; }
+    .svc-tab.ifs.active { background: linear-gradient(135deg,#059669,#065f46); border-color: #059669; color: #fff; }
+    .svc-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.25); min-width: 28px; text-align: center;
+    }
+    .svc-tab:not(.active) .svc-pill { background: #e2e8f0; color: #64748b; }
+    .svc-tab:disabled { opacity: 0.42; cursor: not-allowed !important; }
+    .svc-tab:disabled:hover { border-color: #e2e8f0; color: #94a3b8; background: white; }
+
+    /* ── Dashboard layout ── */
+    .dash-2col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+    @media(max-width:780px){ .dash-2col { grid-template-columns:1fr; } }
+
+    /* Category chart bars */
+    .dcat-row { display:flex; align-items:center; gap:10px; padding:6px 0; cursor:pointer; border-radius:8px; transition:background 0.15s; }
+    .dcat-row:hover { background:#f8fafc; }
+    .dcat-label { font-size:12px; font-weight:600; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:160px; max-width:160px; }
+    .dcat-bar-bg { flex:1; background:#e2e8f0; border-radius:6px; height:20px; overflow:hidden; position:relative; }
+    .dcat-bar-fill { height:100%; border-radius:6px; transition:width 0.45s; display:flex; align-items:center; padding-left:8px; }
+    .dcat-bar-txt  { font-size:10px; font-weight:700; color:rgba(255,255,255,0.9); white-space:nowrap; }
+    .dcat-val { font-size:12px; font-weight:700; color:#1e1b4b; white-space:nowrap; min-width:64px; text-align:right; }
+    .dcat-cnt { font-size:11px; color:#94a3b8; white-space:nowrap; min-width:44px; text-align:right; }
+    .dcat-row.active { background:#eef2ff; }
+
+    /* Officer card (top 5) */
+    .dofc-card {
+      display:flex; align-items:center; gap:14px;
+      padding:12px 14px; border-radius:12px; border:1.5px solid #e2e8f0;
+      background:#f8fafc; margin-bottom:10px; transition:border-color 0.15s;
+    }
+    .dofc-card:hover { border-color:#a5b4fc; }
+    .dofc-rank { font-size:18px; font-weight:900; color:#c7d2fe; width:26px; text-align:center; flex-shrink:0; }
+    .dofc-photo { width:44px; height:54px; border-radius:8px; object-fit:cover; border:2px solid #e2e8f0; flex-shrink:0; background:#eef0fb; }
+    .dofc-info { flex:1; min-width:0; }
+    .dofc-name { font-size:13px; font-weight:700; color:#1e1b4b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dofc-post { font-size:11px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+    .dofc-svc  { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:700; margin-top:3px; }
+    .dofc-svc.ias { background:#fef3c7; color:#92400e; }
+    .dofc-svc.ips { background:#fee2e2; color:#991b1b; }
+    .dofc-svc.ifs { background:#dcfce7; color:#166534; }
+    .dofc-avg { font-size:22px; font-weight:900; flex-shrink:0; text-align:right; min-width:72px; }
+    .dofc-avg-sub { font-size:10px; color:#94a3b8; text-align:right; }
+
+    /* Speed chart */
+    .dspd-bar-wrap { margin-bottom:10px; }
+    .dspd-bar { display:flex; border-radius:8px; overflow:hidden; height:28px; margin-bottom:6px; }
+    .dspd-seg { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:rgba(255,255,255,0.92); overflow:hidden; white-space:nowrap; }
+    .dspd-legend { display:flex; flex-wrap:wrap; gap:4px 16px; }
+    .dspd-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+
+    /* Drill-down list */
+    .ddrill-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f1f5f9; }
+    .ddrill-row:last-child { border-bottom:none; }
+    .ddrill-photo { width:34px; height:42px; border-radius:6px; object-fit:cover; border:1.5px solid #e2e8f0; flex-shrink:0; }
+    .ddrill-name { flex:1; min-width:0; }
+    .ddrill-name strong { font-size:12.5px; color:#1e1b4b; }
+    .ddrill-post { font-size:11px; color:#64748b; }
+    .ddrill-bar-bg { width:120px; background:#e2e8f0; border-radius:4px; height:6px; flex-shrink:0; }
+    .ddrill-bar-fill { height:100%; border-radius:4px; }
+    .ddrill-hrs { font-size:13px; font-weight:700; flex-shrink:0; min-width:62px; text-align:right; }
+
+    /* ── Entry dashboard cards ── */
+    .ec-section-lbl {
+      font-size: 10.5px; font-weight: 800; color: #4338ca; text-transform: uppercase;
+      letter-spacing: 0.9px; margin: 20px 0 10px; padding-bottom: 6px;
+      border-bottom: 1.5px solid #e0e7ff;
+    }
+    .ec-period-bar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+      background: linear-gradient(135deg,#eef2ff,#e0e7ff);
+      border: 1.5px solid #c7d2fe; border-radius: 14px; padding: 14px 20px; margin-bottom: 18px;
+    }
+    .ec-period-dates { font-size: 15px; font-weight: 800; color: #1e1b4b; }
+    .ec-period-meta  { font-size: 11.5px; color: #64748b; margin-top: 3px; }
+    .ec-svc-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+    .ec-svc-card { border-radius: 14px; border: 2px solid #e2e8f0; padding: 16px 18px; }
+    .ec-svc-hdr  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ec-mini-bar-bg   { background: #e2e8f0; border-radius: 6px; height: 9px; overflow: hidden; margin-bottom: 8px; }
+    .ec-mini-bar-fill { height: 100%; border-radius: 6px; transition: width 0.45s; }
+    .ec-svc-meta { font-size: 11px; color: #64748b; }
+    .ec-speed-wrap {
+      background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(30,27,75,0.08);
+      padding: 18px 20px; margin-bottom: 18px;
+    }
+    .ec-speed-hdr {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      gap: 8px; margin-bottom: 12px; font-size: 12px; color: #64748b;
+    }
+    .ec-spd-bar { display: flex; border-radius: 8px; overflow: hidden; height: 30px; margin-bottom: 10px; }
+    .ec-spd-seg {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.92);
+      min-width: 0; overflow: hidden; white-space: nowrap;
+    }
+    .ec-spd-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
+    .ec-spd-dot {
+      display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+      margin-right: 4px; vertical-align: middle;
+    }
+    @media (max-width: 720px) {
+      .stat-grid { grid-template-columns: repeat(2,1fr); }
+      .ec-svc-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── Officers grid ── */
+    .ofc-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 8px;
+      max-height: 480px; overflow-y: auto; padding-right: 2px;
+    }
+    .ofc-chip {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 10px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .ofc-chip:hover       { border-color: #a5b4fc; background: #eef2ff; }
+    .ofc-chip.done        { border-color: #86efac; background: #f0fdf4; }
+    .ofc-chip.done:hover  { border-color: #4ade80; }
+    .ofc-chip.partial     { border-color: #fde68a; background: #fffbeb; }
+    .ofc-chip.partial:hover { border-color: #fbbf24; }
+    .ofc-chip.none        { border-color: #fca5a5; background: #fff1f2; }
+    .ofc-chip.none:hover  { border-color: #f87171; }
+    .chip-ico  { font-size: 16px; flex-shrink: 0; }
+    .chip-name { font-size: 12px; font-weight: 700; color: #1e1b4b; line-height: 1.3; }
+    .chip-sub  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Big CTA button ── */
+    .btn-cta {
+      width: 100%; padding: 18px 28px;
+      background: linear-gradient(135deg, #4338ca, #3730a3);
+      color: #fff; border: none; border-radius: 14px;
+      font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(67,56,202,0.35);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-bottom: 18px;
+    }
+    .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(67,56,202,0.5); }
+
+    /* ── Form elements ── */
+    .form-grp  { display: flex; flex-direction: column; gap: 5px; }
+    .lbl       { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; }
+    .lbl .req  { color: #ef4444; }
+    .inp {
+      padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 9px;
+      font-family: 'Inter', sans-serif; font-size: 14px; color: #1e1b4b;
+      transition: border-color 0.18s; background: #fff; width: 100%;
+    }
+    .inp:focus { outline: none; border-color: #4338ca; }
+    .inp.ro    { background: #f1f5f9; color: #64748b; cursor: default; }
+    .inp.pend  { background: #fef2f2; border-color: #fca5a5; color: #dc2626; font-weight: 700; }
+    .inp.zero  { background: #f0fdf4; border-color: #86efac; color: #059669; font-weight: 700; }
+
+    /* ── Radio toggle ── */
+    .radio-grp { display: flex; gap: 8px; flex-wrap: wrap; }
+    .radio-opt {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      cursor: pointer; font-size: 13px; font-weight: 700; color: #64748b;
+      transition: all 0.15s; user-select: none;
+    }
+    .radio-opt input { display: none; }
+    .radio-opt.sel-ind { border-color: #4338ca; background: #eef2ff; color: #4338ca; }
+    .radio-opt.sel-reg { border-color: #059669; background: #f0fdf4; color: #059669; }
+    .radio-opt.sel-fac { border-color: #d97706; background: #fffbeb; color: #d97706; }
+
+    /* ── Post cards ── */
+    .post-card {
+      border: 2px solid #e2e8f0; border-radius: 16px;
+      padding: 20px 22px; margin-bottom: 16px;
+      background: #fafbff;
+    }
+    .post-card.saved { border-color: #86efac; background: #f0fdf4; }
+    .post-card-hdr {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 18px; padding-bottom: 12px;
+      border-bottom: 1.5px solid #e2e8f0;
+    }
+    .post-num {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, #4338ca, #3730a3);
+      color: #fff; font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .post-num.saved-num { background: linear-gradient(135deg, #059669, #047857); }
+    .post-card-name { font-size: 14px; font-weight: 700; color: #1e1b4b; flex: 1; }
+    .saved-badge {
+      padding: 4px 12px; border-radius: 20px;
+      background: #f0fdf4; border: 1.5px solid #86efac;
+      color: #15803d; font-size: 11px; font-weight: 700;
+    }
+    .sec-label {
+      font-size: 11px; font-weight: 700; color: #4338ca;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 10px; margin-top: 4px;
+      padding-bottom: 4px; border-bottom: 1px dashed #c7d2fe;
+    }
+    .g2  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .g3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .g5  { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 14px; }
+    .g6  { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; margin-bottom: 14px; }
+
+    .bucket-msg {
+      font-size: 12px; font-weight: 600; padding: 8px 14px;
+      border-radius: 8px; margin-bottom: 12px;
+    }
+    .bucket-msg.ok  { background: #f0fdf4; color: #15803d; }
+    .bucket-msg.err { background: #fef2f2; color: #dc2626; }
+
+    /* ── Buttons ── */
+    .btn-save {
+      width: 100%; padding: 12px 20px;
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(5,150,105,0.3); margin-top: 8px;
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-save:hover    { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(5,150,105,0.45); }
+    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-save.upd { background: linear-gradient(135deg, #0284c7, #0369a1); box-shadow: 0 4px 14px rgba(2,132,199,0.3); }
+    .btn-primary {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #4338ca, #3730a3);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(67,56,202,0.3);
+      transition: transform 0.15s, box-shadow 0.2s; width: 100%; margin-top: 4px;
+    }
+    .btn-primary:hover    { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(67,56,202,0.45); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── Officer info bar (step 2) ── */
+    .ofc-info-bar {
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      border: 1.5px solid #a5b4fc; border-radius: 12px;
+      padding: 12px 18px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+
+    /* ── Selected officer badge ── */
+    .ofc-badge {
+      background: #eef2ff; border: 1.5px solid #a5b4fc; border-radius: 10px;
+      padding: 10px 16px; display: none; align-items: center; gap: 10px;
+      margin-top: 10px;
+    }
+    .ofc-badge.show { display: flex; }
+    .badge-done {
+      margin-left: auto; padding: 4px 12px; border-radius: 20px;
+      background: #f0fdf4; border: 1.5px solid #86efac;
+      color: #15803d; font-size: 11px; font-weight: 700; display: none;
+    }
+    .badge-done.show { display: block; }
+
+    /* ── Period capsules ── */
+    .caps-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .cap {
+      padding: 7px 18px; border-radius: 20px;
+      border: 2px solid #e2e8f0; background: #f8fafc;
+      font-size: 12px; font-weight: 700; color: #64748b;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.18s;
+    }
+    .cap:hover  { border-color: #a5b4fc; color: #4338ca; background: #eef2ff; }
+    .cap.active { background: linear-gradient(135deg,#4338ca,#3730a3); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(67,56,202,0.3); }
+
+    /* ── Table ── */
+    .tbl-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th { background: #1e1b4b; color: #c7d2fe; padding: 9px 12px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #f1f5f9; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody td { padding: 8px 12px; color: #374151; vertical-align: middle; }
+    .tn  { text-align: right; font-weight: 700; color: #1e1b4b; font-variant-numeric: tabular-nums; }
+    .tp  { text-align: right; font-weight: 700; color: #dc2626; font-variant-numeric: tabular-nums; }
+    .tg  { text-align: right; font-weight: 700; color: #059669; font-variant-numeric: tabular-nums; }
+    .tbadge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+    .tbadge.ias { background: #fef3c7; color: #d97706; }
+    .tbadge.ips { background: #fee2e2; color: #dc2626; }
+    .tbadge.ifs { background: #d1fae5; color: #059669; }
+    .tbadge.regular { background: #e0e7ff; color: #4338ca; }
+    .tbadge.fac     { background: #fef3c7; color: #d97706; }
+
+    /* ── Alert (inline) ── */
+    .alert { padding: 11px 15px; border-radius: 9px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+    .alert.ok  { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
+    .alert.err { background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626; }
+    .alert.inf { background: #eff6ff; border: 1.5px solid #93c5fd; color: #1d4ed8; }
+
+    /* ── Popup toast ── */
+    #ais-toast-root { position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:999999; display:flex; flex-direction:column; align-items:center; gap:12px; pointer-events:none; }
+    .ais-toast {
+      display:flex; align-items:flex-start; gap:14px;
+      background:#fff; border-radius:16px; padding:18px 22px;
+      box-shadow:0 12px 40px rgba(15,12,41,0.18), 0 2px 8px rgba(15,12,41,0.08);
+      min-width:320px; max-width:480px; width:max-content;
+      pointer-events:all; border-left:5px solid #4338ca;
+      animation: toast-in 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .ais-toast.warn  { border-left-color:#d97706; }
+    .ais-toast.error { border-left-color:#dc2626; }
+    .ais-toast.info  { border-left-color:#0ea5e9; }
+    .ais-toast.ok    { border-left-color:#059669; }
+    .ais-toast.hiding { animation: toast-out 0.22s ease-in both; }
+    .ais-toast-ico { font-size:26px; line-height:1; flex-shrink:0; margin-top:1px; }
+    .ais-toast-body { flex:1; }
+    .ais-toast-title { font-size:14px; font-weight:800; color:#1e1b4b; margin-bottom:3px; line-height:1.3; }
+    .ais-toast-msg { font-size:13px; color:#475569; line-height:1.5; }
+    .ais-toast-close { background:none; border:none; cursor:pointer; font-size:16px; color:#94a3b8; padding:0 0 0 8px; line-height:1; flex-shrink:0; }
+    .ais-toast-close:hover { color:#1e1b4b; }
+    @keyframes toast-in  { from { opacity:0; transform:translateY(-18px) scale(0.94); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes toast-out { from { opacity:1; transform:translateY(0) scale(1); }        to { opacity:0; transform:translateY(-12px) scale(0.94); } }
+
+    /* ── Confirm dialog ── */
+    #ais-confirm-overlay {
+      position:fixed; inset:0; background:rgba(15,12,41,0.55); z-index:999998;
+      display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(3px); animation:cfm-in 0.2s ease both;
+    }
+    #ais-confirm-overlay.hiding { animation:cfm-out 0.18s ease both; }
+    @keyframes cfm-in  { from{opacity:0} to{opacity:1} }
+    @keyframes cfm-out { from{opacity:1} to{opacity:0} }
+    .ais-cfm-box {
+      background:#fff; border-radius:20px; padding:32px 36px 28px;
+      max-width:420px; width:94%; box-shadow:0 24px 60px rgba(0,0,0,0.22);
+      animation:cfm-box-in 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+      text-align:center;
+    }
+    @keyframes cfm-box-in { from{transform:scale(0.88);opacity:0} to{transform:scale(1);opacity:1} }
+    .ais-cfm-ico   { font-size:48px; margin-bottom:14px; line-height:1; }
+    .ais-cfm-title { font-size:18px; font-weight:800; color:#1e1b4b; margin-bottom:8px; }
+    .ais-cfm-body  { font-size:13px; color:#475569; line-height:1.6; margin-bottom:6px; }
+    .ais-cfm-note  { font-size:11px; color:#94a3b8; margin-bottom:24px; }
+    .ais-cfm-row   { display:flex; gap:12px; justify-content:center; }
+    .ais-cfm-cancel {
+      padding:10px 26px; border:2px solid #e2e8f0; border-radius:10px;
+      background:#f8fafc; color:#475569; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s;
+    }
+    .ais-cfm-cancel:hover { border-color:#94a3b8; color:#1e1b4b; }
+    .ais-cfm-delete {
+      padding:10px 26px; border:none; border-radius:10px;
+      background:linear-gradient(135deg,#dc2626,#b91c1c); color:#fff;
+      font-size:13px; font-weight:700; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:all 0.15s;
+      box-shadow:0 4px 14px rgba(220,38,38,0.35);
+    }
+    .ais-cfm-delete:hover { background:linear-gradient(135deg,#b91c1c,#991b1b); box-shadow:0 6px 18px rgba(220,38,38,0.45); }
+
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .empty-ico { font-size: 38px; margin-bottom: 10px; }
+    .empty-txt { font-size: 14px; font-weight: 600; }
+    .empty-sub { font-size: 12px; margin-top: 4px; }
+
+    /* ── Pagination ── */
+    .paging { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+    .pg {
+      padding: 6px 11px; border: 1.5px solid #e2e8f0; border-radius: 7px;
+      background: #fff; font-size: 12px; font-weight: 600; color: #475569;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .pg:hover  { border-color: #4338ca; color: #4338ca; background: #eef2ff; }
+    .pg.active { background: #4338ca; color: #fff; border-color: #4338ca; }
+    .pg:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Step indicator ── */
+    .em-steps { display:flex; align-items:flex-start; margin-bottom:22px; background:#f8fafc; border-radius:14px; padding:16px 24px; gap:0; }
+    .em-step  { display:flex; flex-direction:column; align-items:center; gap:5px; flex-shrink:0; }
+    .em-step-n {
+      width:34px; height:34px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800;
+      background:#e2e8f0; color:#94a3b8; transition:all 0.3s;
+    }
+    .em-step.active .em-step-n { background:#4338ca; color:#fff; box-shadow:0 0 0 5px rgba(67,56,202,0.18); }
+    .em-step.done   .em-step-n { background:#059669; color:#fff; }
+    .em-step-l { font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; transition:color 0.3s; }
+    .em-step.active .em-step-l, .em-step.done .em-step-l { color:#1e1b4b; }
+    .em-step-line { flex:1; height:2px; background:#e2e8f0; margin:17px 8px 0; min-width:20px; transition:background 0.3s; }
+    .em-step-line.done { background:#059669; }
+
+    /* ── Officer info bar (steps 2+3) ── */
+    .oic-bar { background:linear-gradient(135deg,#312e81,#4338ca); border-radius:12px; padding:13px 18px; margin-bottom:18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .oic-name { font-size:15px; font-weight:800; color:#fff; }
+    .oic-meta { font-size:11px; color:#a5b4fc; margin-top:1px; }
+    .oic-period { padding:5px 13px; background:rgba(255,255,255,0.15); border-radius:20px; font-size:12px; color:#e0e7ff; font-weight:600; white-space:nowrap; }
+    .oic-back { padding:6px 14px; background:rgba(255,255,255,0.1); border:1px solid rgba(165,180,252,0.4); border-radius:8px; color:#c7d2fe; font-size:11px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:background 0.15s; margin-left:auto; white-space:nowrap; }
+    .oic-back:hover { background:rgba(255,255,255,0.22); }
+
+    /* ── Step 2 Post Detail rows ── */
+    .pd-row {
+      display:grid; grid-template-columns:36px 1fr 1fr auto;
+      gap:10px; align-items:center;
+      padding:12px 14px; border-radius:12px;
+      background:#fff; border:2px solid #e2e8f0; margin-bottom:8px; transition:border-color 0.2s;
+    }
+    .pd-row.is-reg { border-color:#818cf8; background:#eef2ff; }
+    .pd-num2 { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
+    .pd-inp { padding:8px 12px; border:2px solid #e2e8f0; border-radius:8px; font-family:'Inter',sans-serif; font-size:13px; color:#1e1b4b; transition:border-color 0.18s; background:#fff; width:100%; }
+    .pd-inp:focus { outline:none; border-color:#4338ca; }
+    .type-btns { display:flex; gap:5px; }
+    .type-btn { padding:7px 11px; border-radius:8px; border:2px solid #e2e8f0; background:#f8fafc; font-size:11px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap; transition:all 0.15s; color:#64748b; }
+    .type-btn.reg-on { background:#4338ca; border-color:#4338ca; color:#fff; }
+    .type-btn.fac-on { background:#d97706; border-color:#d97706; color:#fff; }
+    .type-btn:hover:not(.reg-on):not(.fac-on) { border-color:#a5b4fc; color:#4338ca; }
+    .s2-err { padding:10px 15px; border-radius:9px; background:#fef2f2; border:1.5px solid #fca5a5; color:#dc2626; font-size:12px; font-weight:600; margin-bottom:12px; display:none; }
+    .s2-err.show { display:block; }
+    .s2-note { font-size:12px; color:#64748b; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:9px; padding:10px 14px; margin-bottom:14px; line-height:1.6; }
+    .s2-note strong { color:#dc2626; }
+
+    /* ── Step 3 file data cards ── */
+    .s3-card { border:2px solid #e2e8f0; border-radius:16px; margin-bottom:18px; overflow:hidden; background:#fff; }
+    .s3-card.saved { border-color:#86efac; }
+    .s3-card-hdr { display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(135deg,#1e1b4b,#312e81); flex-wrap:wrap; }
+    .s3-hdr-num { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.18); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; flex-shrink:0; }
+    .s3-hdr-info { flex:1; min-width:100px; }
+    .s3-hdr-name { font-size:14px; font-weight:800; color:#fff; }
+    .s3-hdr-dept { font-size:11px; color:#a5b4fc; margin-top:2px; }
+    .s3-type-badge { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+    .s3-type-badge.reg { background:rgba(167,243,208,0.2); color:#6ee7b7; border:1px solid rgba(110,231,183,0.35); }
+    .s3-type-badge.fac { background:rgba(253,230,138,0.2); color:#fde68a; border:1px solid rgba(253,211,77,0.35); }
+    .s3-saved-badge { padding:4px 12px; border-radius:20px; background:rgba(134,239,172,0.18); border:1px solid rgba(134,239,172,0.4); color:#6ee7b7; font-size:11px; font-weight:700; white-space:nowrap; }
+    .s3-card-body { padding:18px 22px; }
+    /* Total files highlight box */
+    .total-box { background:linear-gradient(135deg,#1e1b4b,#3730a3); border-radius:12px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:16px; }
+    .total-num { font-size:34px; font-weight:800; color:#fff; line-height:1; flex-shrink:0; }
+    .total-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#a5b4fc; }
+    .total-bkdn { font-size:11px; color:#c7d2fe; margin-top:4px; }
+    /* Step 3 progress dots */
+    .s3-dots { display:flex; align-items:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .s3-dot { width:32px; height:32px; border-radius:50%; border:2px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#94a3b8; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+    .s3-dot.saved  { background:#059669; border-color:#059669; color:#fff; }
+    .s3-dot.active { background:#4338ca; border-color:#4338ca; color:#fff; box-shadow:0 0 0 4px rgba(67,56,202,0.2); }
+    .g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+
+    /* ── Mode selection cards ── */
+    .mode-card { background:#f8fafc;border:2px solid #e2e8f0;border-radius:16px;padding:28px 22px;cursor:pointer;transition:all 0.2s;text-align:center;display:flex;flex-direction:column;align-items:center; }
+    .mode-card:hover { border-color:#4338ca;background:#eef2ff;transform:translateY(-3px);box-shadow:0 10px 28px rgba(67,56,202,0.14); }
+    .mode-card-ico   { font-size:44px;margin-bottom:14px;line-height:1; }
+    .mode-card-title { font-size:16px;font-weight:800;color:#1e1b4b;margin-bottom:8px; }
+    .mode-card-sub   { font-size:12px;color:#64748b;line-height:1.65;margin-bottom:18px;flex:1; }
+    .mode-card-btn   { padding:10px 24px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;width:100%; }
+    .mode-card-btn.manual { background:#e0e7ff;color:#4338ca; }
+    .mode-card-btn.manual:hover { background:#c7d2fe; }
+    .mode-card-btn.upload { background:linear-gradient(135deg,#4338ca,#3730a3);color:#fff;box-shadow:0 4px 12px rgba(67,56,202,0.3); }
+    .mode-card-btn.upload:hover { box-shadow:0 6px 18px rgba(67,56,202,0.4); }
+
+    /* ── Template field guide ── */
+    .tpl-guide-wrap { border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:20px;overflow:hidden; }
+    .tpl-guide-summary { padding:13px 18px;font-size:13px;font-weight:700;color:#1e1b4b;cursor:pointer;background:#f8fafc;list-style:none;display:flex;align-items:center;gap:8px; }
+    .tpl-guide-summary::-webkit-details-marker { display:none; }
+    .tpl-guide-arrow { font-size:10px;color:#4338ca;transition:transform 0.2s; }
+    details[open] .tpl-guide-arrow { transform:rotate(90deg); }
+    .tpl-guide { padding:16px 18px; }
+    .tpl-guide-tbl { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px; }
+    .tpl-guide-tbl th { background:#1e1b4b;color:#c7d2fe;padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px; }
+    .tpl-guide-tbl td { padding:7px 12px;border-bottom:1px solid #f1f5f9;color:#374151;vertical-align:top;line-height:1.5; }
+    .tpl-guide-tbl tr.tpl-prefill td { background:#f0fdf4;color:#059669;font-style:italic; }
+    .tpl-notes { background:#fefce8;border:1.5px solid #fde68a;border-radius:10px;padding:13px 16px;font-size:12px;color:#374151;line-height:1.7; }
+    .tpl-notes ol { padding-left:20px;margin-top:6px; }
+
+    /* ── Upload drop zone ── */
+    .upload-zone { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 24px;border:2.5px dashed #c7d2fe;border-radius:14px;background:#f8fafc;cursor:pointer;transition:all 0.2s;width:100%; }
+    .upload-zone:hover,.upload-zone.dragover { border-color:#4338ca;background:#eef2ff; }
+    .upload-zone-ico { font-size:40px;margin-bottom:10px; }
+
+    /* ── Upload preview ── */
+    .up-summary { display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap; }
+    .up-sum-item { padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700; }
+    .up-sum-item.ok   { background:#f0fdf4;color:#059669;border:1.5px solid #86efac; }
+    .up-sum-item.err  { background:#fef2f2;color:#dc2626;border:1.5px solid #fca5a5; }
+    .up-sum-item.info { background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd; }
+
+    @media (max-width: 768px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .g6 { grid-template-columns: 1fr 1fr 1fr; }
+      .g5 { grid-template-columns: 1fr 1fr; }
+      .g4 { grid-template-columns: 1fr 1fr; }
+      .page { padding: 14px 14px 52px; }
+      .modal.lg { padding: 18px; }
+      .pd-row { grid-template-columns: 36px 1fr; grid-template-rows: auto auto auto; }
+    }
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr; }
+      .g2, .g3 { grid-template-columns: 1fr; }
+      .g5, .g4 { grid-template-columns: 1fr 1fr; }
+      .g6 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="responsive_fit.css">
+</head>
+<body>
+
+<!-- ══════ PERIOD SELECTION MODAL ══════ -->
+<div class="overlay hidden" id="periodOverlay">
+  <div class="modal sm">
+    <div class="modal-hdr" style="margin-bottom:10px;">
+      <div class="modal-hdr-title">📅 Set Data Entry Period</div>
+      <button class="btn-x" onclick="closePeriodModal()">✕</button>
+    </div>
+    <div class="modal-sub">
+      Choose the reporting period for e-Office statistics.
+      This period will apply to all officers across IAS, IPS, and IFS.
+    </div>
+    <div class="g2" style="margin-bottom:18px;">
+      <div class="form-grp">
+        <label class="lbl">Period From <span class="req">*</span></label>
+        <input type="date" id="pFrom" class="inp">
+      </div>
+      <div class="form-grp">
+        <label class="lbl">Period To <span class="req">*</span></label>
+        <input type="date" id="pTo" class="inp">
+      </div>
+    </div>
+    <div id="pErr" style="color:#dc2626;font-size:12px;font-weight:600;margin-bottom:12px;display:none;"></div>
+    <button class="btn-primary" onclick="confirmPeriod()">Proceed to Data Entry →</button>
+  </div>
+</div>
+
+<!-- ══════ MODE SELECTION MODAL ══════ -->
+<div class="overlay hidden" id="modeOverlay">
+  <div class="modal sm" style="max-width:560px;">
+    <div class="modal-hdr" style="margin-bottom:8px;">
+      <div class="modal-hdr-title">📋 How would you like to enter data?</div>
+      <button class="btn-x" onclick="closeModeModal()">✕</button>
+    </div>
+    <div id="modePeriodLabel" class="modal-sub" style="margin-bottom:24px;">—</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="mode-card" onclick="selectManual()">
+        <div class="mode-card-ico">✏️</div>
+        <div class="mode-card-title">Manual Entry</div>
+        <div class="mode-card-sub">Enter data officer by officer through guided step-by-step forms. Best for selective edits and additions.</div>
+        <button class="mode-card-btn manual">Enter Manually →</button>
+      </div>
+      <div class="mode-card" onclick="selectUpload()">
+        <div class="mode-card-ico">📤</div>
+        <div class="mode-card-title">Upload Template</div>
+        <div class="mode-card-sub">Download an Excel template with officers pre-filled, fill all data in bulk, and upload at once.</div>
+        <button class="mode-card-btn upload">Upload Template →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ UPLOAD TEMPLATE MODAL ══════ -->
+<div class="overlay hidden" id="uploadOverlay" style="align-items:flex-start;padding:24px 0;overflow-y:auto;">
+  <div class="modal lg" style="max-width:860px;padding:0;margin:auto;">
+
+    <!-- Sticky header -->
+    <div style="position:sticky;top:0;background:#fff;z-index:10;padding:22px 28px 16px;border-bottom:1.5px solid #e2e8f0;border-radius:18px 18px 0 0;">
+      <div class="modal-hdr" style="margin:0;">
+        <div class="modal-hdr-title">📤 Upload e-Office Data Template</div>
+        <button class="btn-x" onclick="closeUploadModal()">✕</button>
+      </div>
+      <div id="uploadPeriodLabel" style="font-size:12px;color:#64748b;margin-top:4px;">—</div>
+    </div>
+
+    <div style="padding:22px 28px 28px;">
+
+      <!-- Service tabs -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Select Service</div>
+        <div style="display:flex;gap:8px;">
+          <button class="svc-tab ias active" id="upSvcBtn-IAS" onclick="setUploadSvc('IAS')">👤 IAS</button>
+          <button class="svc-tab ips"        id="upSvcBtn-IPS" onclick="setUploadSvc('IPS')">🛡 IPS</button>
+          <button class="svc-tab ifs"        id="upSvcBtn-IFS" onclick="setUploadSvc('IFS')">🌲 IFS</button>
+        </div>
+      </div>
+
+      <!-- Template field guide -->
+      <details class="tpl-guide-wrap" open>
+        <summary class="tpl-guide-summary"><span class="tpl-guide-arrow">▶</span>📋 Template Field Guide &amp; Conditions</summary>
+        <div class="tpl-guide">
+          <table class="tpl-guide-tbl">
+            <thead>
+              <tr><th>Field</th><th style="width:80px;">Required</th><th style="width:70px;">Type</th><th>Conditions / Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr class="tpl-prefill"><td>Identity No</td><td>Auto</td><td>Text</td><td>Pre-filled. Do not modify.</td></tr>
+              <tr class="tpl-prefill"><td>Officer Name</td><td>Auto</td><td>Text</td><td>Pre-filled. Do not modify.</td></tr>
+              <tr class="tpl-prefill"><td>Service Type</td><td>Auto</td><td>Text</td><td>Pre-filled. Do not modify.</td></tr>
+              <tr><td>Post Name / Designation</td><td>✓ Yes</td><td>Text</td><td>Name of the post held. Enter <strong>No Posts Held</strong> if no post was held during this period.</td></tr>
+              <tr><td>Department / Ministry</td><td>Optional</td><td>Text</td><td>Department or Ministry. Leave blank if not applicable.</td></tr>
+              <tr><td>Post Type</td><td>✓ Yes</td><td>Text</td><td>Must be exactly <strong>Regular</strong> or <strong>FAC</strong>. Each officer must have exactly <strong>one Regular post</strong>.</td></tr>
+              <tr><td>Opening Balance</td><td>✓ Yes</td><td>Integer</td><td>Files at the start of the period. Must be ≥ 0.</td></tr>
+              <tr><td>Files Created</td><td>✓ Yes</td><td>Integer</td><td>New files created during the period. Must be ≥ 0.</td></tr>
+              <tr><td>Files Received</td><td>✓ Yes</td><td>Integer</td><td>Files received from other offices. Must be ≥ 0.</td></tr>
+              <tr><td>Files Processed</td><td>✓ Yes</td><td>Integer</td><td>Files disposed / closed. Must satisfy: 0 ≤ Processed ≤ (Opening Balance + Created + Received).</td></tr>
+              <tr><td>Avg Processing Hrs</td><td>Optional</td><td>Decimal</td><td>Average hours to clear each file. Must be ≥ 0. Leave blank if not tracked.</td></tr>
+              <tr><td>Processed &lt; 1 Day</td><td>Optional</td><td>Integer</td><td rowspan="5" style="background:#fffbeb;vertical-align:middle;color:#92400e;">Time buckets are optional. <strong>If any bucket is non-zero</strong>, all five must sum to <strong>Files Processed</strong>.</td></tr>
+              <tr><td>Processed 1–3 Days</td><td>Optional</td><td>Integer</td></tr>
+              <tr><td>Processed 3–7 Days</td><td>Optional</td><td>Integer</td></tr>
+              <tr><td>Processed 7–30 Days</td><td>Optional</td><td>Integer</td></tr>
+              <tr><td>Processed &gt; 30 Days</td><td>Optional</td><td>Integer</td></tr>
+            </tbody>
+          </table>
+          <div class="tpl-notes">
+            <strong>📌 Important Rules</strong>
+            <ol>
+              <li><strong>One row = one post.</strong> If an officer holds 2 posts, add 2 rows with the same Identity No.</li>
+              <li>Each officer must have exactly <strong>one Regular post</strong> (primary post). FAC posts are additional.</li>
+              <li>For officers who held <strong>no post</strong> during this period, enter <em>No Posts Held</em> as the Post Name.</li>
+              <li>Do <strong>not add or remove officer rows</strong> from the template. Only fill columns D onwards.</li>
+              <li>Files Pending is auto-computed: Opening Balance + Created + Received − Processed.</li>
+            </ol>
+          </div>
+        </div>
+      </details>
+
+      <!-- Step 1: Download -->
+      <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:14px;padding:18px 22px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:14px;font-weight:800;color:#1e1b4b;">Step 1 — Download Template</div>
+            <div style="font-size:12px;color:#4338ca;margin-top:3px;">Officer Identity Nos and Names are pre-filled. Fill data from column D onwards.</div>
+          </div>
+          <button onclick="downloadTemplate()" style="padding:10px 22px;background:linear-gradient(135deg,#4338ca,#3730a3);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;box-shadow:0 4px 12px rgba(67,56,202,0.3);">📥 Download Template</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Upload -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:800;color:#1e1b4b;margin-bottom:10px;">Step 2 — Upload Filled Template</div>
+        <label class="upload-zone" id="uploadDropZone" for="uploadFileInput">
+          <div class="upload-zone-ico">📂</div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;">Drag &amp; drop file here or click to browse</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:5px;">Accepts .xlsx, .xls, .csv</div>
+          <div id="uploadFileName" style="font-size:12px;color:#4338ca;margin-top:8px;font-weight:600;"></div>
+        </label>
+        <input type="file" id="uploadFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleUploadFile(this)">
+      </div>
+
+      <!-- Step 3: Preview -->
+      <div id="uploadPreview" style="display:none;"></div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1.5px solid #e2e8f0;">
+        <button onclick="closeUploadModal()" style="padding:10px 24px;background:#f1f5f9;border:2px solid #e2e8f0;border-radius:10px;color:#475569;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">✕ Cancel</button>
+        <button id="uploadSaveBtn" onclick="saveTemplateData()" style="display:none;padding:10px 28px;background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 12px rgba(5,150,105,0.3);">💾 Save Records</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ DATA ENTRY MODAL ══════ -->
+<div class="overlay top-align hidden" id="entryOverlay">
+  <div class="modal lg">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title">📝 Enter e-Office Files Data</div>
+      <button class="btn-x" onclick="closeEntry()">✕</button>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="em-steps">
+      <div class="em-step active" id="emS1">
+        <div class="em-step-n">1</div>
+        <div class="em-step-l">Select Officer</div>
+      </div>
+      <div class="em-step-line" id="emL1"></div>
+      <div class="em-step" id="emS2">
+        <div class="em-step-n">2</div>
+        <div class="em-step-l">Post Details</div>
+      </div>
+      <div class="em-step-line" id="emL2"></div>
+      <div class="em-step" id="emS3">
+        <div class="em-step-n">3</div>
+        <div class="em-step-l">File Data</div>
+      </div>
+    </div>
+
+    <!-- STEP 1 ── Officer + posts count -->
+    <div id="eStep1">
+
+      <!-- Service selector -->
+      <div class="form-grp" style="margin-bottom:14px;">
+        <label class="lbl">Service</label>
+        <div class="svc-bar" style="margin-top:6px;margin-bottom:0;">
+          <button class="svc-tab ias active" id="mTab-IAS" onclick="setModalSvc('IAS')">👤 IAS <span class="svc-pill" id="mPill-IAS">—</span></button>
+          <button class="svc-tab ips"        id="mTab-IPS" onclick="setModalSvc('IPS')">🛡 IPS <span class="svc-pill" id="mPill-IPS">—</span></button>
+          <button class="svc-tab ifs"        id="mTab-IFS" onclick="setModalSvc('IFS')">🌲 IFS <span class="svc-pill" id="mPill-IFS">—</span></button>
+        </div>
+      </div>
+
+      <!-- Officer dropdown -->
+      <div class="form-grp" style="margin-bottom:14px;">
+        <label class="lbl">Select Officer <span class="req">*</span></label>
+        <select id="ofcSelect" class="inp" onchange="onOfcSelected()" style="padding:10px 14px;cursor:pointer;">
+          <option value="">— Select an officer —</option>
+        </select>
+      </div>
+
+      <!-- Selected officer badge -->
+      <div class="ofc-badge" id="ofcBadge">
+        <span style="font-size:22px;">👤</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;" id="badgeName">—</div>
+          <div style="font-size:11px;color:#6366f1;margin-top:2px;" id="badgeInfo">—</div>
+        </div>
+        <div class="badge-done" id="badgeDone">✓ Already entered — will update</div>
+      </div>
+
+      <!-- Number of posts -->
+      <div id="postsWrap" style="display:none;margin-top:18px;">
+        <div class="lbl" style="margin-bottom:10px;">
+          Posts held during this period <span class="req">*</span>
+        </div>
+        <div class="radio-grp" id="postsRadio"></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.6;">
+          Select the number of posts. Each post will have its own file data section.
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnProceed" onclick="proceedEntry()" style="margin-top:20px;" disabled>
+        Continue to Post Details →
+      </button>
+    </div>
+
+    <!-- STEP 2 ── Post name / dept / type per post -->
+    <div id="eStep2" style="display:none;">
+      <div class="oic-bar">
+        <div>
+          <div class="oic-name" id="s2OicName">—</div>
+          <div class="oic-meta" id="s2OicMeta">—</div>
+        </div>
+        <div class="oic-period" id="s2Period">—</div>
+        <button class="oic-back" onclick="goToS1()">← Change Officer</button>
+      </div>
+
+      <div class="s2-err" id="s2Err"></div>
+      <div class="s2-note">
+        Fill in the name and department for each post.
+        <strong>Exactly one Regular</strong> post is required — selecting Regular on one row automatically sets all others to FAC.
+      </div>
+
+      <div id="pdRows"></div>
+
+      <button class="btn-primary" id="btnToS3" onclick="proceedToS3()" style="margin-top:14px;">
+        Save Post Details &amp; Enter File Data →
+      </button>
+    </div>
+
+    <!-- STEP 3 ── File data per post -->
+    <div id="eStep3" style="display:none;">
+      <div class="oic-bar">
+        <div>
+          <div class="oic-name" id="s3OicName">—</div>
+          <div class="oic-meta" id="s3OicMeta">—</div>
+        </div>
+        <div class="oic-period" id="s3Period">—</div>
+        <button class="oic-back" onclick="goToS2()">← Edit Post Details</button>
+      </div>
+
+      <div class="s3-dots" id="s3Dots"></div>
+      <div id="s3Cards"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════ HEADER ══════ -->
+<div class="top-header">
+  <button class="btn-back" onclick="location.href='index.html'">← Home</button>
+  <div class="hdr-title-grp">
+    <div class="hdr-mod-label">e-Office Module</div>
+    <div class="hdr-mod-title">e-Office Data Entry</div>
+  </div>
+  <div class="period-badge" id="hdrPeriod" onclick="tryOpenPeriodModal()">📅 No Period Set</div>
+  <button class="btn-hdr" onclick="signOut()">⏻ Logout</button>
+</div>
+
+<div class="welcome-bar">
+  <span>Operator: <strong id="wName">—</strong></span>
+  <span id="wDate" style="font-size:11px;color:#94a3b8;"></span>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-dashboard" onclick="goTab('dashboard')">📊 Dashboard</button>
+  <button class="tab-btn"        id="tab-entry"     onclick="goTab('entry')">📝 Data Entry</button>
+  <button class="tab-btn"        id="tab-records"   onclick="goTab('records')">📋 Records</button>
+</div>
+
+<div class="page">
+
+  <!-- ══════ DASHBOARD ══════ -->
+  <div id="pane-dashboard">
+    <div id="dashLoading" class="empty">
+      <div class="empty-ico" style="font-size:32px;">⏳</div>
+      <div class="empty-txt" style="font-size:15px;">Loading dashboard…</div>
+    </div>
+    <div id="dashEmpty" class="empty" style="display:none;">
+      <div class="empty-ico">📋</div>
+      <div class="empty-txt">No data entered yet</div>
+      <div class="empty-sub">Go to the <strong>Data Entry</strong> tab to start entering e-Office file statistics for officers.</div>
+    </div>
+    <div id="dashBody" style="display:none;">
+      <!-- Period pills -->
+      <div class="caps-bar" id="dashCaps"></div>
+      <!-- KPI row -->
+      <div class="stat-grid" id="dashKPIs" style="grid-template-columns:repeat(3,1fr);"></div>
+      <!-- 2-col charts row -->
+      <div class="dash-2col">
+        <div class="card" id="dashCatCard">
+          <div class="card-title">📊 Avg Processing Time by Designation Category <span id="dashCatClear" style="display:none;margin-left:auto;font-size:12px;color:#4338ca;cursor:pointer;font-weight:600;" onclick="clearDashDrill()">✕ Clear filter</span></div>
+          <div id="dashCatChart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Processing Speed Distribution</div>
+          <div id="dashSpeedChart"></div>
+        </div>
+      </div>
+      <!-- Drill-down panel (hidden until category clicked) -->
+      <div id="dashDrillCard" class="card" style="display:none;margin-bottom:18px;">
+        <div class="card-title" id="dashDrillTitle"></div>
+        <div id="dashDrillList"></div>
+      </div>
+      <!-- Top 5 best / worst -->
+      <div class="dash-2col">
+        <div class="card">
+          <div class="card-title">🏆 Top 5 Fastest — Best Disposal</div>
+          <div id="dashTop5Best"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🐌 Top 5 Slowest — Needs Attention</div>
+          <div id="dashTop5Worst"></div>
+        </div>
+      </div>
+      <!-- Service-wise summary -->
+      <div class="card">
+        <div class="card-title">🏛️ Service-wise Summary</div>
+        <div id="dashSvcSummary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ DATA ENTRY ══════ -->
+  <div id="pane-entry" style="display:none;">
+    <div id="entryEmpty" class="empty" style="padding-bottom:24px;">
+      <div class="empty-ico">📅</div>
+      <div class="empty-txt">No period selected</div>
+      <div class="empty-sub" style="margin-bottom:20px;">Click the button below to set the reporting period and begin data entry.</div>
+      <button class="btn-cta" onclick="openEntry()" style="max-width:400px;margin:0 auto;">➕ Enter e-Office Files Data</button>
+    </div>
+    <div id="entryBody" style="display:none;">
+
+      <!-- Progress -->
+      <div class="prog-wrap">
+        <div class="prog-hdr">
+          <div class="prog-title">📋 Overall Data Entry Progress</div>
+          <div class="prog-count" id="progCount">0 / 0</div>
+        </div>
+        <div class="prog-bg"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <div class="prog-sub" id="progSub">—</div>
+      </div>
+
+      <!-- Stat cards / data cards -->
+      <div id="entryStats"></div>
+
+      <!-- CTA -->
+      <button class="btn-cta" onclick="openEntry()">➕ Enter e-Office Files Data</button>
+
+      <!-- Service tabs + officers grid -->
+      <div class="svc-bar">
+        <button class="svc-tab ias active" id="eSvc-IAS" onclick="setEntrySvc('IAS')">👤 IAS <span class="svc-pill" id="ePill-IAS">0/0</span></button>
+        <button class="svc-tab ips"        id="eSvc-IPS" onclick="setEntrySvc('IPS')">🛡 IPS <span class="svc-pill" id="ePill-IPS">0/0</span></button>
+        <button class="svc-tab ifs"        id="eSvc-IFS" onclick="setEntrySvc('IFS')">🌲 IFS <span class="svc-pill" id="ePill-IFS">0/0</span></button>
+      </div>
+
+      <div class="card" style="padding:18px 20px;">
+        <div class="card-title" style="margin-bottom:12px;">
+          Officers Status
+          <span style="margin-left:auto;font-size:12px;color:#94a3b8;font-weight:500;">Click any officer to open their data entry</span>
+        </div>
+        <div class="ofc-grid" id="ofcGrid">
+          <div style="font-size:13px;color:#94a3b8;grid-column:1/-1;text-align:center;padding:20px;">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ RECORDS ══════ -->
+  <div id="pane-records" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 Submitted Records</div>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-grp" style="min-width:100px;flex:1;">
+          <label class="lbl">Service</label>
+          <select id="rSvc" class="inp" onchange="loadRec(1)" style="padding:8px 12px;cursor:pointer;">
+            <option value="">All</option><option>IAS</option><option>IPS</option><option>IFS</option>
+          </select>
+        </div>
+        <div class="form-grp" style="min-width:150px;flex:2;">
+          <label class="lbl">Officer</label>
+          <input type="text" id="rOfc" class="inp" placeholder="Name or ID…" oninput="loadRec(1)" style="padding:8px 12px;">
+        </div>
+        <div class="form-grp" style="min-width:100px;flex:1;">
+          <label class="lbl">Post Type</label>
+          <select id="rPT" class="inp" onchange="loadRec(1)" style="padding:8px 12px;cursor:pointer;">
+            <option value="">All</option><option value="regular">Regular</option><option value="fac">FAC</option>
+          </select>
+        </div>
+        <div class="form-grp" style="min-width:140px;flex:1;">
+          <label class="lbl">Period</label>
+          <select id="rPeriod" class="inp" onchange="loadRec(1)" style="padding:8px 12px;cursor:pointer;">
+            <option value="">All Periods</option>
+          </select>
+        </div>
+        <button onclick="clearRecF()" style="padding:8px 14px;background:#f1f5f9;border:2px solid #e2e8f0;border-radius:9px;color:#475569;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">✕ Clear</button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Svc</th><th>Officer</th><th>ID</th>
+              <th>Post / Designation</th><th>Department</th><th>Type</th>
+              <th>Period</th>
+              <th style="text-align:right;">Open</th><th style="text-align:right;">Created</th><th style="text-align:right;">Rcvd</th>
+              <th style="text-align:right;">Procd</th><th style="text-align:right;">Pending</th>
+              <th style="text-align:right;">Avg Time</th>
+              <th style="text-align:right;">&lt;1d</th><th style="text-align:right;">1-3d</th><th style="text-align:right;">3-7d</th>
+              <th style="text-align:right;">7-30d</th><th style="text-align:right;">&gt;30d</th>
+              <th>Entered At</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="recBody"></tbody>
+        </table>
+      </div>
+      <div id="recEmpty" class="empty" style="display:none;">
+        <div class="empty-ico">🗂️</div>
+        <div class="empty-txt">No records found</div>
+        <div class="empty-sub">Enter data using the Data Entry tab.</div>
+      </div>
+      <div class="paging" id="recPaging"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+<div id="ais-toast-root"></div>
+
+<script>
+// ================================================================
+// POPUP TOAST
+// ================================================================
+(function() {
+  var _CFG = {
+    warn:  { ico:'⚠️',  title:'Warning' },
+    error: { ico:'❌',  title:'Error' },
+    info:  { ico:'ℹ️',  title:'Info' },
+    ok:    { ico:'✅',  title:'Done' }
+  };
+  window.showConfirm = function(opts) {
+    // opts: { ico, title, body, note, confirmLabel, onConfirm }
+    var ov = document.createElement('div');
+    ov.id = 'ais-confirm-overlay';
+    ov.innerHTML =
+      '<div class="ais-cfm-box">' +
+        '<div class="ais-cfm-ico">'   + (opts.ico   || '🗑️') + '</div>' +
+        '<div class="ais-cfm-title">' + (opts.title || 'Confirm') + '</div>' +
+        '<div class="ais-cfm-body">'  + (opts.body  || '') + '</div>' +
+        '<div class="ais-cfm-note">'  + (opts.note  || 'This action cannot be undone.') + '</div>' +
+        '<div class="ais-cfm-row">' +
+          '<button class="ais-cfm-cancel">Cancel</button>' +
+          '<button class="ais-cfm-delete">' + (opts.confirmLabel || '🗑️ Delete') + '</button>' +
+        '</div>' +
+      '</div>';
+    function close() {
+      ov.classList.add('hiding');
+      setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200);
+    }
+    ov.querySelector('.ais-cfm-cancel').addEventListener('click', close);
+    ov.querySelector('.ais-cfm-delete').addEventListener('click', function() {
+      close();
+      if (opts.onConfirm) opts.onConfirm();
+    });
+    ov.addEventListener('click', function(ev){ if (ev.target === ov) close(); });
+    document.body.appendChild(ov);
+  };
+
+  window.showAlert = function(msg, type, title) {
+    type = type || 'warn';
+    var cfg   = _CFG[type] || _CFG.warn;
+    var root  = document.getElementById('ais-toast-root');
+    var toast = document.createElement('div');
+    toast.className = 'ais-toast ' + type;
+    toast.innerHTML =
+      '<div class="ais-toast-ico">' + cfg.ico + '</div>' +
+      '<div class="ais-toast-body">' +
+        '<div class="ais-toast-title">' + (title || cfg.title) + '</div>' +
+        '<div class="ais-toast-msg">'  + msg.replace(/\n/g,'<br>') + '</div>' +
+      '</div>' +
+      '<button class="ais-toast-close" onclick="this.closest(\'.ais-toast\').dispatchEvent(new Event(\'ais-close\'))">✕</button>';
+    function dismiss() {
+      toast.classList.add('hiding');
+      setTimeout(function(){ if (toast.parentNode) toast.parentNode.removeChild(toast); }, 230);
+    }
+    toast.addEventListener('ais-close', dismiss);
+    root.appendChild(toast);
+    setTimeout(dismiss, 6000);
+  };
+})();
+
+// ================================================================
+// STATE
+// ================================================================
+var _session   = null;
+var _period    = { from: '', to: '' };
+var _officers  = { IAS: [], IPS: [], IFS: [] };
+var _entered   = {};      // 'SVC|ID' → [records]
+var _mSvc      = 'IAS';   // modal service
+var _eSvc      = 'IAS';   // entry pane service
+var _editOfc   = null;    // { officer, existingRecords }
+var _numPosts         = null;   // null = nothing selected yet
+var _postDetails      = [];     // [{name, dept, type}] from step 2
+var _postSaved        = [];     // bool per post
+var _postDetailsSaved = {};     // 'SVC|ID' → true  (post details saved in DB for current period)
+var _savedPostDetails = {};     // 'SVC|ID' → {num_posts, post_details:[…]}
+var _recPage      = 1;
+var _dashData     = null;
+var _dashPhotos   = {};   // identity_no → photo_url
+var _dashPer      = null;
+var _pendingEntry = false;   // open entry modal after period is set
+var _svcGates     = { IAS: true, IPS: true, IFS: true }; // per-service open/locked state
+var REC_PG        = 25;
+
+// ================================================================
+// INIT
+// ================================================================
+(async function init() {
+  _session = await requireAuth();
+  if (!_session) return;
+  if ((_session.role || '').toLowerCase() !== 'eoffice') { location.href = 'index.html'; return; }
+  if (!await enforceModuleGate('eoffice')) return;
+
+  document.getElementById('wName').textContent = _session.email || '—';
+  var now = new Date();
+  document.getElementById('wDate').textContent =
+    now.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+  await loadOfficers();
+  await checkServiceGates();
+  await autoResumePeriod();
+  refreshEntry();
+  loadDash();
+})();
+
+function signOut() {
+  if (window._supabase && _supabase.auth) _supabase.auth.signOut();
+  location.href = 'index.html';
+}
+
+// ================================================================
+// SERVICE GATES (per-service deadline / pause control)
+// ================================================================
+async function checkServiceGates() {
+  try {
+    var { data } = await _supabase
+      .from('module_control')
+      .select('module_name, is_paused, deadline, label')
+      .in('module_name', ['eoffice_IAS', 'eoffice_IPS', 'eoffice_IFS']);
+
+    var now = new Date();
+    _svcGates = { IAS: true, IPS: true, IFS: true };
+    (data || []).forEach(function(row) {
+      var svc = row.module_name.replace('eoffice_', '');
+      var paused  = !!row.is_paused;
+      var expired = row.deadline && now > new Date(row.deadline);
+      if (paused || expired) _svcGates[svc] = false;
+    });
+  } catch(e) {
+    // table missing or error — allow all
+    _svcGates = { IAS: true, IPS: true, IFS: true };
+  }
+  applyServiceGates();
+}
+
+function applyServiceGates() {
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    var locked = !_svcGates[svc];
+    var tip = locked ? svc + ' e-Office data entry is paused or deadline has passed.' : '';
+
+    // Main entry grid tab
+    var eBtn = document.getElementById('eSvc-' + svc);
+    if (eBtn) {
+      eBtn.disabled = locked;
+      eBtn.style.opacity  = locked ? '0.45' : '';
+      eBtn.style.cursor   = locked ? 'not-allowed' : '';
+      eBtn.title = tip;
+    }
+
+    // Modal Step-1 service tab
+    var mBtn = document.getElementById('mTab-' + svc);
+    if (mBtn) {
+      mBtn.disabled = locked;
+      mBtn.style.opacity  = locked ? '0.45' : '';
+      mBtn.style.cursor   = locked ? 'not-allowed' : '';
+      mBtn.title = tip;
+    }
+  });
+
+  // Auto-switch _eSvc if currently locked service is selected
+  if (!_svcGates[_eSvc]) {
+    var first = ['IAS','IPS','IFS'].find(function(s) { return _svcGates[s]; });
+    if (first) { _eSvc = first; setEntrySvc(first); }
+  }
+}
+
+// ================================================================
+// AUTO-RESUME PERIOD
+// ================================================================
+async function autoResumePeriod() {
+  var by = (_session.email || '').toUpperCase();
+
+  // Fetch most recent period from both sources in parallel
+  var results = await Promise.all([
+    _supabase.from('eoffice_data')
+      .select('period_from, period_to')
+      .eq('entered_by', by)
+      .order('period_from', { ascending: false })
+      .limit(1),
+    _supabase.from('eoffice_post_details')
+      .select('period_from, period_to')
+      .eq('entered_by', by)
+      .order('period_from', { ascending: false })
+      .limit(1)
+  ]);
+
+  var candidates = [];
+  results.forEach(function(r) {
+    if (!r.error && r.data && r.data.length) candidates.push(r.data[0]);
+  });
+  if (!candidates.length) return; // fresh start — no previous data
+
+  // Pick the most recent period across both tables
+  candidates.sort(function(a, b) { return b.period_from.localeCompare(a.period_from); });
+  var latest = candidates[0];
+
+  // Set the period in state and UI
+  _period = { from: latest.period_from, to: latest.period_to };
+  var badge = document.getElementById('hdrPeriod');
+  if (badge) badge.textContent = '📅 ' + fmtD(_period.from) + ' → ' + fmtD(_period.to);
+  document.getElementById('pFrom').value = _period.from;
+  document.getElementById('pTo').value   = _period.to;
+
+  await loadEntered(); // loads file data + post details + calls updatePeriodBadgeLock
+}
+
+// ================================================================
+// PERIOD MODAL
+// ================================================================
+function tryOpenPeriodModal() {
+  if (_period.from && !isAllOfficersDone()) {
+    showAlert('Data entry is in progress for <strong>' + fmtD(_period.from) + ' → ' + fmtD(_period.to) + '</strong>.\nComplete data for all officers before changing the period.', 'warn', '🔒 Period Locked');
+    return;
+  }
+  openPeriodModal();
+}
+
+function openPeriodModal() {
+  document.getElementById('periodOverlay').classList.remove('hidden');
+}
+function closePeriodModal() {
+  document.getElementById('periodOverlay').classList.add('hidden');
+  _pendingEntry = false;
+}
+
+async function confirmPeriod() {
+  var from = document.getElementById('pFrom').value;
+  var to   = document.getElementById('pTo').value;
+  var err  = document.getElementById('pErr');
+  err.style.display = 'none';
+
+  if (!from) { err.textContent = 'Period From is required.'; err.style.display = ''; return; }
+  if (!to)   { err.textContent = 'Period To is required.';   err.style.display = ''; return; }
+  if (to < from) { err.textContent = 'Period To cannot be before Period From.'; err.style.display = ''; return; }
+
+  _period = { from: from, to: to };
+  document.getElementById('periodOverlay').classList.add('hidden');
+  document.getElementById('hdrPeriod').textContent = '📅 ' + fmtD(from) + ' → ' + fmtD(to);
+
+  await loadEntered();
+  refreshEntry();
+  loadDash();
+
+  _pendingEntry = false;
+  openModeModal();
+}
+
+function updatePeriodBadgeLock() {
+  var badge = document.getElementById('hdrPeriod');
+  if (!badge) return;
+  var locked = !!_period.from && !isAllOfficersDone();
+  badge.classList.toggle('locked', locked);
+  badge.title = locked
+    ? '🔒 Period locked — complete all officers\' data before changing the period.'
+    : (_period.from ? '✅ Period complete — click to start a new period.' : '');
+}
+
+// ================================================================
+// OFFICERS
+// ================================================================
+async function loadOfficers() {
+  await Promise.all(['IAS','IPS','IFS'].map(async function(svc) {
+    var { data } = await _supabase
+      .from('officers')
+      .select('id, identity_no, name_of_officer, cadre, allotment_year, service_type')
+      .eq('service_type', svc).eq('is_retired', false)
+      .order('allotment_year', { ascending: true })
+      .order('name_of_officer',   { ascending: true });
+    _officers[svc] = data || [];
+    var el = document.getElementById('mPill-' + svc);
+    if (el) el.textContent = _officers[svc].length;
+  }));
+}
+
+async function loadEntered() {
+  if (!_period.from) return;
+  _entered = {};
+  var { data } = await _supabase
+    .from('eoffice_data')
+    .select('id, identity_no, service_type, post_name, department_name, post_type, opening_balance, files_created, files_received, files_processed, files_pending, avg_process_hours, processed_lt_1day, processed_1_to_3days, processed_3_to_7days, processed_7_to_30days, processed_gt_30days')
+    .eq('period_from', _period.from).eq('period_to', _period.to)
+    .eq('entered_by', (_session.email || '').toUpperCase());
+
+  (data || []).forEach(function(r) {
+    var k = (r.service_type || '') + '|' + (r.identity_no || '');
+    if (!_entered[k]) _entered[k] = [];
+    _entered[k].push(r);
+  });
+  await loadPostDetailsSaved();
+  updatePeriodBadgeLock();
+}
+
+async function loadPostDetailsSaved() {
+  if (!_period.from) return;
+  _postDetailsSaved = {};
+  _savedPostDetails = {};
+  var { data } = await _supabase
+    .from('eoffice_post_details')
+    .select('identity_no, service_type, num_posts, post_details')
+    .eq('period_from', _period.from)
+    .eq('period_to',   _period.to)
+    .eq('entered_by',  (_session.email || '').toUpperCase());
+  (data || []).forEach(function(r) {
+    var key = (r.service_type || '') + '|' + (r.identity_no || '');
+    _postDetailsSaved[key] = true;
+    _savedPostDetails[key] = { num_posts: r.num_posts, post_details: r.post_details || [] };
+  });
+}
+
+function ofcStatus(svc, id) {
+  var key        = svc + '|' + id;
+  var recs       = _entered[key] || [];
+  var savedPD    = _savedPostDetails[key];
+  var filesCount = recs.length;
+
+  // Nothing at all
+  if (filesCount === 0 && !savedPD) return 'none';
+
+  // "No Posts Held" is a complete entry
+  if (filesCount === 1 && recs[0].post_name === 'No Posts Held') return 'full';
+
+  // Legacy records (saved before post_details table existed) — treat as full
+  if (filesCount > 0 && !savedPD) return 'full';
+
+  // Post details saved AND all posts have file data
+  if (savedPD && filesCount >= savedPD.num_posts) return 'full';
+
+  // Anything else: post details exist but file data missing or incomplete
+  return 'partial';
+}
+
+function isDone(svc, id) { return ofcStatus(svc, id) === 'full'; }
+
+function isAllOfficersDone() {
+  var total = 0, done = 0;
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    (_officers[svc] || []).forEach(function(o) {
+      total++;
+      if (isDone(svc, o.identity_no)) done++;
+    });
+  });
+  return total > 0 && done === total;
+}
+
+// ================================================================
+// TAB NAV
+// ================================================================
+function goTab(t) {
+  ['dashboard','entry','records'].forEach(function(x) {
+    document.getElementById('pane-' + x).style.display = x === t ? '' : 'none';
+    document.getElementById('tab-' + x).classList.toggle('active', x === t);
+  });
+  if (t === 'records') loadRec(1);
+  if (t === 'dashboard') loadDash();
+}
+
+// ================================================================
+// ENTRY PANE
+// ================================================================
+function refreshEntry() {
+  var has = !!_period.from;
+  document.getElementById('entryEmpty').style.display = has ? 'none' : '';
+  document.getElementById('entryBody').style.display  = has ? '' : 'none';
+  applyServiceGates();
+  if (!has) return;
+  updateProgress();
+  updateEntryStats();
+  renderOfcGrid(_eSvc);
+}
+
+function updateProgress() {
+  var total = 0, done = 0;
+  ['IAS','IPS','IFS'].filter(function(s){ return _svcGates[s]; }).forEach(function(svc) {
+    var ofcs = _officers[svc] || [];
+    total += ofcs.length;
+    ofcs.forEach(function(o) { if (isDone(svc, o.identity_no)) done++; });
+  });
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progFill').className   = 'prog-fill' + (pct === 100 ? ' done' : '');
+  document.getElementById('progCount').textContent = done + ' / ' + total + ' Officers';
+  document.getElementById('progSub').textContent   =
+    pct === 100 ? '🎉 All officers\' data entered for this period!' :
+    pct > 0     ? (total - done) + ' officer(s) still pending.' :
+                  'No data entered yet. Click "Enter e-Office Files Data" to begin.';
+
+  ['IAS','IPS','IFS'].forEach(function(svc) {
+    var ofcs = _svcGates[svc] ? (_officers[svc] || []) : [];
+    var d = ofcs.filter(function(o) { return isDone(svc, o.identity_no); }).length;
+    var el = document.getElementById('ePill-' + svc);
+    if (el) el.textContent = _svcGates[svc] ? d + '/' + ofcs.length : '🔒';
+  });
+}
+
+function updateEntryStats() {
+  // ── 1. Officer status counts ──────────────────────────
+  var totalOfc = 0, doneCnt = 0, partialCnt = 0, noneCnt = 0;
+  var svcStat = {
+    IAS: { total:0, done:0, partial:0, none:0 },
+    IPS: { total:0, done:0, partial:0, none:0 },
+    IFS: { total:0, done:0, partial:0, none:0 }
+  };
+  ['IAS','IPS','IFS'].filter(function(s){ return _svcGates[s]; }).forEach(function(svc) {
+    (_officers[svc] || []).forEach(function(o) {
+      totalOfc++; svcStat[svc].total++;
+      var st = ofcStatus(svc, o.identity_no);
+      if      (st === 'full')    { doneCnt++;    svcStat[svc].done++;    }
+      else if (st === 'partial') { partialCnt++; svcStat[svc].partial++; }
+      else                       { noneCnt++;    svcStat[svc].none++;    }
+    });
+  });
+
+  // ── 2. File aggregates ────────────────────────────────
+  var totOB=0, totFC=0, totFR=0, totFP=0, totPend=0;
+  var totLt1=0, tot1t3=0, tot3t7=0, tot7t30=0, totGt30=0;
+  var sumHrs=0, hrsCnt=0, regularCnt=0, facCnt=0;
+  Object.keys(_entered).forEach(function(key) {
+    var svc = key.split('|')[0];
+    if (!_svcGates[svc]) return;
+    var recs = _entered[key];
+    recs.forEach(function(r) {
+      if (r.post_name === 'No Posts Held') return;
+      totOB   += r.opening_balance         || 0;
+      totFC   += r.files_created           || 0;
+      totFR   += r.files_received          || 0;
+      totFP   += r.files_processed         || 0;
+      totPend += r.files_pending           || 0;
+      totLt1  += r.processed_lt_1day       || 0;
+      tot1t3  += r.processed_1_to_3days    || 0;
+      tot3t7  += r.processed_3_to_7days    || 0;
+      tot7t30 += r.processed_7_to_30days   || 0;
+      totGt30 += r.processed_gt_30days     || 0;
+      if (r.avg_process_hours != null && (r.files_processed||0) > 0) { sumHrs += r.avg_process_hours * (r.files_processed||0); hrsCnt += r.files_processed||0; }
+      if ((r.post_type || 'regular') === 'fac') facCnt++; else regularCnt++;
+    });
+  });
+  var totInflow    = totOB + totFC + totFR;
+  var disposalRate = totInflow > 0 ? Math.round(totFP / totInflow * 100) : 0;
+  var avgHrs       = hrsCnt > 0 ? sumHrs / hrsCnt : null;
+  var speedTotal   = totLt1 + tot1t3 + tot3t7 + tot7t30 + totGt30;
+  var fastPct      = speedTotal > 0 ? Math.round((totLt1 + tot1t3) / speedTotal * 100) : 0;
+  var pct = function(d, t) { return t > 0 ? Math.round(d / t * 100) : 0; };
+
+  // ── 3. Period bar ─────────────────────────────────────
+  var periodBar = '';
+  if (_period.from) {
+    var pFrom = new Date(_period.from + 'T00:00:00');
+    var pTo   = new Date(_period.to   + 'T00:00:00');
+    var totalDays = Math.round((pTo - pFrom) / 86400000) + 1;
+    periodBar =
+      '<div class="ec-period-bar">' +
+        '<div class="ec-period-dates">📅 ' + fmtD(_period.from) + ' → ' + fmtD(_period.to) + '</div>' +
+        '<div class="ec-period-meta">Reporting period · ' + totalDays + ' days total</div>' +
+      '</div>';
+  }
+
+  // ── 4. Officer completion ─────────────────────────────
+  var secOfficers =
+    '<div class="ec-section-lbl" style="margin-top:0;">📋 Officer Completion Status</div>' +
+    '<div class="stat-grid">' +
+      mkStat('green', doneCnt,    '✅', 'Officers Complete') +
+      mkStat('amber', partialCnt, '🟡', 'Posts Saved · Files Pending') +
+      mkStat('red',   noneCnt,    '❌', 'Not Started') +
+      mkStat('blue',  totalOfc,   '👥', 'Total Officers') +
+    '</div>';
+
+  // ── 5. Per-service breakdown ──────────────────────────
+  var svcCfg = {
+    IAS: { label:'👤 IAS', accent:'#d97706', bar:'#fbbf24', border:'#fde68a', bg:'#fffbeb' },
+    IPS: { label:'🛡 IPS', accent:'#dc2626', bar:'#f87171', border:'#fca5a5', bg:'#fff1f2' },
+    IFS: { label:'🌲 IFS', accent:'#059669', bar:'#4ade80', border:'#86efac', bg:'#f0fdf4' }
+  };
+  var svcCards = ['IAS','IPS','IFS'].filter(function(svc){ return _svcGates[svc]; }).map(function(svc) {
+    var s = svcStat[svc]; var c = svcCfg[svc]; var dp = pct(s.done, s.total);
+    return '<div class="ec-svc-card" style="border-color:' + c.border + ';background:' + c.bg + ';">' +
+      '<div class="ec-svc-hdr">' +
+        '<span style="font-size:13px;font-weight:800;color:#1e1b4b;">' + c.label + '</span>' +
+        '<span style="font-size:24px;font-weight:900;color:' + c.accent + ';">' + s.done +
+          '<span style="font-size:12px;font-weight:600;color:#94a3b8;"> / ' + s.total + '</span></span>' +
+      '</div>' +
+      '<div class="ec-mini-bar-bg"><div class="ec-mini-bar-fill" style="width:' + dp + '%;background:' + c.bar + ';"></div></div>' +
+      '<div class="ec-svc-meta"><strong>' + dp + '%</strong> complete' +
+        (s.partial > 0 ? ' &nbsp;·&nbsp; <span style="color:#d97706;">🟡 ' + s.partial + ' partial</span>' : '') +
+        (s.none    > 0 ? ' &nbsp;·&nbsp; <span style="color:#dc2626;">❌ ' + s.none    + ' pending</span>' : '') +
+      '</div></div>';
+  }).join('');
+  var secSvc =
+    '<div class="ec-section-lbl">🏛️ Per-Service Breakdown</div>' +
+    '<div class="ec-svc-row">' + svcCards + '</div>';
+
+  // ── 6. Files overview ─────────────────────────────────
+  var drColor = disposalRate >= 80 ? 'green' : disposalRate >= 50 ? 'amber' : 'red';
+  var secFiles =
+    '<div class="ec-section-lbl">📂 Files Overview — Current Period</div>' +
+    '<div class="stat-grid">' +
+      mkStat('blue',  totInflow,           '📥', 'Total Inflow') +
+      mkStat('green', totFP,               '✅', 'Files Processed') +
+      mkStat(totPend > 0 ? 'red' : 'green', totPend, '⏳', 'Files Pending') +
+      mkStat(drColor, disposalRate + '%',  '⚡', 'Disposal Rate') +
+    '</div>' +
+    '<div class="stat-grid">' +
+      mkStat('blue',  totOB,  '📋', 'Opening Balance') +
+      mkStat('blue',  totFC,  '📝', 'Files Created') +
+      mkStat('blue',  totFR,  '📨', 'Files Received') +
+      mkStat(avgHrs !== null ? 'amber' : 'blue',
+             avgHrs !== null ? fmtHrsShort(avgHrs) : '—', '⏱️', 'Avg Time / File') +
+    '</div>';
+
+  // ── 7. Processing speed distribution ─────────────────
+  var secSpeed = '';
+  if (speedTotal > 0) {
+    var speeds = [
+      { lbl:'< 1 day',   n:totLt1,  col:'#10b981' },
+      { lbl:'1–3 days',  n:tot1t3,  col:'#34d399' },
+      { lbl:'3–7 days',  n:tot3t7,  col:'#fbbf24' },
+      { lbl:'7–30 days', n:tot7t30, col:'#f97316' },
+      { lbl:'> 30 days', n:totGt30, col:'#ef4444' }
+    ];
+    var segs = speeds.map(function(s) {
+      var w = pct(s.n, speedTotal);
+      return w > 0
+        ? '<div class="ec-spd-seg" style="width:' + w + '%;background:' + s.col + ';" title="' +
+            s.lbl + ': ' + s.n.toLocaleString('en-IN') + ' files (' + w + '%)">' +
+            (w >= 9 ? w + '%' : '') + '</div>'
+        : '';
+    }).join('');
+    var legend = speeds.filter(function(s){ return s.n > 0; }).map(function(s) {
+      return '<span class="ec-spd-dot" style="background:' + s.col + ';"></span>' +
+             '<span style="font-size:11px;color:#475569;">' + s.lbl + ':&nbsp;<strong>' +
+             s.n.toLocaleString('en-IN') + '</strong></span>';
+    }).join('');
+    var fastColor = fastPct >= 70 ? '#059669' : fastPct >= 40 ? '#d97706' : '#dc2626';
+    secSpeed =
+      '<div class="ec-section-lbl">⚡ Processing Speed Distribution</div>' +
+      '<div class="ec-speed-wrap">' +
+        '<div class="ec-speed-hdr">' +
+          '<span>' + speedTotal.toLocaleString('en-IN') + ' files disposed</span>' +
+          '<span style="font-weight:800;color:' + fastColor + ';">' + fastPct + '% disposed within 3 days</span>' +
+          (avgHrs !== null ? '<span>Avg: <strong>' + fmtHrsShort(avgHrs) + ' / file</strong></span>' : '') +
+        '</div>' +
+        '<div class="ec-spd-bar">' + segs + '</div>' +
+        '<div class="ec-spd-legend">' + legend + '</div>' +
+      '</div>';
+  }
+
+  // ── 8. Post type breakdown ────────────────────────────
+  var totalPosts = regularCnt + facCnt;
+  var secPosts = '';
+  if (totalPosts > 0) {
+    secPosts =
+      '<div class="ec-section-lbl">🏷️ Post Type Breakdown</div>' +
+      '<div class="stat-grid">' +
+        mkStat('blue',  regularCnt,             '🏛️', 'Regular Posts') +
+        mkStat('amber', facCnt,                 '🔄', 'FAC Posts') +
+        mkStat('green', pct(regularCnt,totalPosts) + '%', '📊', 'Regular Share') +
+        mkStat('blue',  totalPosts,             '📌', 'Total Posts') +
+      '</div>';
+  }
+
+  document.getElementById('entryStats').innerHTML =
+    periodBar + secOfficers + secSvc + secFiles + secSpeed + secPosts;
+}
+
+function setEntrySvc(svc) {
+  if (!_svcGates[svc]) {
+    showAlert('<strong>' + svc + '</strong> e-Office data entry is currently paused or its deadline has passed.', 'warn', '⏸ Service Locked');
+    return;
+  }
+  _eSvc = svc;
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    document.getElementById('eSvc-' + s).classList.toggle('active', s === svc);
+  });
+  renderOfcGrid(svc);
+}
+
+function renderOfcGrid(svc) {
+  var officers = _officers[svc] || [];
+  var grid = document.getElementById('ofcGrid');
+  if (!officers.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;font-size:13px;color:#94a3b8;">No active ' + svc + ' officers found.</div>';
+    return;
+  }
+  // Sort: partial (🟡) first, none (❌) next, full (✅) at the end
+  var rank = { partial: 0, none: 1, full: 2 };
+  var sorted = officers.slice().sort(function(a, b) {
+    return rank[ofcStatus(svc, a.identity_no)] - rank[ofcStatus(svc, b.identity_no)];
+  });
+
+  grid.innerHTML = sorted.map(function(o) {
+    var status = ofcStatus(svc, o.identity_no);
+    var recs   = _entered[svc + '|' + o.identity_no] || [];
+    var ico, cls, sub;
+    if (status === 'full') {
+      ico = '✅'; cls = 'done';
+      sub = e(o.identity_no || '—') + ' · ' + recs.length + ' post' + (recs.length !== 1 ? 's' : '') + ' saved';
+    } else if (status === 'partial') {
+      ico = '🟡'; cls = 'partial';
+      sub = e(o.identity_no || '—') + ' · Posts saved — file data pending';
+    } else {
+      ico = '❌'; cls = 'none';
+      sub = e(o.identity_no || '—') + ' · Not started';
+    }
+    return '<div class="ofc-chip ' + cls + '" onclick="openEntryFor(\'' + ea(svc) + '\',\'' + ea(o.identity_no) + '\')">' +
+      '<span class="chip-ico">' + ico + '</span>' +
+      '<div>' +
+        '<div class="chip-name">' + e(o.name_of_officer) + '</div>' +
+        '<div class="chip-sub">' + sub + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ================================================================
+// ENTRY MODAL
+// ================================================================
+
+function setStep(n) {
+  ['eStep1','eStep2','eStep3'].forEach(function(id, i) {
+    document.getElementById(id).style.display = (i + 1 === n) ? '' : 'none';
+  });
+  [1,2,3].forEach(function(s) {
+    var el = document.getElementById('emS' + s);
+    if (!el) return;
+    el.classList.toggle('active', s === n);
+    el.classList.toggle('done',   s < n);
+  });
+  [1,2].forEach(function(s) {
+    var ln = document.getElementById('emL' + s);
+    if (ln) ln.classList.toggle('done', s < n);
+  });
+}
+
+function openEntry() {
+  if (!_period.from) {
+    _pendingEntry = true;
+    openPeriodModal();
+    return;
+  }
+  // Use current service or fall back to first unlocked one
+  var svc = _svcGates[_eSvc] ? _eSvc
+    : (['IAS','IPS','IFS'].find(function(s) { return _svcGates[s]; }) || _eSvc);
+  document.getElementById('entryOverlay').classList.remove('hidden');
+  resetModal();
+  setModalSvc(svc);
+}
+
+function openEntryFor(svc, id) {
+  if (!_svcGates[svc]) {
+    showAlert('<strong>' + svc + '</strong> e-Office data entry is currently paused or its deadline has passed.', 'warn', '⏸ Service Locked');
+    return;
+  }
+  document.getElementById('entryOverlay').classList.remove('hidden');
+  resetModal();
+  setModalSvc(svc);
+
+  // Post details already saved but file data incomplete → skip straight to Step 3
+  if (ofcStatus(svc, id) === 'partial') {
+    var o = (_officers[svc] || []).find(function(x) { return x.identity_no === id; });
+    if (!o) return;
+    _editOfc = { officer: o, existingRecords: _entered[svc + '|' + id] || null };
+    var savedPD = _savedPostDetails[svc + '|' + id];
+    if (savedPD) {
+      _numPosts    = savedPD.num_posts;
+      _postDetails = (savedPD.post_details || []).map(function(pd) {
+        return { name: pd.name || '', dept: pd.dept || '', type: pd.type || 'fac' };
+      });
+    }
+    buildStep3();
+    return;
+  }
+
+  // Normal flow (none = fresh, full = re-edit)
+  var sel = document.getElementById('ofcSelect');
+  sel.value = id;
+  onOfcSelected();
+}
+
+function closeEntry() {
+  document.getElementById('entryOverlay').classList.add('hidden');
+}
+
+function resetModal() {
+  setStep(1);
+  document.getElementById('ofcSelect').value = '';
+  document.getElementById('ofcBadge').classList.remove('show');
+  document.getElementById('postsWrap').style.display = 'none';
+  document.getElementById('btnProceed').disabled = true;
+  _editOfc = null; _numPosts = null; _postSaved = []; _postDetails = [];
+}
+
+function setModalSvc(svc) {
+  if (!_svcGates[svc]) {
+    showAlert('<strong>' + svc + '</strong> e-Office data entry is currently paused or its deadline has passed.', 'warn', '⏸ Service Locked');
+    return;
+  }
+  _mSvc = svc;
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    document.getElementById('mTab-' + s).classList.toggle('active', s === svc);
+  });
+  var sel = document.getElementById('ofcSelect');
+  sel.innerHTML = '<option value="">— Select an officer —</option>';
+  (_officers[svc] || []).forEach(function(o) {
+    var done = isDone(svc, o.identity_no);
+    var opt  = document.createElement('option');
+    opt.value = o.identity_no;
+    opt.textContent = (done ? '✓ ' : '') + o.name_of_officer + ' (' + o.identity_no + ')';
+    sel.appendChild(opt);
+  });
+  document.getElementById('ofcBadge').classList.remove('show');
+  document.getElementById('postsWrap').style.display = 'none';
+  document.getElementById('btnProceed').disabled = true;
+}
+
+function onOfcSelected() {
+  var id  = document.getElementById('ofcSelect').value;
+  if (!id) {
+    document.getElementById('ofcBadge').classList.remove('show');
+    document.getElementById('postsWrap').style.display = 'none';
+    document.getElementById('btnProceed').disabled = true;
+    return;
+  }
+  var o = (_officers[_mSvc] || []).find(function(x) { return x.identity_no === id; });
+  if (!o) return;
+
+  var existing = _entered[_mSvc + '|' + id] || null;
+  _editOfc = { officer: o, existingRecords: existing };
+
+  document.getElementById('badgeName').textContent = o.name_of_officer;
+  document.getElementById('badgeInfo').textContent = o.identity_no + ' · ' + _mSvc + ' · Batch ' + (o.allotment_year || '—');
+  document.getElementById('ofcBadge').classList.add('show');
+
+  var doneBadge = document.getElementById('badgeDone');
+  doneBadge.classList.toggle('show', !!existing);
+
+  var savedPD = _savedPostDetails[_mSvc + '|' + id];
+  var n = existing
+    ? (existing.length === 1 && existing[0].post_name === 'No Posts Held' ? 0 : existing.length)
+    : savedPD ? savedPD.num_posts
+    : null;
+  buildPostsRadio(n);
+  document.getElementById('postsWrap').style.display = '';
+  document.getElementById('btnProceed').disabled = (n === null);
+}
+
+function buildPostsRadio(sel) {
+  _numPosts = (sel !== null && sel !== undefined) ? sel : null;
+  var html = '';
+  for (var n = 0; n <= 5; n++) {
+    var act = (_numPosts !== null && n === _numPosts);
+    var lbl = n === 0 ? '0 (None)' : n === 1 ? '1 Post' : n + ' Posts';
+    html += '<label class="radio-opt' + (act ? ' sel-ind' : '') + '" onclick="pickPosts(' + n + ')">' +
+      '<input type="radio" name="numPosts" value="' + n + '"' + (act ? ' checked' : '') + '>' +
+      lbl + '</label>';
+  }
+  document.getElementById('postsRadio').innerHTML = html;
+}
+
+function pickPosts(n) {
+  _numPosts = n;
+  document.querySelectorAll('#postsRadio .radio-opt').forEach(function(el, i) {
+    el.classList.toggle('sel-ind', i === n);
+  });
+  document.getElementById('btnProceed').disabled = false;
+}
+
+function proceedEntry() {
+  if (!_editOfc || _numPosts === null) return;
+  if (_numPosts === 0) {
+    var o = _editOfc.officer;
+    showConfirm({
+      ico:          '📭',
+      title:        'No Posts Held?',
+      body:         '<strong>' + e(o.name_of_officer) + '</strong> held <strong>no posts</strong> during this period.',
+      note:         'A "No Posts Held" record will be saved for this officer.',
+      confirmLabel: '✅ Yes, Confirm',
+      onConfirm:    saveNoPostsRecord
+    });
+    return;
+  }
+  buildStep2();
+}
+
+function goToS1() { setStep(1); }
+
+function goToS2() {
+  renderPdRows();
+  setStep(2);
+}
+
+async function saveNoPostsRecord() {
+  var btn = document.getElementById('btnProceed');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  var o = _editOfc.officer;
+  var payload = {
+    officer_id: o.id || null, identity_no: o.identity_no, officer_name: o.name_of_officer,
+    service_type: _mSvc, post_name: 'No Posts Held', department_name: null, post_type: 'regular',
+    period_from: _period.from, period_to: _period.to,
+    opening_balance: 0, files_created: 0, files_received: 0, files_processed: 0, files_pending: 0,
+    avg_process_hours: 0,
+    processed_lt_1day: 0, processed_1_to_3days: 0, processed_3_to_7days: 0,
+    processed_7_to_30days: 0, processed_gt_30days: 0,
+    upload_type: 'officer', entered_by: (_session.email || '').toUpperCase()
+  };
+  var existing = (_editOfc.existingRecords || [])[0];
+  var error;
+  if (existing && existing.id) {
+    error = (await _supabase.from('eoffice_data').update(payload).eq('id', existing.id)).error;
+  } else {
+    error = (await _supabase.from('eoffice_data').insert(payload)).error;
+  }
+  btn.textContent = 'Continue to Post Details →'; btn.disabled = false;
+  if (error) { showAlert(error.message, 'error', '💾 Save Failed'); return; }
+  await loadEntered(); refreshEntry(); closeEntry();
+}
+
+// ── Step 2: collect post name / dept / type ─────────────────────
+function buildStep2() {
+  var o        = _editOfc.officer;
+  var existing = _editOfc.existingRecords || [];
+
+  _postDetails = [];
+  var savedKey = _mSvc + '|' + o.identity_no;
+  var savedPD  = (existing.length === 0) ? _savedPostDetails[savedKey] : null;
+
+  for (var i = 0; i < _numPosts; i++) {
+    var rec = existing[i] || null;
+    var spd = savedPD ? (savedPD.post_details[i] || {}) : {};
+    _postDetails.push({
+      name: rec ? (rec.post_name       || '') : (spd.name || ''),
+      dept: rec ? (rec.department_name || '') : (spd.dept || ''),
+      type: rec ? (rec.post_type       || 'fac') : (spd.type || 'fac')
+    });
+  }
+
+  document.getElementById('s2OicName').textContent = o.name_of_officer;
+  document.getElementById('s2OicMeta').textContent = o.identity_no + ' · ' + _mSvc + ' · Batch ' + (o.allotment_year || '—');
+  document.getElementById('s2Period').textContent   = '📅 ' + fmtD(_period.from) + ' → ' + fmtD(_period.to);
+  document.getElementById('s2Err').classList.remove('show');
+
+  renderPdRows();
+  setStep(2);
+}
+
+function renderPdRows() {
+  var html = '';
+  for (var i = 0; i < _numPosts; i++) {
+    var d     = _postDetails[i];
+    var isReg = d.type === 'regular';
+    html += '<div class="pd-row' + (isReg ? ' is-reg' : '') + '" id="pdr' + i + '">' +
+      '<div class="pd-num2">' + (i + 1) + '</div>' +
+      '<input class="pd-inp" id="pdn' + i + '" placeholder="Post / Designation *" value="' + e(d.name) + '" oninput="_postDetails[' + i + '].name=this.value">' +
+      '<input class="pd-inp" id="pdd' + i + '" placeholder="Department *" value="' + e(d.dept) + '" oninput="_postDetails[' + i + '].dept=this.value">' +
+      '<div class="type-btns">' +
+        '<button class="type-btn' + (isReg ? ' reg-on' : '') + '" onclick="pickPT(' + i + ',\'regular\')">Regular</button>' +
+        '<button class="type-btn' + (!isReg ? ' fac-on' : '') + '" onclick="pickPT(' + i + ',\'fac\')">FAC</button>' +
+      '</div>' +
+    '</div>';
+  }
+  document.getElementById('pdRows').innerHTML = html;
+}
+
+function pickPT(idx, type) {
+  if (type === 'regular') {
+    for (var i = 0; i < _numPosts; i++) {
+      _postDetails[i].type = (i === idx) ? 'regular' : 'fac';
+    }
+  } else {
+    _postDetails[idx].type = 'fac';
+  }
+  renderPdRows();
+}
+
+async function proceedToS3() {
+  var err = document.getElementById('s2Err');
+  err.classList.remove('show');
+
+  for (var i = 0; i < _numPosts; i++) {
+    _postDetails[i].name = (document.getElementById('pdn' + i).value || '').trim();
+    _postDetails[i].dept = (document.getElementById('pdd' + i).value || '').trim();
+  }
+
+  for (var j = 0; j < _numPosts; j++) {
+    var d = _postDetails[j];
+    if (!d.name) { err.textContent = 'Post ' + (j+1) + ': Post / Designation is required.'; err.classList.add('show'); return; }
+    if (!d.dept) { err.textContent = 'Post ' + (j+1) + ': Department is required.'; err.classList.add('show'); return; }
+  }
+
+  var regCount = _postDetails.filter(function(d) { return d.type === 'regular'; }).length;
+  if (regCount === 0) {
+    err.textContent = 'Exactly one Regular post is required. Please select Regular for one of the posts.';
+    err.classList.add('show'); return;
+  }
+  if (regCount > 1) {
+    err.textContent = 'Only one Regular post is allowed. Currently ' + regCount + ' are marked Regular.';
+    err.classList.add('show'); return;
+  }
+
+  // Persist post details so progress can be tracked (🟡 state)
+  var btn = document.getElementById('btnToS3');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  var o = _editOfc.officer;
+  await _supabase.from('eoffice_post_details').upsert({
+    identity_no:  o.identity_no,
+    service_type: _mSvc,
+    period_from:  _period.from,
+    period_to:    _period.to,
+    num_posts:    _numPosts,
+    post_details: _postDetails,
+    entered_by:   (_session.email || '').toUpperCase()
+  }, { onConflict: 'identity_no,service_type,period_from,period_to,entered_by' });
+  btn.textContent = 'Save Post Details & Enter File Data →'; btn.disabled = false;
+
+  await loadPostDetailsSaved();
+  refreshEntry();
+  buildStep3();
+}
+
+// ── Step 3: file data per post ──────────────────────────────────
+function buildStep3() {
+  var o        = _editOfc.officer;
+  var existing = _editOfc.existingRecords || [];
+
+  document.getElementById('s3OicName').textContent = o.name_of_officer;
+  document.getElementById('s3OicMeta').textContent = o.identity_no + ' · ' + _mSvc + ' · Batch ' + (o.allotment_year || '—');
+  document.getElementById('s3Period').textContent   = '📅 ' + fmtD(_period.from) + ' → ' + fmtD(_period.to);
+
+  _postSaved = Array(_numPosts).fill(false);
+
+  var dotsHtml = '';
+  for (var i = 0; i < _numPosts; i++) {
+    dotsHtml += '<div class="s3-dot' + (i === 0 ? ' active' : '') + '" id="s3dot' + i + '" onclick="scrollToCard(' + i + ')">' + (i+1) + '</div>';
+    if (i < _numPosts - 1) dotsHtml += '<div style="flex:1;height:2px;background:#e2e8f0;margin:0 4px;max-width:44px;"></div>';
+  }
+  document.getElementById('s3Dots').innerHTML = dotsHtml;
+
+  var cardsHtml = '';
+  for (var j = 0; j < _numPosts; j++) {
+    cardsHtml += buildS3Card(j, existing[j] || null);
+  }
+  document.getElementById('s3Cards').innerHTML = cardsHtml;
+
+  for (var k = 0; k < _numPosts; k++) {
+    (function(idx) {
+      ['ob','fc','fr'].forEach(function(f) {
+        var el = document.getElementById('f' + idx + '_' + f);
+        if (el) el.addEventListener('input', function() { calcTotal(idx); calcPend(idx); chkBkts(idx); });
+      });
+      var fpEl = document.getElementById('f' + idx + '_fp');
+      if (fpEl) fpEl.addEventListener('input', function() { calcPend(idx); chkBkts(idx); });
+      ['b1','b13','b37','b730','bg30'].forEach(function(f) {
+        var el = document.getElementById('f' + idx + '_' + f);
+        if (el) el.addEventListener('input', function() { chkBkts(idx); });
+      });
+    })(k);
+  }
+
+  setStep(3);
+}
+
+function buildS3Card(idx, rec) {
+  var n      = idx + 1;
+  var p      = 'f' + idx + '_';
+  var d      = _postDetails[idx];
+  var v      = function(fld, def) {
+    if (!rec) return def !== undefined ? def : 0;
+    var val = rec[fld];
+    return (val !== null && val !== undefined) ? val : (def !== undefined ? def : 0);
+  };
+  var saved   = !!rec;
+  var isReg   = d.type === 'regular';
+  var ob      = +v('opening_balance', 0);
+  var fc      = +v('files_created',   0);
+  var fr      = +v('files_received',  0);
+  var fp      = +v('files_processed', 0);
+  var pnd     = saved ? +v('files_pending', 0) : 0;
+  var tot     = ob + fc + fr;
+  var pendCls = pnd > 0 ? 'inp ro pend' : 'inp ro zero';
+
+  return '<div class="s3-card' + (saved ? ' saved' : '') + '" id="s3c' + idx + '">' +
+
+    '<div class="s3-card-hdr">' +
+      '<div class="s3-hdr-num">' + n + '</div>' +
+      '<div class="s3-hdr-info">' +
+        '<div class="s3-hdr-name">' + e(d.name) + '</div>' +
+        '<div class="s3-hdr-dept">' + e(d.dept) + '</div>' +
+      '</div>' +
+      '<span class="s3-type-badge ' + (isReg ? 'reg' : 'fac') + '">' + (isReg ? '★ Regular' : 'FAC') + '</span>' +
+      (saved ? '<span class="s3-saved-badge">✓ Saved</span>' : '') +
+    '</div>' +
+
+    '<div class="s3-card-body">' +
+
+      '<div class="total-box">' +
+        '<div class="total-num" id="' + p + 'tot">' + tot + '</div>' +
+        '<div>' +
+          '<div class="total-lbl">Total Files in System</div>' +
+          '<div class="total-bkdn" id="' + p + 'totbkdn">Opening ' + ob + ' + Created ' + fc + ' + Received ' + fr + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="sec-label">📂 File Statistics</div>' +
+      '<div class="g4">' +
+        nfld(p + 'ob', 'Opening Balance', ob) +
+        nfld(p + 'fc', 'Files Created',   fc) +
+        nfld(p + 'fr', 'Files Received',  fr) +
+        nfld(p + 'fp', 'Files Processed', fp) +
+      '</div>' +
+      '<div class="g2" style="margin-bottom:14px;">' +
+        '<div class="form-grp"><label class="lbl">Files Pending (auto)</label>' +
+          '<input type="number" id="' + p + 'pend" class="' + pendCls + '" value="' + pnd + '" readonly></div>' +
+        '<div class="form-grp"><label class="lbl">Avg Time to Clear Each File (Hrs)</label>' +
+          '<input type="number" id="' + p + 'avg" class="inp" value="' + v('avg_process_hours', 0) + '" min="0" step="0.01" placeholder="e.g. 4.5"></div>' +
+      '</div>' +
+
+      '<div class="sec-label">⏱ Processing Time Buckets <span style="font-weight:400;color:#94a3b8;font-size:10px;">— must sum to Files Processed</span></div>' +
+      '<div class="g5">' +
+        nfld(p + 'b1',   '&lt; 1 Day',   v('processed_lt_1day',       0)) +
+        nfld(p + 'b13',  '1–3 Days',     v('processed_1_to_3days',    0)) +
+        nfld(p + 'b37',  '3–7 Days',     v('processed_3_to_7days',    0)) +
+        nfld(p + 'b730', '7–30 Days',    v('processed_7_to_30days',   0)) +
+        nfld(p + 'bg30', '&gt; 30 Days', v('processed_gt_30days',     0)) +
+      '</div>' +
+
+      '<div class="bucket-msg ok" id="' + p + 'bktMsg">✓ Bucket sum matches Files Processed</div>' +
+
+      '<button class="btn-save' + (saved ? ' upd' : '') + '" id="' + p + 'saveBtn" onclick="savePost(' + idx + ')">' +
+        (saved ? '🔄 Update Post ' + n : '✅ Save Post ' + n) +
+      '</button>' +
+      '<div id="' + p + 'alert" style="margin-top:8px;"></div>' +
+
+    '</div>' +
+  '</div>';
+}
+
+function calcTotal(idx) {
+  var p  = 'f' + idx + '_';
+  var ob = +document.getElementById(p + 'ob').value || 0;
+  var fc = +document.getElementById(p + 'fc').value || 0;
+  var fr = +document.getElementById(p + 'fr').value || 0;
+  var tot = ob + fc + fr;
+  var totEl   = document.getElementById(p + 'tot');
+  var totBkdn = document.getElementById(p + 'totbkdn');
+  if (totEl)   totEl.textContent   = tot;
+  if (totBkdn) totBkdn.textContent = 'Opening ' + ob + ' + Created ' + fc + ' + Received ' + fr;
+}
+
+function scrollToCard(idx) {
+  var card = document.getElementById('s3c' + idx);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  for (var i = 0; i < _numPosts; i++) {
+    var dot = document.getElementById('s3dot' + i);
+    if (dot) dot.classList.toggle('active', i === idx);
+  }
+}
+
+function nfld(id, lbl, val) {
+  return '<div class="form-grp"><label class="lbl">' + lbl + '</label>' +
+    '<input type="number" id="' + id + '" class="inp" value="' + (+val||0) + '" min="0" step="1"></div>';
+}
+
+function calcPend(idx) {
+  var p   = 'f' + idx + '_';
+  var ob  = +document.getElementById(p + 'ob').value || 0;
+  var fc  = +document.getElementById(p + 'fc').value || 0;
+  var fr  = +document.getElementById(p + 'fr').value || 0;
+  var fp  = +document.getElementById(p + 'fp').value || 0;
+  var pnd = ob + fc + fr - fp;
+  var el  = document.getElementById(p + 'pend');
+  if (el) { el.value = pnd; el.className = 'inp ro ' + (pnd > 0 ? 'pend' : 'zero'); }
+}
+
+function chkBkts(idx) {
+  var p      = 'f' + idx + '_';
+  var fp     = +document.getElementById(p + 'fp').value || 0;
+  var bktSum = ['b1','b13','b37','b730','bg30'].reduce(function(s, f) {
+    return s + (+document.getElementById(p + f).value || 0);
+  }, 0);
+  var el = document.getElementById(p + 'bktMsg');
+  if (!el) return;
+  if (bktSum === fp) {
+    el.className   = 'bucket-msg ok';
+    el.textContent = '✓ Bucket sum (' + bktSum + ') matches Files Processed (' + fp + ')';
+  } else {
+    el.className   = 'bucket-msg err';
+    el.textContent = '✗ Bucket sum (' + bktSum + ') ≠ Files Processed (' + fp + ')  — diff: ' + (fp - bktSum);
+  }
+}
+
+// ================================================================
+// SAVE
+// ================================================================
+async function savePost(idx) {
+  var p       = 'f' + idx + '_';
+  var alertEl = document.getElementById(p + 'alert');
+  var btn     = document.getElementById(p + 'saveBtn');
+
+  var d        = _postDetails[idx] || {};
+  var postName = d.name || '';
+  var deptName = d.dept || '';
+  var postType = d.type || 'regular';
+
+  var ob   = +document.getElementById(p + 'ob').value   || 0;
+  var fc   = +document.getElementById(p + 'fc').value   || 0;
+  var fr   = +document.getElementById(p + 'fr').value   || 0;
+  var fp   = +document.getElementById(p + 'fp').value   || 0;
+  var pnd  = ob + fc + fr - fp;
+  var avg  = +document.getElementById(p + 'avg').value  || 0;
+  var b1   = +document.getElementById(p + 'b1').value   || 0;
+  var b13  = +document.getElementById(p + 'b13').value  || 0;
+  var b37  = +document.getElementById(p + 'b37').value  || 0;
+  var b730 = +document.getElementById(p + 'b730').value || 0;
+  var bg30 = +document.getElementById(p + 'bg30').value || 0;
+  var bktSum = b1 + b13 + b37 + b730 + bg30;
+
+  if (bktSum !== fp) {
+    showA(alertEl, 'err', 'Time bucket total (' + bktSum + ') must equal Files Processed (' + fp + ').');
+    return;
+  }
+
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  var o   = _editOfc.officer;
+  var svc = _mSvc;
+  var payload = {
+    officer_id: o.id || null, identity_no: o.identity_no, officer_name: o.name_of_officer,
+    service_type: svc, post_name: postName, department_name: deptName, post_type: postType,
+    period_from: _period.from, period_to: _period.to,
+    opening_balance: ob, files_created: fc, files_received: fr, files_processed: fp, files_pending: pnd,
+    avg_process_hours: avg,
+    processed_lt_1day: b1, processed_1_to_3days: b13, processed_3_to_7days: b37,
+    processed_7_to_30days: b730, processed_gt_30days: bg30,
+    upload_type: 'officer',
+    entered_by: (_session.email || '').toUpperCase()
+  };
+
+  var existing = (_editOfc.existingRecords || [])[idx];
+  var error;
+  if (existing && existing.id) {
+    var res = await _supabase.from('eoffice_data').update(payload).eq('id', existing.id);
+    error = res.error;
+  } else {
+    var ins = await _supabase.from('eoffice_data').insert(payload).select('id').single();
+    error = ins.error;
+    if (!error && ins.data) {
+      if (!_editOfc.existingRecords) _editOfc.existingRecords = [];
+      _editOfc.existingRecords[idx] = Object.assign({}, payload, { id: ins.data.id });
+    }
+  }
+
+  btn.disabled = false;
+  if (error) {
+    showA(alertEl, 'err', 'Save failed: ' + error.message);
+    btn.textContent = existing ? '🔄 Update Post ' + (idx+1) : '✅ Save Post ' + (idx+1);
+    return;
+  }
+
+  _postSaved[idx] = true;
+  var card = document.getElementById('s3c' + idx);
+  if (card) {
+    card.classList.add('saved');
+    var hdr = card.querySelector('.s3-card-hdr');
+    if (hdr && !hdr.querySelector('.s3-saved-badge')) {
+      hdr.insertAdjacentHTML('beforeend', '<span class="s3-saved-badge">✓ Saved</span>');
+    }
+  }
+  var dot = document.getElementById('s3dot' + idx);
+  if (dot) { dot.classList.remove('active'); dot.classList.add('saved'); }
+
+  btn.textContent = '✓ Saved!';
+  btn.className   = 'btn-save upd';
+  showA(alertEl, 'ok', '✅ Post ' + (idx+1) + ' saved successfully.');
+
+  await loadEntered();
+  refreshEntry();
+}
+
+function showA(el, type, msg) {
+  el.innerHTML = '<div class="alert ' + type + '">' + e(msg) + '</div>';
+  if (type === 'ok') setTimeout(function() { el.innerHTML = ''; }, 4000);
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+async function loadDash() {
+  document.getElementById('dashEmpty').style.display   = 'none';
+  document.getElementById('dashBody').style.display    = 'none';
+  document.getElementById('dashLoading').style.display = '';
+
+  var by = (_session.email || '').toUpperCase();
+  var { data } = await _supabase
+    .from('eoffice_data')
+    .select('identity_no, officer_name, service_type, post_name, department_name, post_type, opening_balance, files_created, files_received, files_processed, files_pending, avg_process_hours, processed_lt_1day, processed_1_to_3days, processed_3_to_7days, processed_7_to_30days, processed_gt_30days, period_from, period_to')
+    .eq('entered_by', by)
+    .order('period_from', { ascending: false });
+  _dashData = data || [];
+
+  if (_dashData.length) {
+    var ids = [...new Set(_dashData.map(function(r){ return r.identity_no; }).filter(Boolean))];
+    if (ids.length) {
+      var { data: photos } = await _supabase.from('officers').select('identity_no, photo_url').in('identity_no', ids);
+      _dashPhotos = {};
+      (photos || []).forEach(function(p){ if (p.photo_url) _dashPhotos[p.identity_no] = p.photo_url; });
+    }
+  }
+
+  document.getElementById('dashLoading').style.display = 'none';
+  if (!_dashData.length) { document.getElementById('dashEmpty').style.display = ''; return; }
+  document.getElementById('dashBody').style.display = '';
+  _dashPer = null;
+  buildDashCaps();
+  renderDash();
+}
+
+function buildDashCaps() {
+  var seen = {}, periods = [];
+  _dashData.forEach(function(r) {
+    var k = r.period_from + '|' + r.period_to;
+    if (!seen[k]) { seen[k] = true; periods.push({ k: k, f: r.period_from, t: r.period_to }); }
+  });
+  // default to most recent period
+  if (!_dashPer && periods.length) _dashPer = periods[0].k;
+  var html = '';
+  periods.forEach(function(p) {
+    html += '<button class="cap' + (_dashPer === p.k ? ' active' : '') + '" onclick="selDashP(\'' + p.k + '\')">' +
+      fmtD(p.f) + ' → ' + fmtD(p.t) + '</button>';
+  });
+  document.getElementById('dashCaps').innerHTML = html;
+}
+
+function selDashP(k) { _dashPer = k; buildDashCaps(); clearDashDrill(); renderDash(); }
+function clearDashDrill() {
+  document.getElementById('dashDrillCard').style.display = 'none';
+  document.getElementById('dashCatClear').style.display  = 'none';
+  document.querySelectorAll('.dcat-row').forEach(function(el){ el.classList.remove('active'); });
+}
+
+// Derive category from post name
+function dashCategory(postName) {
+  if (!postName || postName === 'No Posts Held') return null;
+  var p = (postName || '').toUpperCase();
+  if (p.includes('PRINCIPAL SECRETARY'))                             return 'Principal Secretary';
+  if (p.includes('SPECIAL SECRETARY') || p.includes('ADDL. SECRETARY') || p.includes('ADDITIONAL SECRETARY')) return 'Special / Addl. Secretary';
+  if (p.includes('SECRETARY TO GOVERNMENT') || (p.includes('SECRETARY') && !p.includes('COLLECTOR'))) return 'Secretary';
+  if (p.includes('JOINT COLLECTOR') || p.includes('JT. COLLECTOR') || p.includes('JT COLLECTOR')) return 'Joint Collector';
+  if (p.includes('DEPUTY COLLECTOR') || p.includes('DY. COLLECTOR') || p.includes('DY COLLECTOR')) return 'Deputy Collector';
+  if (p.includes('COLLECTOR'))                                       return 'Collector';
+  if (p.includes('MUNICIPAL COMMISSIONER'))                         return 'Municipal Commissioner';
+  if (p.includes('COMMISSIONER'))                                   return 'Commissioner';
+  if (p.includes('DIRECTOR GENERAL OF POLICE') || p.includes('DGP')) return 'DGP';
+  if (p.includes('ADG') || p.includes('ADDITIONAL DG'))            return 'ADG Police';
+  if (p.includes('INSPECTOR GENERAL') || p.includes(' IGP'))        return 'Inspector General';
+  if (p.includes('DIG ') || p.includes('DEPUTY IGP') || p.includes('DEPUTY IG')) return 'DIG';
+  if (p.includes('SUPERINTENDENT OF POLICE') || p.includes('SP,') || p.includes('SP '))  return 'Superintendent of Police';
+  if (p.includes('CHIEF CONSERVATOR') || p.includes('PCCF') || p.includes('CCF')) return 'Chief Conservator of Forests';
+  if (p.includes('CONSERVATOR OF FORESTS') || p.includes('CF,') || p.includes(' CF ')) return 'Conservator of Forests';
+  if (p.includes('DFO') || p.includes('DEPUTY CONSERVATOR') || p.includes('DCF')) return 'Dy. Conservator of Forests';
+  if (p.includes('MANAGING DIRECTOR') || p.includes(' MD,') || p.includes(' MD ')) return 'Managing Director';
+  if (p.includes('CHIEF EXECUTIVE') || p.includes(' CEO'))          return 'CEO';
+  if (p.includes('DIRECTOR'))                                       return 'Director';
+  return 'Other';
+}
+
+// Avg-hrs colour (based on hours: green < 24, yellow 24-72, orange 72-168, red > 168)
+function hrsColor(h) {
+  if (h === null || h === undefined) return '#94a3b8';
+  if (h < 8)   return '#059669';
+  if (h < 24)  return '#10b981';
+  if (h < 72)  return '#d97706';
+  if (h < 168) return '#f97316';
+  return '#dc2626';
+}
+function hrsBg(h) {
+  if (h === null) return '#f1f5f9';
+  if (h < 8)   return '#f0fdf4';
+  if (h < 24)  return '#ecfdf5';
+  if (h < 72)  return '#fffbeb';
+  if (h < 168) return '#fff7ed';
+  return '#fff1f2';
+}
+
+function renderDash() {
+  var rows = _dashData || [];
+  if (_dashPer) {
+    var pp = _dashPer.split('|');
+    rows = rows.filter(function(r){ return r.period_from === pp[0] && r.period_to === pp[1]; });
+  }
+  var realRows = rows.filter(function(r){ return r.post_name !== 'No Posts Held'; });
+
+  // set 3-col grid for 6 KPIs
+  document.getElementById('dashKPIs').style.gridTemplateColumns = 'repeat(3,1fr)';
+
+  // ── KPIs ──────────────────────────────────────────────
+  var uniqOfc    = new Set(realRows.map(function(r){ return r.identity_no; })).size;
+  var totProcd   = realRows.reduce(function(s,r){ return s + (r.files_processed||0); }, 0);
+  var totPend    = realRows.reduce(function(s,r){ return s + (r.files_pending||0);   }, 0);
+  var totInflow  = realRows.reduce(function(s,r){ return s + (r.opening_balance||0) + (r.files_created||0) + (r.files_received||0); }, 0);
+  var dispRate   = totInflow > 0 ? Math.round(totProcd / totInflow * 100) : 0;
+  // weighted avg hrs across all posts (weight = files_processed)
+  var wSum = 0, wCnt = 0;
+  realRows.forEach(function(r){ if (r.avg_process_hours != null && r.files_processed > 0){ wSum += r.avg_process_hours * r.files_processed; wCnt += r.files_processed; } });
+  var globalAvgHrs = wCnt > 0 ? (wSum / wCnt) : null;
+  var drColor = dispRate >= 80 ? 'green' : dispRate >= 50 ? 'amber' : 'red';
+
+  document.getElementById('dashKPIs').innerHTML =
+    mkStat('blue',  uniqOfc,              '👥', 'Officers Covered') +
+    mkStat('green', totProcd.toLocaleString('en-IN'), '✅', 'Files Processed') +
+    mkStat(totPend > 0 ? 'red':'green', totPend.toLocaleString('en-IN'), '⏳', 'Files Pending') +
+    mkStat(drColor, dispRate + '%',       '⚡', 'Disposal Rate') +
+    mkStat('amber', globalAvgHrs !== null ? fmtHrsShort(globalAvgHrs) : '—', '⏱️', 'Overall Avg Processing Time') +
+    mkStat('blue',  realRows.length,       '📋', 'Post Records');
+
+  // ── Officer aggregates (combined weighted avg hrs) ─────
+  var ofcMap = {};
+  realRows.forEach(function(r) {
+    var key = r.identity_no || r.officer_name || '?';
+    if (!ofcMap[key]) ofcMap[key] = { name: r.officer_name || r.identity_no || '—', identity_no: r.identity_no, service_type: r.service_type, posts: [], fp: 0, wHrs: 0, inflow: 0 };
+    var fp = r.files_processed || 0;
+    ofcMap[key].posts.push({ post: r.post_name || '—', dept: r.department_name || '', hrs: r.avg_process_hours, fp: fp });
+    ofcMap[key].fp    += fp;
+    ofcMap[key].inflow += (r.opening_balance||0) + (r.files_created||0) + (r.files_received||0);
+    if (r.avg_process_hours != null && fp > 0) ofcMap[key].wHrs += r.avg_process_hours * fp;
+  });
+  Object.values(ofcMap).forEach(function(o){ o.combinedAvg = o.fp > 0 ? o.wHrs / o.fp : null; });
+
+  // ── Category chart ─────────────────────────────────────
+  var catMap = {};
+  realRows.forEach(function(r) {
+    var cat = dashCategory(r.post_name);
+    if (!cat) return;
+    if (!catMap[cat]) catMap[cat] = { fp: 0, wHrs: 0, ofcs: new Set() };
+    var fp = r.files_processed || 0;
+    catMap[cat].ofcs.add(r.identity_no);
+    catMap[cat].fp += fp;
+    if (r.avg_process_hours != null && fp > 0) catMap[cat].wHrs += r.avg_process_hours * fp;
+  });
+  var catList = Object.keys(catMap).map(function(cat) {
+    var d = catMap[cat];
+    return { cat: cat, avg: d.fp > 0 ? d.wHrs / d.fp : null, cnt: d.ofcs.size };
+  }).filter(function(c){ return c.avg !== null; })
+    .sort(function(a,b){ return a.avg - b.avg; });
+
+  var maxAvg = catList.length ? Math.max.apply(null, catList.map(function(c){ return c.avg; })) : 1;
+  var catHtml = catList.length
+    ? catList.map(function(c, i) {
+        var w = maxAvg > 0 ? Math.max(4, Math.round(c.avg / maxAvg * 100)) : 4;
+        var col = hrsColor(c.avg);
+        var label = fmtHours(c.avg);
+        return '<div class="dcat-row" id="dcat-' + i + '" onclick="drillDashCat(\'' + e(c.cat).replace(/'/g,"\\'") + '\',' + i + ')" title="Click to see officers">' +
+          '<div class="dcat-label" title="' + e(c.cat) + '">' + e(c.cat) + '</div>' +
+          '<div class="dcat-bar-bg">' +
+            '<div class="dcat-bar-fill" style="width:' + w + '%;background:' + col + ';">' +
+              '<span class="dcat-bar-txt">' + (w >= 22 ? label : '') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="dcat-val" style="color:' + col + ';">' + (w < 22 ? label : '') + '</div>' +
+          '<div class="dcat-cnt">' + c.cnt + ' ofc' + (c.cnt !== 1 ? 's' : '') + '</div>' +
+        '</div>';
+      }).join('')
+    : '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">No disposal data available</div>';
+  document.getElementById('dashCatChart').innerHTML = catHtml;
+
+  // ── Speed distribution chart ───────────────────────────
+  var spd = {lt1:0, s13:0, s37:0, s730:0, gt30:0};
+  realRows.forEach(function(r){
+    spd.lt1  += r.processed_lt_1day     || 0;
+    spd.s13  += r.processed_1_to_3days  || 0;
+    spd.s37  += r.processed_3_to_7days  || 0;
+    spd.s730 += r.processed_7_to_30days || 0;
+    spd.gt30 += r.processed_gt_30days   || 0;
+  });
+  var spdTotal = spd.lt1 + spd.s13 + spd.s37 + spd.s730 + spd.gt30;
+  var spdBands = [
+    { lbl:'< 1 day',   n:spd.lt1,  col:'#10b981' },
+    { lbl:'1–3 days',  n:spd.s13,  col:'#34d399' },
+    { lbl:'3–7 days',  n:spd.s37,  col:'#fbbf24' },
+    { lbl:'7–30 days', n:spd.s730, col:'#f97316' },
+    { lbl:'> 30 days', n:spd.gt30, col:'#ef4444' }
+  ];
+  var pct = function(d){ return spdTotal > 0 ? Math.max(d > 0 ? 2 : 0, Math.round(d / spdTotal * 100)) : 0; };
+  var segs = spdBands.map(function(b){
+    var w = pct(b.n);
+    return w > 0 ? '<div class="dspd-seg" style="width:' + w + '%;background:' + b.col + ';" title="' + b.lbl + ': ' + b.n.toLocaleString('en-IN') + '">' + (w >= 9 ? w + '%' : '') + '</div>' : '';
+  }).join('');
+  var fastPct = spdTotal > 0 ? Math.round((spd.lt1 + spd.s13) / spdTotal * 100) : 0;
+  var fastCol = fastPct >= 70 ? '#059669' : fastPct >= 40 ? '#d97706' : '#dc2626';
+  var legend  = spdBands.filter(function(b){ return b.n > 0; }).map(function(b){
+    return '<span><span class="dspd-dot" style="background:' + b.col + ';"></span>' +
+           '<span style="font-size:11px;color:#475569;">' + b.lbl + ': <strong>' + b.n.toLocaleString('en-IN') + '</strong></span></span>';
+  }).join('');
+  document.getElementById('dashSpeedChart').innerHTML =
+    (spdTotal > 0
+      ? '<div style="margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">' +
+          '<span style="font-size:12px;color:#64748b;">' + spdTotal.toLocaleString('en-IN') + ' files disposed</span>' +
+          '<span style="font-size:12px;font-weight:800;color:' + fastCol + ';">' + fastPct + '% within 3 days</span>' +
+        '</div>' +
+        '<div class="dspd-bar">' + segs + '</div>' +
+        '<div class="dspd-legend">' + legend + '</div>'
+      : '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">No speed data available</div>') +
+    (globalAvgHrs !== null
+      ? '<div style="margin-top:16px;padding:12px 16px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;">' +
+          '<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Overall Avg Processing Time</div>' +
+          '<div style="font-size:28px;font-weight:900;color:' + hrsColor(globalAvgHrs) + ';">' + fmtHours(globalAvgHrs) + ' <span style="font-size:14px;font-weight:600;color:#94a3b8;">per file</span></div>' +
+        '</div>'
+      : '');
+
+  // ── Top 5 Best / Worst ────────────────────────────────
+  var ranked = Object.values(ofcMap)
+    .filter(function(o){ return o.combinedAvg !== null && o.fp >= 5; }) // at least 5 processed files
+    .sort(function(a,b){ return a.combinedAvg - b.combinedAvg; });
+  var top5Best  = ranked.slice(0, 5);
+  var top5Worst = ranked.slice(-5).reverse();
+  var maxHrs = ranked.length ? ranked[ranked.length - 1].combinedAvg : 1;
+
+  function renderOfcRankCard(o, rank, isBest) {
+    var h = o.combinedAvg;
+    var col = hrsColor(h);
+    var bg  = hrsBg(h);
+    var photoUrl = _dashPhotos[o.identity_no] || '';
+    var photoEl  = photoUrl
+      ? '<img class="dofc-photo" src="' + photoUrl + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="dofc-photo" style="display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>';
+    var topPost = o.posts.length ? o.posts[0].post : '—';
+    var svcCls  = (o.service_type || '').toLowerCase();
+    var barW    = maxHrs > 0 ? Math.round(h / maxHrs * 100) : 0;
+    var hrsLabel = fmtHours(h);
+    return '<div class="dofc-card" style="background:' + bg + ';border-color:' + col + '33;">' +
+      '<div class="dofc-rank">' + rank + '</div>' +
+      photoEl +
+      '<div class="dofc-info">' +
+        '<div class="dofc-name">' + e(o.name || '—') + '</div>' +
+        '<div class="dofc-post">' + e(topPost) + (o.posts.length > 1 ? ' <span style="color:#a5b4fc;font-size:10px;">+' + (o.posts.length-1) + ' more</span>' : '') + '</div>' +
+        '<span class="dofc-svc ' + svcCls + '">' + (o.service_type || '—') + '</span>' +
+        '<div style="margin-top:6px;background:#e2e8f0;border-radius:4px;height:5px;overflow:hidden;"><div style="width:' + barW + '%;height:100%;background:' + col + ';border-radius:4px;"></div></div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="dofc-avg" style="color:' + col + ';">' + hrsLabel + '</div>' +
+        '<div class="dofc-avg-sub">' + o.fp.toLocaleString('en-IN') + ' files processed</div>' +
+        (o.posts.length > 1 ? '<div class="dofc-avg-sub">Combined (' + o.posts.length + ' posts)</div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  function medalFor(i) { return ['🥇','🥈','🥉','4️⃣','5️⃣'][i] || (i+1); }
+  document.getElementById('dashTop5Best').innerHTML = top5Best.length
+    ? top5Best.map(function(o,i){ return renderOfcRankCard(o, medalFor(i), true); }).join('')
+    : '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Not enough data yet (need ≥ 5 files processed per officer)</div>';
+  document.getElementById('dashTop5Worst').innerHTML = top5Worst.length
+    ? top5Worst.map(function(o,i){ return renderOfcRankCard(o, medalFor(i), false); }).join('')
+    : '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Not enough data yet</div>';
+
+  // ── Service-wise summary ──────────────────────────────
+  var svcD = {};
+  realRows.forEach(function(r) {
+    var s = r.service_type || '—';
+    if (!svcD[s]) svcD[s] = { ofcs: new Set(), procd: 0, pend: 0, inflow: 0, wHrs: 0, wFp: 0 };
+    svcD[s].ofcs.add(r.identity_no);
+    svcD[s].procd  += r.files_processed || 0;
+    svcD[s].pend   += r.files_pending   || 0;
+    svcD[s].inflow += (r.opening_balance||0) + (r.files_created||0) + (r.files_received||0);
+    if (r.avg_process_hours != null && (r.files_processed||0) > 0) {
+      svcD[s].wHrs += r.avg_process_hours * (r.files_processed||0);
+      svcD[s].wFp  += r.files_processed||0;
+    }
+  });
+  var svcOrder = ['IAS','IPS','IFS'];
+  var svcStyles = {
+    IAS: { bg:'#fffbeb', bdr:'#fde68a', accent:'#d97706', badge:'👤 IAS' },
+    IPS: { bg:'#fff1f2', bdr:'#fca5a5', accent:'#dc2626', badge:'🛡 IPS' },
+    IFS: { bg:'#f0fdf4', bdr:'#86efac', accent:'#059669', badge:'🌲 IFS' }
+  };
+  var svcHtml = svcOrder.filter(function(s){ return !!svcD[s]; }).map(function(s) {
+    var d = svcD[s]; var st = svcStyles[s] || {};
+    var dr  = d.inflow > 0 ? Math.round(d.procd / d.inflow * 100) : 0;
+    var avgH = d.wFp > 0 ? d.wHrs / d.wFp : null;
+    return '<div style="background:' + (st.bg||'#f8fafc') + ';border:2px solid ' + (st.bdr||'#e2e8f0') + ';border-radius:14px;padding:18px 20px;flex:1;min-width:200px;">' +
+      '<div style="font-size:14px;font-weight:800;color:' + (st.accent||'#1e1b4b') + ';margin-bottom:12px;">' + (st.badge||s) + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        dSvcStat(d.ofcs.size, 'Officers') + dSvcStat(d.procd.toLocaleString('en-IN'), 'Processed') +
+        dSvcStat(d.pend > 0 ? d.pend.toLocaleString('en-IN') : '✓ 0', 'Pending') +
+        dSvcStat(dr + '%', 'Disposal') +
+        dSvcStat(avgH !== null ? fmtHours(avgH) : '—', 'Avg Time', avgH !== null ? hrsColor(avgH) : null) +
+      '</div>' +
+    '</div>';
+  }).join('');
+  function dSvcStat(val, lbl, col) {
+    return '<div><div style="font-size:18px;font-weight:800;color:' + (col||'#1e1b4b') + ';">' + val + '</div>' +
+           '<div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;">' + lbl + '</div></div>';
+  }
+  document.getElementById('dashSvcSummary').innerHTML =
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;">' + svcHtml + '</div>';
+
+  // store for drill-down
+  window._dashRenderState = { rows: rows, ofcMap: ofcMap, catList: catList, maxHrs: maxHrs };
+}
+
+function drillDashCat(cat, idx) {
+  if (!window._dashRenderState) return;
+  var state = window._dashRenderState;
+  document.querySelectorAll('.dcat-row').forEach(function(el){ el.classList.remove('active'); });
+  var activeEl = document.getElementById('dcat-' + idx);
+  if (activeEl) activeEl.classList.add('active');
+  document.getElementById('dashCatClear').style.display = '';
+
+  // find officers in this category
+  var catOfcs = {};
+  state.rows.forEach(function(r) {
+    if (dashCategory(r.post_name) !== cat || r.post_name === 'No Posts Held') return;
+    var key = r.identity_no;
+    if (!catOfcs[key]) catOfcs[key] = { name: r.officer_name || r.identity_no || '—', identity_no: r.identity_no, service_type: r.service_type, posts: [], fp: 0, wHrs: 0 };
+    var fp = r.files_processed || 0;
+    catOfcs[key].posts.push({ post: r.post_name || '—', hrs: r.avg_process_hours, fp: fp });
+    catOfcs[key].fp += fp;
+    if (r.avg_process_hours != null && fp > 0) catOfcs[key].wHrs += r.avg_process_hours * fp;
+  });
+  var list = Object.values(catOfcs).map(function(o){ o.avg = o.fp > 0 ? o.wHrs / o.fp : null; return o; })
+    .sort(function(a,b){ return (a.avg||999) - (b.avg||999); });
+  var maxA = list.length ? Math.max.apply(null, list.map(function(o){ return o.avg || 0; })) : 1;
+
+  var rows = list.map(function(o, i) {
+    var h = o.avg; var col = hrsColor(h);
+    var photoUrl = _dashPhotos[o.identity_no] || '';
+    var photoEl  = photoUrl
+      ? '<img class="ddrill-photo" src="' + photoUrl + '" onerror="this.style.background=\'#eef0fb\'" alt="">'
+      : '<div class="ddrill-photo" style="display:flex;align-items:center;justify-content:center;font-size:16px;background:#eef0fb;">👤</div>';
+    var barW = maxA > 0 && h !== null ? Math.round(h / maxA * 100) : 0;
+    var hLabel = h === null ? '—' : fmtHours(h);
+    return '<div class="ddrill-row">' +
+      '<div style="width:20px;text-align:center;font-size:12px;font-weight:700;color:#94a3b8;">' + (i+1) + '</div>' +
+      photoEl +
+      '<div class="ddrill-name">' +
+        '<strong>' + e(o.name) + '</strong><br>' +
+        '<span class="ddrill-post">' + e(o.posts[0]&&o.posts[0].post||'—') + (o.posts.length>1 ? ' (+' + (o.posts.length-1) + ')' : '') + '</span>' +
+      '</div>' +
+      '<div class="ddrill-bar-bg"><div class="ddrill-bar-fill" style="width:' + barW + '%;background:' + col + ';"></div></div>' +
+      '<div class="ddrill-hrs" style="color:' + col + ';">' + hLabel + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8;min-width:54px;text-align:right;">' + o.fp.toLocaleString('en-IN') + ' files</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('dashDrillTitle').textContent = '🔍 ' + cat + ' — Officer Detail (' + list.length + ')';
+  document.getElementById('dashDrillList').innerHTML = rows || '<div style="color:#94a3b8;padding:12px;text-align:center;">No officers</div>';
+  document.getElementById('dashDrillCard').style.display = '';
+  document.getElementById('dashDrillCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ================================================================
+// RECORDS TAB
+// ================================================================
+async function loadRec(page) {
+  _recPage = page || 1;
+  var svc   = document.getElementById('rSvc').value;
+  var ofc   = document.getElementById('rOfc').value.trim();
+  var pt    = document.getElementById('rPT').value;
+  var per   = document.getElementById('rPeriod').value;
+
+  var q = _supabase.from('eoffice_data').select('*', { count: 'exact' })
+    .eq('entered_by', (_session.email || '').toUpperCase())
+    .order('period_from', { ascending: false })
+    .order('officer_name', { ascending: true });
+
+  if (svc) q = q.eq('service_type', svc);
+  if (pt)  q = q.eq('post_type', pt);
+  if (ofc) q = q.or('officer_name.ilike.%' + ofc + '%,identity_no.ilike.%' + ofc + '%');
+  if (per) {
+    var pp = per.split('|');
+    if (pp.length === 2) q = q.eq('period_from', pp[0]).eq('period_to', pp[1]);
+  }
+
+  var off = (_recPage - 1) * REC_PG;
+  q = q.range(off, off + REC_PG - 1);
+
+  var { data, count } = await q;
+  var rows = data || [];
+
+  var tbody = document.getElementById('recBody');
+  var empty = document.getElementById('recEmpty');
+
+  if (!rows.length) {
+    tbody.innerHTML = ''; empty.style.display = '';
+    document.getElementById('recPaging').innerHTML = ''; return;
+  }
+  empty.style.display = 'none';
+
+  var n = off + 1;
+  tbody.innerHTML = rows.map(function(r) {
+    var pend = r.files_pending !== null ? r.files_pending : (r.opening_balance + (r.files_created||0) + r.files_received - r.files_processed);
+    return '<tr>' +
+      '<td style="color:#94a3b8;">' + (n++) + '</td>' +
+      '<td><span class="tbadge ' + (r.service_type||'').toLowerCase() + '">' + (r.service_type||'—') + '</span></td>' +
+      '<td style="font-weight:600;">' + e(r.officer_name||'—') + '</td>' +
+      '<td style="font-size:11px;color:#94a3b8;">' + e(r.identity_no||'—') + '</td>' +
+      '<td>' + e(r.post_name||'—') + '</td>' +
+      '<td>' + e(r.department_name||'—') + '</td>' +
+      '<td><span class="tbadge ' + (r.post_type||'regular') + '">' + (r.post_type === 'fac' ? 'FAC' : 'Regular') + '</span></td>' +
+      '<td style="font-size:11px;white-space:nowrap;">' + fmtD(r.period_from) + '→' + fmtD(r.period_to) + '</td>' +
+      '<td class="tn">' + (r.opening_balance||0) + '</td>' +
+      '<td class="tn">' + (r.files_created||0) + '</td>' +
+      '<td class="tn">' + (r.files_received||0) + '</td>' +
+      '<td class="tn">' + (r.files_processed||0) + '</td>' +
+      '<td class="' + (pend > 0 ? 'tp' : 'tg') + '">' + pend + '</td>' +
+      '<td class="tn" style="white-space:nowrap;">' + fmtHours(r.avg_process_hours) + '</td>' +
+      '<td class="tn">' + (r.processed_lt_1day||0) + '</td>' +
+      '<td class="tn">' + (r.processed_1_to_3days||0) + '</td>' +
+      '<td class="tn">' + (r.processed_3_to_7days||0) + '</td>' +
+      '<td class="tn">' + (r.processed_7_to_30days||0) + '</td>' +
+      '<td class="tn">' + (r.processed_gt_30days||0) + '</td>' +
+      '<td style="font-size:11px;color:#94a3b8;">' + fmtDT(r.entered_at) + '</td>' +
+      '<td><button onclick="delRec(this)"' +
+        ' data-id="'          + r.id + '"' +
+        ' data-post-type="'   + e(r.post_type   || 'regular') + '"' +
+        ' data-identity-no="' + e(r.identity_no || '')        + '"' +
+        ' data-period-from="' + e(r.period_from || '')        + '"' +
+        ' data-period-to="'   + e(r.period_to   || '')        + '"' +
+        ' data-officer="'     + e(r.officer_name|| '—')       + '"' +
+        ' data-post="'        + e(r.post_name   || '—')       + '"' +
+        ' style="padding:3px 9px;background:#fef2f2;border:1.5px solid #fca5a5;color:#dc2626;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Inter\',sans-serif;">🗑 Del</button></td>' +
+    '</tr>';
+  }).join('');
+
+  // Pagination
+  var tp = Math.ceil((count||0) / REC_PG);
+  var ph = '';
+  if (tp > 1) {
+    ph += '<button class="pg" onclick="loadRec(' + Math.max(1,_recPage-1) + ')" ' + (_recPage<=1?'disabled':'') + '>‹</button>';
+    for (var pg = 1; pg <= tp; pg++) {
+      if (pg === 1 || pg === tp || Math.abs(pg - _recPage) <= 2)
+        ph += '<button class="pg' + (pg===_recPage?' active':'') + '" onclick="loadRec(' + pg + ')">' + pg + '</button>';
+      else if (Math.abs(pg - _recPage) === 3) ph += '<span style="padding:6px 4px;color:#94a3b8;">…</span>';
+    }
+    ph += '<button class="pg" onclick="loadRec(' + Math.min(tp,_recPage+1) + ')" ' + (_recPage>=tp?'disabled':'') + '>›</button>';
+  }
+  document.getElementById('recPaging').innerHTML = ph;
+  populatePerFilter();
+}
+
+async function populatePerFilter() {
+  var sel = document.getElementById('rPeriod');
+  if (sel.options.length > 1) return;
+  var { data } = await _supabase.from('eoffice_data')
+    .select('period_from, period_to')
+    .eq('entered_by', (_session.email||'').toUpperCase())
+    .order('period_from', { ascending: false });
+  var seen = {};
+  (data||[]).forEach(function(r) {
+    var k = r.period_from + '|' + r.period_to;
+    if (!seen[k]) {
+      seen[k] = true;
+      var o = document.createElement('option');
+      o.value = k; o.textContent = fmtD(r.period_from) + ' → ' + fmtD(r.period_to);
+      sel.appendChild(o);
+    }
+  });
+}
+
+async function delRec(btn) {
+  var id         = btn.dataset.id;
+  var postType   = btn.dataset.postType   || 'regular';
+  var identityNo = btn.dataset.identityNo || '';
+  var periodFrom = btn.dataset.periodFrom || '';
+  var periodTo   = btn.dataset.periodTo   || '';
+  var officer    = btn.dataset.officer    || '—';
+  var post       = btn.dataset.post       || '—';
+
+  // ── FAC-before-Regular guard ─────────────────────────────
+  if (postType !== 'fac') {
+    var { data: facRecs } = await _supabase
+      .from('eoffice_data')
+      .select('id')
+      .eq('entered_by', (_session.email || '').toUpperCase())
+      .eq('identity_no', identityNo)
+      .eq('period_from', periodFrom)
+      .eq('period_to',   periodTo)
+      .eq('post_type',   'fac')
+      .limit(1);
+    if (facRecs && facRecs.length > 0) {
+      showAlert(
+        '<strong>' + e(officer) + '</strong> still has FAC post record(s) for this period.<br>' +
+        'Please delete all <strong>FAC</strong> posts first before removing the Regular post.',
+        'warn', '⚠️ Delete FAC Posts First'
+      );
+      return;
+    }
+  }
+
+  // ── Confirmation dialog ──────────────────────────────────
+  var typeLabel = postType === 'fac' ? '🔄 FAC' : '🏛️ Regular';
+  showConfirm({
+    ico:          '🗑️',
+    title:        'Delete Record?',
+    body:         '<strong>' + e(officer) + '</strong><br>' +
+                  '<span style="font-size:12px;color:#64748b;">' + e(post) + ' &nbsp;·&nbsp; ' + typeLabel + '</span>',
+    note:         'This will permanently remove this e-Office record. This cannot be undone.',
+    confirmLabel: '🗑️ Yes, Delete',
+    onConfirm:    async function() {
+      btn.textContent = '…'; btn.disabled = true;
+      var { error } = await _supabase.from('eoffice_data').delete().eq('id', id);
+      if (error) {
+        showAlert(error.message, 'error', '💾 Delete Failed');
+        btn.textContent = '🗑 Del'; btn.disabled = false;
+        return;
+      }
+      await loadEntered(); refreshEntry(); loadRec(_recPage);
+    }
+  });
+}
+
+function clearRecF() {
+  ['rSvc','rOfc','rPT','rPeriod'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  loadRec(1);
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function mkStat(col, num, ico, lbl) {
+  return '<div class="stat-card ' + col + '">' +
+    '<span class="stat-icon">' + ico + '</span>' +
+    '<div class="stat-num">' + (typeof num === 'number' ? num.toLocaleString('en-IN') : num) + '</div>' +
+    '<div class="stat-lbl">' + lbl + '</div>' +
+  '</div>';
+}
+
+function e(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function ea(s) { return String(s).replace(/'/g, "\\'"); }
+
+// ================================================================
+// MODE SELECTION
+// ================================================================
+function openModeModal() {
+  document.getElementById('modePeriodLabel').textContent =
+    '📅 Reporting period: ' + fmtD(_period.from) + ' → ' + fmtD(_period.to);
+  document.getElementById('modeOverlay').classList.remove('hidden');
+}
+function closeModeModal() {
+  document.getElementById('modeOverlay').classList.add('hidden');
+}
+function selectManual() {
+  closeModeModal();
+  openEntry();
+}
+function selectUpload() {
+  closeModeModal();
+  openUploadModal();
+}
+
+// ================================================================
+// TEMPLATE UPLOAD
+// ================================================================
+var _uploadSvc    = 'IAS';
+var _uploadResult = null;
+
+function openUploadModal() {
+  document.getElementById('uploadPeriodLabel').textContent =
+    '📅 Period: ' + fmtD(_period.from) + ' → ' + fmtD(_period.to);
+  // Apply service gates
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    var btn = document.getElementById('upSvcBtn-' + s);
+    if (!btn) return;
+    var locked = !_svcGates[s];
+    btn.disabled = locked;
+    btn.style.opacity = locked ? '0.42' : '';
+    btn.title = locked ? s + ' data entry is currently locked.' : '';
+  });
+  var firstOpen = ['IAS','IPS','IFS'].find(function(s){ return _svcGates[s]; }) || 'IAS';
+  _uploadResult = null;
+  document.getElementById('uploadPreview').style.display  = 'none';
+  document.getElementById('uploadSaveBtn').style.display  = 'none';
+  document.getElementById('uploadFileInput').value        = '';
+  document.getElementById('uploadFileName').textContent   = '';
+  setUploadSvc(firstOpen);
+  document.getElementById('uploadOverlay').classList.remove('hidden');
+  // Drag-and-drop
+  var zone = document.getElementById('uploadDropZone');
+  zone.ondragover  = function(ev){ ev.preventDefault(); zone.classList.add('dragover'); };
+  zone.ondragleave = function()  { zone.classList.remove('dragover'); };
+  zone.ondrop      = function(ev){
+    ev.preventDefault(); zone.classList.remove('dragover');
+    var f = ev.dataTransfer.files[0];
+    if (f) { document.getElementById('uploadFileInput').files = ev.dataTransfer.files; handleUploadFile(document.getElementById('uploadFileInput')); }
+  };
+}
+function closeUploadModal() {
+  document.getElementById('uploadOverlay').classList.add('hidden');
+}
+function setUploadSvc(svc) {
+  _uploadSvc = svc;
+  ['IAS','IPS','IFS'].forEach(function(s) {
+    var btn = document.getElementById('upSvcBtn-' + s);
+    if (btn) btn.classList.toggle('active', s === svc);
+  });
+  _uploadResult = null;
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadSaveBtn').style.display = 'none';
+  document.getElementById('uploadFileInput').value       = '';
+  document.getElementById('uploadFileName').textContent  = '';
+}
+
+function downloadTemplate() {
+  if (typeof XLSX === 'undefined') {
+    showAlert('Excel library is not loaded. Please refresh and try again.', 'error', 'Library Error');
+    return;
+  }
+  var svc      = _uploadSvc;
+  var officers = _officers[svc] || [];
+  if (!officers.length) {
+    showAlert('No active officers found for ' + svc + '.', 'warn', 'No Officers');
+    return;
+  }
+
+  var headers = [
+    'Identity No', 'Officer Name', 'Service Type',
+    'Post Name / Designation', 'Department / Ministry', 'Post Type',
+    'Opening Balance', 'Files Created', 'Files Received', 'Files Processed',
+    'Avg Processing Hrs', '< 1 Day', '1-3 Days', '3-7 Days', '7-30 Days', '> 30 Days'
+  ];
+  var note = [
+    'INSTRUCTIONS: Fill columns D-P for each officer. Do not modify columns A, B, C. ' +
+    'One row = one post. For multiple posts, add rows with the same Identity No. ' +
+    'Post Type must be "Regular" or "FAC". Each officer needs exactly ONE Regular post. ' +
+    'Period: ' + _period.from + ' to ' + _period.to,
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+  ];
+
+  var aoa = [note, headers];
+  officers.forEach(function(o) {
+    aoa.push([o.identity_no, o.name_of_officer, svc, '', '', 'Regular', 0, 0, 0, 0, '', 0, 0, 0, 0, 0]);
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [
+    {wch:14},{wch:30},{wch:12},
+    {wch:28},{wch:24},{wch:10},
+    {wch:14},{wch:13},{wch:13},{wch:14},
+    {wch:18},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}
+  ];
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:15} }];
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'e-Office Data');
+  XLSX.writeFile(wb, 'eoffice_' + svc + '_' + _period.from + '_' + _period.to + '.xlsx');
+}
+
+function handleUploadFile(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    showAlert('Excel library is not loaded. Please refresh and try again.', 'error', 'Library Error');
+    return;
+  }
+  document.getElementById('uploadFileName').textContent = '📄 ' + file.name;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var wb = XLSX.read(ev.target.result, { type: 'array' });
+      parseAndValidate(wb.Sheets[wb.SheetNames[0]]);
+    } catch(ex) {
+      showAlert('Could not read the file: ' + ex.message, 'error', 'Parse Error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseAndValidate(ws) {
+  var svc       = _uploadSvc;
+  var officers  = _officers[svc] || [];
+  var officerMap = {};
+  officers.forEach(function(o){ officerMap[String(o.identity_no)] = o; });
+
+  // rows[0] = instruction, rows[1] = headers, rows[2+] = data
+  var rawRows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+  var dataRows = rawRows.slice(2);
+
+  var parsed = [];
+  var officerPostsMap = {}; // identity_no → [{ postType, parsedIdx }]
+
+  dataRows.forEach(function(row, ri) {
+    if (row.every(function(c){ return c === '' || c === null || c === undefined; })) return;
+
+    var idNo    = String(row[0]  || '').trim();
+    var ptName  = String(row[3]  || '').trim();
+    var dept    = String(row[4]  || '').trim();
+    var ptType  = String(row[5]  || '').trim().toLowerCase();
+    var ob      = Number(row[6]) || 0;
+    var fc      = Number(row[7]) || 0;
+    var fr      = Number(row[8]) || 0;
+    var fp      = Number(row[9]) || 0;
+    var avgHrs  = (row[10] !== '' && row[10] !== null) ? Number(row[10]) : null;
+    var b1      = Number(row[11]) || 0;
+    var b13     = Number(row[12]) || 0;
+    var b37     = Number(row[13]) || 0;
+    var b730    = Number(row[14]) || 0;
+    var bgt30   = Number(row[15]) || 0;
+
+    var errs = [];
+    var ofc  = officerMap[idNo];
+
+    if (!idNo)  errs.push('Identity No is missing');
+    else if (!ofc) errs.push('Identity No "' + idNo + '" not found in ' + svc + ' officers list');
+    if (!ptName) errs.push('Post Name is required');
+
+    var isNoPosts = ptName.toLowerCase() === 'no posts held';
+
+    if (!isNoPosts) {
+      if (ptType !== 'regular' && ptType !== 'fac')
+        errs.push('Post Type must be "Regular" or "FAC" (found: "' + row[5] + '")');
+      if (!Number.isInteger(ob) || ob < 0) errs.push('Opening Balance must be a whole number ≥ 0');
+      if (!Number.isInteger(fc) || fc < 0) errs.push('Files Created must be a whole number ≥ 0');
+      if (!Number.isInteger(fr) || fr < 0) errs.push('Files Received must be a whole number ≥ 0');
+      if (!Number.isInteger(fp) || fp < 0) errs.push('Files Processed must be a whole number ≥ 0');
+      if (fp > ob + fc + fr) errs.push('Files Processed (' + fp + ') exceeds total inflow (' + (ob+fc+fr) + ')');
+      if (avgHrs !== null && (isNaN(avgHrs) || avgHrs < 0)) errs.push('Avg Processing Hrs must be ≥ 0');
+      var bkSum = b1 + b13 + b37 + b730 + bgt30;
+      if (bkSum > 0 && bkSum !== fp)
+        errs.push('Bucket sum (' + bkSum + ') must equal Files Processed (' + fp + ')');
+    }
+
+    var entry = {
+      rowNum: ri + 3, idNo: idNo,
+      officerName: ofc ? ofc.name_of_officer : String(row[1] || '').trim(),
+      ptName: ptName, dept: dept, ptType: isNoPosts ? 'regular' : ptType,
+      ob: ob, fc: fc, fr: fr, fp: fp, avgHrs: avgHrs,
+      b1: b1, b13: b13, b37: b37, b730: b730, bgt30: bgt30,
+      isNoPosts: isNoPosts, errs: errs
+    };
+    if (idNo && ofc && !isNoPosts) {
+      if (!officerPostsMap[idNo]) officerPostsMap[idNo] = [];
+      officerPostsMap[idNo].push({ ptType: ptType, idx: parsed.length });
+    }
+    parsed.push(entry);
+  });
+
+  // Cross-row: each officer must have exactly one Regular post
+  Object.keys(officerPostsMap).forEach(function(id) {
+    var posts = officerPostsMap[id];
+    var regCount = posts.filter(function(p){ return p.ptType === 'regular'; }).length;
+    if (regCount === 0) {
+      posts.forEach(function(p){
+        if (parsed[p.idx]) parsed[p.idx].errs.push('No Regular post found for this officer — exactly one Regular post is required');
+      });
+    } else if (regCount > 1) {
+      posts.filter(function(p){ return p.ptType === 'regular'; }).forEach(function(p){
+        if (parsed[p.idx]) parsed[p.idx].errs.push('Officer has ' + regCount + ' Regular posts — only one is allowed');
+      });
+    }
+  });
+
+  var valid   = parsed.filter(function(r){ return r.errs.length === 0; });
+  var invalid = parsed.filter(function(r){ return r.errs.length >  0; });
+  _uploadResult = { rows: parsed, valid: valid, invalid: invalid };
+  renderUploadPreview();
+}
+
+function renderUploadPreview() {
+  var res     = _uploadResult;
+  var preview = document.getElementById('uploadPreview');
+  var saveBtn = document.getElementById('uploadSaveBtn');
+  preview.style.display = '';
+
+  var ok  = res.valid.length;
+  var err = res.invalid.length;
+  var tot = res.rows.length;
+
+  var summaryHtml =
+    '<div class="up-summary">' +
+      '<span class="up-sum-item ok">✅ <strong>' + ok  + '</strong> valid</span>' +
+      '<span class="up-sum-item err">❌ <strong>' + err + '</strong> with errors</span>' +
+      '<span class="up-sum-item info">📋 <strong>' + tot + '</strong> total rows</span>' +
+    '</div>';
+
+  if (err === 0 && ok > 0) {
+    saveBtn.style.display = ''; saveBtn.disabled = false;
+    saveBtn.textContent = '💾 Save ' + ok + ' Records';
+  } else if (err > 0) {
+    saveBtn.style.display = ''; saveBtn.disabled = true;
+    saveBtn.textContent = '⚠️ Fix ' + err + ' error' + (err !== 1 ? 's' : '') + ' to enable Save';
+  } else {
+    saveBtn.style.display = 'none';
+  }
+
+  var tblHtml =
+    '<div style="overflow-x:auto;max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px;">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+    '<thead style="position:sticky;top:0;z-index:1;"><tr style="background:#1e1b4b;color:#c7d2fe;">' +
+      '<th style="padding:8px 10px;text-align:left;white-space:nowrap;min-width:40px;">#</th>' +
+      '<th style="padding:8px 10px;text-align:left;min-width:140px;">Officer</th>' +
+      '<th style="padding:8px 10px;text-align:left;min-width:120px;">Post Name</th>' +
+      '<th style="padding:8px 10px;text-align:left;min-width:70px;">Type</th>' +
+      '<th style="padding:8px 10px;text-align:right;min-width:50px;">OB</th>' +
+      '<th style="padding:8px 10px;text-align:right;min-width:54px;">Created</th>' +
+      '<th style="padding:8px 10px;text-align:right;min-width:50px;">Rcvd</th>' +
+      '<th style="padding:8px 10px;text-align:right;min-width:60px;">Procd</th>' +
+      '<th style="padding:8px 10px;text-align:left;min-width:200px;">Status / Errors</th>' +
+    '</tr></thead><tbody>';
+
+  res.rows.forEach(function(r) {
+    var hasErr = r.errs.length > 0;
+    var rowBg  = hasErr ? '#fef2f2' : '#f0fdf4';
+    var rowBdr = hasErr ? '#fecaca' : '#d1fae5';
+    var statusHtml = hasErr
+      ? r.errs.map(function(er){ return '<div style="color:#dc2626;font-size:10px;margin-top:2px;line-height:1.4;">⚠ ' + e(er) + '</div>'; }).join('')
+      : '<span style="color:#059669;font-weight:700;">✓ Valid</span>';
+    var typeBadge = r.ptType === 'fac'
+      ? '<span style="padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">FAC</span>'
+      : '<span style="padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#e0e7ff;color:#4338ca;">Regular</span>';
+
+    tblHtml +=
+      '<tr style="background:' + rowBg + ';border-bottom:1px solid ' + rowBdr + ';">' +
+        '<td style="padding:8px 10px;color:#94a3b8;font-weight:600;">' + r.rowNum + '</td>' +
+        '<td style="padding:8px 10px;font-weight:600;">' + e(r.officerName) +
+          '<div style="color:#94a3b8;font-size:10px;">' + e(r.idNo || '—') + '</div></td>' +
+        '<td style="padding:8px 10px;">' + e(r.ptName || '—') + '</td>' +
+        '<td style="padding:8px 10px;">' + typeBadge + '</td>' +
+        '<td style="padding:8px 10px;text-align:right;">' + r.ob + '</td>' +
+        '<td style="padding:8px 10px;text-align:right;">' + r.fc + '</td>' +
+        '<td style="padding:8px 10px;text-align:right;">' + r.fr + '</td>' +
+        '<td style="padding:8px 10px;text-align:right;">' + r.fp + '</td>' +
+        '<td style="padding:8px 10px;">' + statusHtml + '</td>' +
+      '</tr>';
+  });
+  tblHtml += '</tbody></table></div>';
+
+  preview.innerHTML =
+    '<div style="font-size:13px;font-weight:800;color:#1e1b4b;margin-bottom:10px;">Step 3 — Validation Results</div>' +
+    summaryHtml + tblHtml;
+}
+
+async function saveTemplateData() {
+  if (!_uploadResult || !_uploadResult.valid.length) return;
+  var btn = document.getElementById('uploadSaveBtn');
+  btn.textContent = '⏳ Saving…'; btn.disabled = true;
+
+  var svc        = _uploadSvc;
+  var enteredBy  = (_session.email || '').toUpperCase();
+  var validRows  = _uploadResult.valid;
+
+  // Delete existing records for these officers in this period (clean re-upload)
+  var ids = [...new Set(validRows.map(function(r){ return r.idNo; }))];
+  for (var i = 0; i < ids.length; i++) {
+    await _supabase.from('eoffice_data')
+      .delete()
+      .eq('entered_by',   enteredBy)
+      .eq('identity_no',  ids[i])
+      .eq('service_type', svc)
+      .eq('period_from',  _period.from)
+      .eq('period_to',    _period.to);
+  }
+
+  // Insert eoffice_data records
+  var records = validRows.map(function(r) {
+    return {
+      identity_no:           r.idNo,
+      officer_name:          r.officerName,
+      service_type:          svc,
+      post_name:             r.ptName,
+      department_name:       r.dept || null,
+      post_type:             r.ptType,
+      opening_balance:       r.isNoPosts ? 0 : r.ob,
+      files_created:         r.isNoPosts ? 0 : r.fc,
+      files_received:        r.isNoPosts ? 0 : r.fr,
+      files_processed:       r.isNoPosts ? 0 : r.fp,
+      files_pending:         r.isNoPosts ? 0 : Math.max(0, r.ob + r.fc + r.fr - r.fp),
+      avg_process_hours:     r.isNoPosts ? null : r.avgHrs,
+      processed_lt_1day:     r.isNoPosts ? 0 : r.b1,
+      processed_1_to_3days:  r.isNoPosts ? 0 : r.b13,
+      processed_3_to_7days:  r.isNoPosts ? 0 : r.b37,
+      processed_7_to_30days: r.isNoPosts ? 0 : r.b730,
+      processed_gt_30days:   r.isNoPosts ? 0 : r.bgt30,
+      period_from:           _period.from,
+      period_to:             _period.to,
+      entered_by:            enteredBy
+    };
+  });
+
+  var { error: e1 } = await _supabase.from('eoffice_data').insert(records);
+  if (e1) {
+    showAlert(e1.message, 'error', '💾 Save Failed');
+    btn.textContent = '💾 Save Records'; btn.disabled = false;
+    return;
+  }
+
+  // Build and upsert eoffice_post_details
+  var byOfficer = {};
+  validRows.forEach(function(r) {
+    if (!byOfficer[r.idNo]) byOfficer[r.idNo] = [];
+    byOfficer[r.idNo].push(r);
+  });
+  var detailRows = Object.keys(byOfficer).map(function(id) {
+    var rws      = byOfficer[id];
+    var nonNone  = rws.filter(function(r){ return !r.isNoPosts; });
+    return {
+      identity_no:  id,
+      service_type: svc,
+      period_from:  _period.from,
+      period_to:    _period.to,
+      num_posts:    nonNone.length,
+      post_details: nonNone.map(function(r){ return { post_name: r.ptName, department: r.dept, post_type: r.ptType }; }),
+      entered_by:   enteredBy
+    };
+  });
+
+  var { error: e2 } = await _supabase.from('eoffice_post_details')
+    .upsert(detailRows, { onConflict: 'identity_no,service_type,period_from,period_to,entered_by' });
+  if (e2) {
+    showAlert(e2.message, 'error', '💾 Post Details Save Failed');
+    btn.textContent = '💾 Save Records'; btn.disabled = false;
+    return;
+  }
+
+  await loadEntered();
+  refreshEntry();
+  closeUploadModal();
+  showAlert(
+    validRows.length + ' records uploaded and saved for <strong>' + svc + '</strong>!',
+    'ok', '✅ Upload Complete'
+  );
+}
+
+function fmtD(d) {
+  if (!d) return '—';
+  var dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtDT(ts) {
+  if (!ts) return '—';
+  var dt = new Date(ts);
+  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short' }) + ' ' +
+         dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+function fmtHours(hrs) {
+  if (hrs === null || hrs === undefined) return '—';
+  var h = parseFloat(hrs);
+  if (isNaN(h) || h < 0) return '—';
+  var totalMins = Math.round(h * 60);
+  if (totalMins === 0) return '0 Mins';
+  var days = Math.floor(totalMins / 1440);
+  var remH = Math.floor((totalMins % 1440) / 60);
+  var mins = totalMins % 60;
+  var parts = [];
+  if (days > 0) parts.push(days + (days === 1 ? ' Day' : ' Days'));
+  if (remH > 0) parts.push(remH + (remH === 1 ? ' Hr' : ' Hrs'));
+  if (mins > 0) parts.push(mins + ' Min' + (mins !== 1 ? 's' : ''));
+  return parts.length ? parts.join(' ') : '< 1 Min';
+}
+function fmtHrsShort(hrs) {
+  if (hrs === null || hrs === undefined) return '—';
+  var h = parseFloat(hrs);
+  if (isNaN(h)) return '—';
+  var totalMins = Math.round(h * 60);
+  if (totalMins < 1) return '< 1m';
+  var days = Math.floor(totalMins / 1440);
+  var remH = Math.floor((totalMins % 1440) / 60);
+  var mins = totalMins % 60;
+  if (days > 0 && remH > 0) return days + 'd ' + remH + 'h';
+  if (days > 0) return days + 'd';
+  if (remH > 0 && mins > 0) return remH + 'h ' + mins + 'm';
+  if (remH > 0) return remH + 'h';
+  return mins + 'm';
+}
+</script>
+</body>
+</html>

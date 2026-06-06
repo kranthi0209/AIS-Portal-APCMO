@@ -57,6 +57,12 @@
 
     /* ── Grid wrap ── */
     #grid360wrap { position:fixed; top:var(--bar360-h,54px); left:0; right:0; bottom:0; overflow-y:auto; background:#eef0fb; padding:10px; }
+    /* Hide / show the top control bar to reclaim the full screen */
+    .b360-hide { height:30px; padding:0 13px; background:linear-gradient(135deg,#475569,#1e293b); border:none; border-radius:8px; color:#fff; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0; box-shadow:0 2px 10px rgba(30,41,59,0.45); transition:transform 0.15s,box-shadow 0.15s; font-family:'Inter',Arial,sans-serif; }
+    .b360-hide:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(30,41,59,0.55); }
+    #bar360.bar-collapsed { display:none; }
+    #showBar360 { position:fixed; top:8px; right:12px; z-index:300; display:none; align-items:center; gap:6px; height:32px; padding:0 15px; background:linear-gradient(135deg,#4338ca,#1e1b4b); color:#fff; border:1px solid rgba(165,180,252,0.45); border-radius:18px; font-size:11.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(15,12,41,0.55); font-family:'Inter',Arial,sans-serif; transition:transform 0.15s; }
+    #showBar360:hover { transform:translateY(-1px); }
     #grid360 { display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:7px; }
 
     /* ── Data status strip ── */
@@ -619,6 +625,7 @@
     border-radius:18px; padding:16px 22px; font-size:14.5px; color:#7c2d12; line-height:1.7; font-weight:500; }
   .kx-formula b { color:#c2410c; font-weight:800; }
   </style>
+  <link rel="stylesheet" href="responsive_fit.css">
 </head>
 <body>
 
@@ -671,7 +678,11 @@
   </button>
   <button class="b360-home" onclick="navTo('landing.html')"><i data-lucide="house"></i><span class="b360-btnlabel">Home</span></button>
   <button class="b360-exit" id="fsBtn360" onclick="toggleFullscreen360()"><i data-lucide="minimize-2"></i><span class="b360-btnlabel">Exit Fullscreen</span></button>
+  <button class="b360-hide" id="hideBar360" onclick="toggleBar360()"><i data-lucide="eye-off"></i><span class="b360-btnlabel">Hide</span></button>
 </div>
+
+<!-- Floating button to bring the control bar back when hidden -->
+<button id="showBar360" onclick="toggleBar360()" title="Show the control bar">&#9662; Show Controls</button>
 
 <!-- ── Grid Area ── -->
 <div id="grid360wrap">
@@ -881,26 +892,10 @@
         <button class="eo-refresh-btn" onclick="loadCombinedTable()">&#8635; Refresh</button>
       </div>
     </div>
-    <!-- filter strip -->
-    <div style="flex-shrink:0;padding:10px 16px;background:#faf5ff;border-bottom:1px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;">
-      <label style="font-size:12px;font-weight:800;color:#5b21b6;display:flex;align-items:center;gap:6px;">No. of Scores:
-        <select id="cmpCountFilter" onchange="renderCombinedTable()" style="padding:5px 9px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:12.5px;background:white;color:#4c1d95;font-weight:700;">
-          <option value="all">All officers</option>
-          <option value="4">Exactly 4 scores</option>
-          <option value="3">Exactly 3 scores</option>
-          <option value="2">Exactly 2 scores</option>
-          <option value="1">Exactly 1 score</option>
-          <option value="0">No scores</option>
-        </select>
-      </label>
-      <span style="width:1px;height:22px;background:#ddd6fe;"></span>
-      <span style="font-size:12px;font-weight:800;color:#5b21b6;">Exact combination:</span>
-      <label class="cmp-chk"><input type="checkbox" id="cmpChkEo" onchange="renderCombinedTable()"> e-Office</label>
-      <label class="cmp-chk"><input type="checkbox" id="cmpChkSw" onchange="renderCombinedTable()"> Swarna KPI</label>
-      <label class="cmp-chk"><input type="checkbox" id="cmpChkGo" onchange="renderCombinedTable()"> GoI Funds</label>
-      <label class="cmp-chk"><input type="checkbox" id="cmpChkPp" onchange="renderCombinedTable()"> Perception</label>
-      <button onclick="cmpClearFilters()" style="padding:5px 12px;border:1.5px solid #c4b5fd;border-radius:7px;background:white;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;">&#8635; Clear</button>
-      <span style="font-size:10.5px;color:#7c3aed;">Tick boxes → officers having <b>exactly</b> that set of scores.</span>
+    <!-- combination tabs -->
+    <div style="flex-shrink:0;padding:9px 14px;background:#faf5ff;border-bottom:1px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:7px;align-items:center;">
+      <div id="cmpTabBar" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;"></div>
+      <span style="font-size:10.5px;color:#0f766e;font-weight:700;margin-left:auto;">&#9878; Normalized 0&ndash;100 &middot; each tab shows officers having <b>exactly</b> that set of scores</span>
     </div>
     <div class="eo-table-wrap">
       <table class="eo-table" id="cmpTable">
@@ -916,7 +911,7 @@
             <th class="sortable" data-col="ppScore" onclick="sortCombined('ppScore')" style="text-align:center;">Perception <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="count" onclick="sortCombined('count')" style="text-align:center;">#&nbsp;Scores <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="finalScore" onclick="sortCombined('finalScore')" style="text-align:center;min-width:90px;background:linear-gradient(135deg,#4c1d95,#7c3aed);">Composite<br><span style="font-size:9px;opacity:0.8;">(average)</span> <span class="sort-icon">&#9651;</span></th>
-            <th class="sortable" data-col="rank" onclick="sortCombined('rank')" style="text-align:center;width:60px;background:linear-gradient(135deg,#4c1d95,#7c3aed);">Rank <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="_grpRank" onclick="sortCombined('_grpRank')" style="text-align:center;width:64px;background:linear-gradient(135deg,#4c1d95,#7c3aed);">Rank<br><span style="font-size:9px;font-weight:600;opacity:0.8;">(in group)</span> <span class="sort-icon">&#9651;</span></th>
           </tr>
         </thead>
         <tbody id="cmpTbody">
@@ -940,54 +935,52 @@
     </div>
     <div class="kx-body">
       <div class="kx-intro">
-        The Central Government gives <b>pocket money</b> 💵 to run helpful schemes (like new roads, schools and toilets).
-        This score is a <b>report card</b> 🏆 that checks how <b>wisely and fully</b> each officer used that money.
-        We look at <b>5 things</b>, compare everyone <b>fairly</b>, and give a score out of <b>100</b>! 🎯
+        The Central Government gives money 💵 to run helpful schemes (roads, schools, toilets…).
+        This score is a <b>report card</b> 🏆 of how <b>fully and wisely</b> each officer used that money.
+        For <b>Secretariat / HoD</b> posts we measure <b>4 efficiencies</b>, blend them by importance, then make the
+        comparison <b>fair</b> by tenure and fund size — a final score out of <b>100</b>. 🎯
+        <a href="GoI_Funds_Scoring_Methodology.html" target="_blank" style="color:#0d9488;font-weight:800;">📄 Read the full methodology →</a>
       </div>
       <div class="kx-steps">
         <div class="kx-step" style="animation-delay:0.05s;">
           <div class="kx-step-ico">🛒</div>
-          <span class="kx-tag" style="background:#16a34a;">35% — BIGGEST</span>
-          <div class="kx-step-h">Actually Spending</div>
-          <div class="kx-step-p">Of the money they <b>received</b>, how much did they actually <b>spend</b> on good work? More spent = better!</div>
+          <span class="kx-tag" style="background:#16a34a;">40% — BIGGEST · AUE</span>
+          <div class="kx-step-h">Spending the Allocation</div>
+          <div class="kx-step-p"><b>Expenditure ÷ GoI Allocation.</b> Of all the money sanctioned by the Centre, how much actually reached the ground as spending? The single most important test.</div>
         </div>
         <div class="kx-step" style="animation-delay:0.13s;">
-          <div class="kx-step-ico">📥</div>
-          <span class="kx-tag" style="background:#2563eb;">20%</span>
-          <div class="kx-step-h">Bringing Money In</div>
-          <div class="kx-step-p">Of the money <b>promised</b> by the Centre, how much did they actually <b>pull in</b>? Don't leave it behind!</div>
+          <div class="kx-step-ico">🏗️</div>
+          <span class="kx-tag" style="background:#2563eb;">30% — FUE</span>
+          <div class="kx-step-h">Using Money at the Field</div>
+          <div class="kx-step-p"><b>Expenditure ÷ Funds with Agencies.</b> Of the money already sitting with implementing agencies, how much did they actually put to work?</div>
         </div>
         <div class="kx-step" style="animation-delay:0.21s;">
-          <div class="kx-step-ico">🏦</div>
-          <span class="kx-tag" style="background:#dc2626;">20% — LESS IS BETTER</span>
-          <div class="kx-step-h">No Money Left Behind</div>
-          <div class="kx-step-p">Money <b>promised but never taken</b> is wasted. The smaller this pile, the higher the marks!</div>
+          <div class="kx-step-ico">📥</div>
+          <span class="kx-tag" style="background:#7c3aed;">20% — FTE</span>
+          <div class="kx-step-h">Pulling the Money In</div>
+          <div class="kx-step-p"><b>Funds Transferred ÷ Allocation.</b> Of the money promised, how much did they draw down for implementation? Don't leave it at the Centre.</div>
         </div>
         <div class="kx-step" style="animation-delay:0.29s;">
-          <div class="kx-step-ico">😴</div>
-          <span class="kx-tag" style="background:#ea580c;">15% — LESS IS BETTER</span>
-          <div class="kx-step-h">No Idle Money</div>
-          <div class="kx-step-p">Money just <b>sitting in bank accounts</b> doing nothing helps no one. Keep it working, not sleeping!</div>
-        </div>
-        <div class="kx-step" style="animation-delay:0.37s;">
-          <div class="kx-step-ico">🐘</div>
-          <span class="kx-tag" style="background:#ca8a04;">10%</span>
-          <div class="kx-step-h">Handling Big Money</div>
-          <div class="kx-step-p">Some officers manage <b>huge</b> amounts. Doing well with bigger funds earns a little extra credit.</div>
+          <div class="kx-step-ico">🏦</div>
+          <span class="kx-tag" style="background:#ea580c;">10% — UFS · LESS IDLE = MORE</span>
+          <div class="kx-step-h">Nothing Left Untapped</div>
+          <div class="kx-step-p"><b>100 − (Untapped ÷ Transferred).</b> Money drawn but left lying idle scores low. The smaller the untapped pile, the higher the marks.</div>
         </div>
       </div>
       <div class="kx-formula">
-        🎯 We line up everyone and find who is the <b>best all-rounder</b> at using money wisely (spending fully,
-        wasting nothing). The closer to perfect, the higher the <b>score out of 100</b>!
-        Scores are always <b>fair</b> — one giant department can't bully the rankings. 👫
-        Click <b>Schemes</b> to see each officer's money details!
+        🎯 <b>Efficiency&nbsp;=&nbsp;0.40·AUE + 0.30·FUE + 0.20·FTE + 0.10·UFS</b> (already 0–100).
+        Then two fairness adjustments: ⏱️ each post counts in proportion to <b>how long the officer held it</b>
+        (tenure-weighted), and ⚖️ the score is scaled by a <b>fund-size (difficulty) factor</b> so that spending a
+        ₹5&nbsp;Cr fund well never beats spending a ₹5,000&nbsp;Cr fund well — because doing it with bigger money is harder.
+        <b>Final&nbsp;=&nbsp;Efficiency × Difficulty&nbsp;factor.</b> Click <b>Schemes</b> to see the money behind each score!
       </div>
       <div style="margin-top:12px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:14px;padding:13px 18px;font-size:12.5px;color:#134e4a;line-height:1.6;">
-        <b>📍 Where does each officer's money come from?</b><br>
-        • <b>Head-office posts</b> (Secretariat → by Department, HoD → by HoD, Chief Secretary → everything) use the
-        <b>Dept/HoD fund table</b> with full details (Allocation, Transferred, Untapped…).<br>
-        • <b>District posts</b> use the <b>District fund table</b>, adding up <b>every scheme in that district</b>
-        (no matter the department). Their "Funds Available" counts as money in hand, and whatever is left unspent counts as idle.
+        <b>📍 Different posts, different data:</b><br>
+        • <b>Secretariat / HoD posts</b> (Secretariat → by Department, HoD → by HoD, Chief Secretary → everything) have the
+        <b>full 5 figures</b> (Allocation, Transferred, With&nbsp;Agencies, Expenditure, Untapped) → all <b>4 indicators</b> apply.<br>
+        • <b>District posts</b> have only <b>Funds Available</b> and <b>Expenditure</b>, so they use a single
+        <b>District Utilization Efficiency&nbsp;= Expenditure ÷ Funds&nbsp;Available</b>, summed across every scheme in that
+        district. It is tenure-weighted and difficulty-scaled the same way, and blended with any head-office posts the officer held.
       </div>
     </div>
   </div>
@@ -1545,9 +1538,25 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof lucide !== 'undefined') lucide.createIcons();
   var bar = document.getElementById('bar360');
   var root = document.documentElement;
-  function syncBarH() { root.style.setProperty('--bar360-h', bar.offsetHeight + 'px'); }
+  function syncBarH() { if (bar.classList.contains('bar-collapsed')) return; root.style.setProperty('--bar360-h', bar.offsetHeight + 'px'); }
   if (bar) { syncBarH(); new ResizeObserver(syncBarH).observe(bar); }
 });
+
+// Collapse / restore the top control bar so the content fills the whole screen
+window.toggleBar360 = function () {
+  var bar = document.getElementById('bar360');
+  var showBtn = document.getElementById('showBar360');
+  var root = document.documentElement;
+  if (!bar) return;
+  var collapsed = bar.classList.toggle('bar-collapsed');
+  if (collapsed) {
+    root.style.setProperty('--bar360-h', '0px');
+    if (showBtn) showBtn.style.display = 'flex';
+  } else {
+    if (showBtn) showBtn.style.display = 'none';
+    root.style.setProperty('--bar360-h', bar.offsetHeight + 'px');
+  }
+};
 </script>
 
 <script>
@@ -1613,6 +1622,20 @@ window.applyAllFilters = function () {
 
 // Bridge used by the grid/wheel (script_360_live.js): loads all four capsule
 // score systems and returns { identity_no: {eo, sw, go, pp} } on a 0–100 scale.
+// Min-max normalise one key of the score map to 0–100 so all four
+// systems are treated on the same scale before they are combined.
+function _normalizeScoreKey(map, key) {
+  var vals = [];
+  Object.keys(map).forEach(function(id){ var v = map[id][key]; if (v != null) vals.push(v); });
+  if (!vals.length) return;
+  var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), range = mx - mn;
+  Object.keys(map).forEach(function(id){
+    var v = map[id][key];
+    if (v == null) return;
+    map[id][key] = range > 0 ? parseFloat(((v - mn) / range * 100).toFixed(2)) : 100;
+  });
+}
+
 window.getLive4ScoreMap = async function () {
   try { await Promise.all([ loadEofficeTable(), loadPerceptionTable(), loadSwarnaTable(), loadGoiTable() ]); }
   catch (e) { console.warn('[live4] load', e); }
@@ -1624,6 +1647,8 @@ window.getLive4ScoreMap = async function () {
   (_swData || []).forEach(function(r){ ens(r.identity_no).sw = r.swScore != null ? r.swScore : null; });
   (_goData || []).forEach(function(r){ ens(r.identity_no).go = r.goScore != null ? r.goScore : null; });
   (_ppData || []).forEach(function(r){ ens(r.identity_no).pp = r.ppScore != null ? r.ppScore : null; });
+  // Normalise all four to a common 0–100 scale
+  ['eo','sw','go','pp'].forEach(function(k){ _normalizeScoreKey(m, k); });
   return m;
 };
 
@@ -1632,7 +1657,7 @@ window.getLive4ScoreMap = async function () {
 // ================================================================
 var _eoData       = [];
 var _eoOfficerMap = {};   // identity_no → {name, cadre, source, domicile, postType}
-var _eoSortCol    = 'officer_id';
+var _eoSortCol    = 'eoRank';
 var _eoSortDir    = 'asc';
 var _eoNameMap = {};   // identity_no → officer name
 
@@ -1948,6 +1973,7 @@ async function loadEofficeTable() {
     _eoData = [];
     (eoResult.data || []).forEach(function(row) {
       var key = String(row.identity_no);
+      if (!_eoOfficerMap[key]) return;   // only officers present in the Officers master
       if (!seen[key]) {
         seen[key] = true;
         _eoData.push({
@@ -2124,7 +2150,7 @@ window.sortEoffice = function(col) {
 //           → public_perception_live (score per district × campaign)
 // ================================================================
 var _ppData    = [];          // per-officer computed rows
-var _ppSortCol = 'officer_id';
+var _ppSortCol = 'ppRank';
 var _ppSortDir = 'asc';
 
 window.openPpScoreModal = function () {
@@ -2448,20 +2474,25 @@ function renderPerceptionTable() {
     var photoHtml = r.photo_url
       ? '<img src="' + _eoEsc(r.photo_url) + '" class="eo-thumb" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="eo-thumb-ph" style="display:none;">&#128100;</span>'
       : '<span class="eo-thumb-ph">&#128100;</span>';
-    var scoreCell = r.ppScore == null
-      ? '<span style="font-size:11px;color:#94a3b8;">—</span>'
-      : ppScoreBadge(r.ppScore);
-    return '<tr>' +
-      '<td class="eo-slno">' + (idx + 1) + '</td>' +
+    var ppIdEsc = _eoEsc(r.identity_no).replace(/'/g,"\\'");
+    var ppIdCells = '<td class="eo-slno">' + (idx + 1) + '</td>' +
       '<td class="eo-photo-cell">' + photoHtml + '</td>' +
       '<td class="eo-name" title="' + _eoEsc(r.name) + '">' + _eoEsc(r.name) + '</td>' +
       '<td class="pp-post">' + _eoEsc(r.present_post || '—') + '</td>' +
       '<td class="eo-num">' + (r.posts_held > 0
-          ? '<span class="pp-clickable" onclick="openPpPostsPopup(\'' + _eoEsc(r.identity_no).replace(/'/g,"\\'") + '\',\'all\')">' + r.posts_held + '</span>'
-          : '0') + '</td>' +
-      '<td class="eo-num">' + (r.posts_covered > 0
-          ? '<span class="pp-clickable" style="color:#c2410c;font-weight:800;" onclick="openPpPostsPopup(\'' + _eoEsc(r.identity_no).replace(/'/g,"\\'") + '\',\'covered\')">' + r.posts_covered + '</span>'
-          : '<span style="color:#94a3b8;">0</span>') + '</td>' +
+          ? '<span class="pp-clickable" onclick="openPpPostsPopup(\'' + ppIdEsc + '\',\'all\')">' + r.posts_held + '</span>'
+          : '0') + '</td>';
+    if (r.posts_covered <= 0) {
+      // Officer held posts but none fall under a perception campaign → one clear message
+      return '<tr style="background:#fffdfb;">' + ppIdCells +
+        '<td colspan="3" style="text-align:center;color:#94a3b8;font-style:italic;font-weight:600;">&#8212; No Public Perception data linked to the posts held during the report period &#8212;</td>' +
+        '</tr>';
+    }
+    var scoreCell = r.ppScore == null
+      ? '<span style="font-size:11px;color:#94a3b8;">—</span>'
+      : ppScoreBadge(r.ppScore);
+    return '<tr>' + ppIdCells +
+      '<td class="eo-num"><span class="pp-clickable" style="color:#c2410c;font-weight:800;" onclick="openPpPostsPopup(\'' + ppIdEsc + '\',\'covered\')">' + r.posts_covered + '</span></td>' +
       '<td style="text-align:center;">' + scoreCell + '</td>' +
       '<td style="text-align:center;font-weight:800;color:#c2410c;">' + (r.ppRank || '—') + '</td>' +
       '</tr>';
@@ -2558,7 +2589,7 @@ window.openPpPostsPopup = function (identityNo, mode) {
 // Office Status HoD         → swarna_kpi_dept_live aggregated by HoD
 // ================================================================
 var _swData    = [];
-var _swSortCol = 'officer_id';
+var _swSortCol = 'swRank';
 var _swSortDir = 'asc';
 var _swRawDist = [];   // raw district rows for the source modal
 var _swRawDept = [];   // raw dept/hod rows for the source modal
@@ -2767,19 +2798,23 @@ function renderSwarnaTable() {
       ? '<img src="' + _eoEsc(r.photo_url) + '" class="eo-thumb" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="eo-thumb-ph" style="display:none;">&#128100;</span>'
       : '<span class="eo-thumb-ph">&#128100;</span>';
     var idEsc = _eoEsc(r.identity_no).replace(/'/g,"\\'");
-    var scoreCell = r.swScore == null
-      ? '<span style="font-size:11px;color:#94a3b8;">—</span>'
-      : swScoreBadge(r.swScore);
-    return '<tr>' +
-      '<td class="eo-slno">' + (idx + 1) + '</td>' +
+    var swIdCells = '<td class="eo-slno">' + (idx + 1) + '</td>' +
       '<td class="eo-photo-cell">' + photoHtml + '</td>' +
       '<td class="eo-name" title="' + _eoEsc(r.name) + '">' + _eoEsc(r.name) + '</td>' +
       '<td class="pp-post">' + _eoEsc(r.present_post || '—') + '</td>' +
       '<td class="eo-num">' + (r.posts_held > 0
-          ? '<span class="pp-clickable" onclick="openSwPostsPopup(\'' + idEsc + '\',\'all\')">' + r.posts_held + '</span>' : '0') + '</td>' +
-      '<td class="eo-num">' + (r.posts_covered > 0
-          ? '<span class="pp-clickable" style="color:#15803d;font-weight:800;" onclick="openSwPostsPopup(\'' + idEsc + '\',\'covered\')">' + r.posts_covered + '</span>'
-          : '<span style="color:#94a3b8;">0</span>') + '</td>' +
+          ? '<span class="pp-clickable" onclick="openSwPostsPopup(\'' + idEsc + '\',\'all\')">' + r.posts_held + '</span>' : '0') + '</td>';
+    if (r.posts_covered <= 0) {
+      // Officer held posts but none fall under a Swarnandhra KPI → one clear message
+      return '<tr style="background:#fbfdfb;">' + swIdCells +
+        '<td colspan="3" style="text-align:center;color:#94a3b8;font-style:italic;font-weight:600;">&#8212; No Swarnandhra KPI data linked to the posts held during the report period &#8212;</td>' +
+        '</tr>';
+    }
+    var scoreCell = r.swScore == null
+      ? '<span style="font-size:11px;color:#94a3b8;">—</span>'
+      : swScoreBadge(r.swScore);
+    return '<tr>' + swIdCells +
+      '<td class="eo-num"><span class="pp-clickable" style="color:#15803d;font-weight:800;" onclick="openSwPostsPopup(\'' + idEsc + '\',\'covered\')">' + r.posts_covered + '</span></td>' +
       '<td style="text-align:center;">' + scoreCell + '</td>' +
       '<td style="text-align:center;font-weight:800;color:#15803d;">' + (r.swRank || '—') + '</td>' +
       '</tr>';
@@ -2894,17 +2929,46 @@ function renderSwRaw() {
 var _goData    = [];
 var _goRawData = [];     // raw goi_funds_live rows (HoD / Department source)
 var _goRawDist = [];     // raw goi_funds_district_live rows (District source)
-var _goSortCol = 'officer_id';
+var _goSortCol = 'goRank';
 var _goSortDir = 'asc';
 
-// weights sum to 1.00 · dir: +1 benefit (higher better), -1 cost (lower better)
-var GOI_WEIGHTS = [
-  { key:'util',     w:0.35, dir: 1 },   // Expenditure ÷ Transferred
-  { key:'absorb',   w:0.20, dir: 1 },   // Transferred ÷ Allocation
-  { key:'untapped', w:0.20, dir:-1 },   // Untapped ÷ Allocation
-  { key:'idle',     w:0.15, dir:-1 },   // With Agencies ÷ Transferred
-  { key:'volume',   w:0.10, dir: 1 }    // log(Allocation)
-];
+// ── Refined GoI Funds scoring (weighted efficiency indicators) ──────────────
+// Secretariat / HoD posts → 4 indicators:
+//   AUE = Expenditure ÷ GoI Allocation   (Allocation Utilization Efficiency) 40%
+//   FUE = Expenditure ÷ Funds w/ Agencies(Fund Utilization Efficiency)        30%
+//   FTE = Funds Transferred ÷ Allocation (Fund Transfer Efficiency)           20%
+//   UFS = 100 − (Untapped ÷ Transferred) (Untapped Fund Score)                10%
+// District posts → only Funds Available & Expenditure are known, so a single
+//   DUE = Expenditure ÷ Funds Available  (District Utilization Efficiency).
+// Per-post efficiency is TENURE-WEIGHTED (days in the post); a log-scaled
+// VOLUME (difficulty) factor then ensures an officer who spent a tiny fund well
+// does not outrank one who spent a far larger fund equally well.
+var GOI_W = { AUE:0.40, FUE:0.30, FTE:0.20, UFS:0.10 };
+var GOI_DIFF_FLOOR = 0.70;   // smallest-fund officer retains 70% of efficiency
+
+function _goCap(x){ x = parseFloat(x); if (isNaN(x)) return 0; return Math.max(0, Math.min(100, x)); }
+function _goDays(from, to){
+  if (!from) return 30;                              // unknown tenure → neutral weight
+  var f = new Date(from).getTime(); if (isNaN(f)) return 30;
+  var t = to ? new Date(to).getTime() : Date.now(); if (isNaN(t)) t = Date.now();
+  return Math.max(1, (t - f) / 86400000);            // days, never below 1
+}
+// Efficiency composite (0–100) for one Secretariat/HoD post's aggregated funds.
+function _goEffSecHoD(p){
+  var A=p.A, I=p.I, E=p.E, T=p.T, U=p.U;
+  var AUE = A>0 ? _goCap(E/A*100) : 0;
+  var FUE = I>0 ? _goCap(E/I*100) : (E>0 ? 100 : 0);
+  var FTE = A>0 ? _goCap(T/A*100) : 0;
+  var UFS = T>0 ? _goCap(100 - (U/T*100)) : 100;     // no transfer → nothing left untapped
+  var ES  = GOI_W.AUE*AUE + GOI_W.FUE*FUE + GOI_W.FTE*FTE + GOI_W.UFS*UFS;
+  return { ES:ES, AUE:AUE, FUE:FUE, FTE:FTE, UFS:UFS };
+}
+// District post: only Funds Available (stored as A) and Expenditure (E) exist.
+function _goEffDistrict(p){
+  var FA=p.A, E=p.E;
+  var DUE = FA>0 ? _goCap(E/FA*100) : 0;
+  return { ES:DUE, AUE:DUE, FUE:null, FTE:null, UFS:null };
+}
 
 var _goNum = function(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; };
 function _goCr(v){ // values are already stored in ₹ Crores
@@ -3053,50 +3117,44 @@ async function loadGoiTable() {
   }
 }
 
-// TOPSIS scoring (winsorized 5–95 percentile) on the filtered group
+// Refined scoring: tenure-weighted efficiency × log-scaled difficulty factor.
 function computeGoiScores(data) {
   var active = data.filter(function(r){ return r.schemes > 0; });
-  var N = active.length, M = GOI_WEIGHTS.length;
   data.forEach(function(r){ r.goScore = (r.schemes > 0) ? 0 : null; r.goRank = null; });
-  if (!N) return;
+  if (!active.length) return;
 
-  active.forEach(function(r) {
-    var A=r.fAlloc, T=r.fTransferred, I=r.fAgencies, E=r.fExpenditure, U=r.fUntapped;
-    r._raw = [
-      T>0 ? E/T : 0,
-      A>0 ? T/A : 0,
-      A>0 ? U/A : 0,
-      T>0 ? I/T : 0,
-      Math.log(A + 1)
-    ];
-  });
-  // winsorize
-  for (var j=0;j<M;j++){ (function(jj){
-    var vals = active.map(function(r){ return r._raw[jj]; }).slice().sort(function(a,b){return a-b;});
-    var lo = vals[Math.max(0,Math.floor(0.05*(N-1)))], hi = vals[Math.min(N-1,Math.ceil(0.95*(N-1)))];
-    active.forEach(function(r){ r._raw[jj] = Math.max(lo, Math.min(hi, r._raw[jj])); });
-  })(j); }
-  // vector normalise
-  var norm = new Array(M).fill(0);
-  active.forEach(function(r){ r._raw.forEach(function(v,j){ norm[j]+=v*v; }); });
-  norm = norm.map(function(s){ return Math.sqrt(s) || 1; });
-  active.forEach(function(r){ r._wn = r._raw.map(function(v,j){ return GOI_WEIGHTS[j].w * (v/norm[j]); }); });
-  // ideal best/worst
-  var Ap=new Array(M), Am=new Array(M);
-  for (var j2=0;j2<M;j2++){ (function(jj){
-    var col = active.map(function(r){ return r._wn[jj]; });
-    var mn=Math.min.apply(null,col), mx=Math.max.apply(null,col);
-    if (GOI_WEIGHTS[jj].dir===1){ Ap[jj]=mx; Am[jj]=mn; } else { Ap[jj]=mn; Am[jj]=mx; }
-  })(j2); }
-  // closeness
+  // Step 1–3: per-post indicators → tenure-weighted officer efficiency (ES)
   active.forEach(function(r){
-    var dp=0,dm=0;
-    r._wn.forEach(function(v,j){ dp+=Math.pow(v-Ap[j],2); dm+=Math.pow(v-Am[j],2); });
-    dp=Math.sqrt(dp); dm=Math.sqrt(dm);
-    var denom=dp+dm;
-    r.goScore = denom>0 ? parseFloat(Math.min(100,Math.max(0,dm/denom*100)).toFixed(2)) : 50;
+    var sES = 0, wES = 0;
+    var acc = { AUE:[0,0], FUE:[0,0], FTE:[0,0], UFS:[0,0] };  // [Σ value·days, Σ days]
+    (r.postsDetail || []).forEach(function(p){
+      if ((p.schemes || 0) <= 0) return;                       // post carries no GoI funds
+      var days = _goDays(p.from_date, p.to_date);
+      var e = (p.category === 'District') ? _goEffDistrict(p) : _goEffSecHoD(p);
+      sES += e.ES * days; wES += days;
+      ['AUE','FUE','FTE','UFS'].forEach(function(k){
+        if (e[k] != null) { acc[k][0] += e[k]*days; acc[k][1] += days; }
+      });
+    });
+    r.goEff = wES > 0 ? sES / wES : 0;
+    r.goAUE = acc.AUE[1] > 0 ? acc.AUE[0]/acc.AUE[1] : null;
+    r.goFUE = acc.FUE[1] > 0 ? acc.FUE[0]/acc.FUE[1] : null;
+    r.goFTE = acc.FTE[1] > 0 ? acc.FTE[0]/acc.FTE[1] : null;
+    r.goUFS = acc.UFS[1] > 0 ? acc.UFS[0]/acc.UFS[1] : null;
+    r._volBasis = r.fAlloc;   // total GoI allocation / funds-available handled
   });
-  active.slice().sort(function(a,b){ return b.goScore-a.goScore; }).forEach(function(r,i){ r.goRank=i+1; });
+
+  // Difficulty (volume) factor: log min–max across the on-screen cohort so that
+  // managing a larger fund is harder and therefore worth proportionally more.
+  var logs = active.map(function(r){ return Math.log((r._volBasis || 0) + 1); });
+  var lmin = Math.min.apply(null, logs), lmax = Math.max.apply(null, logs), lr = lmax - lmin;
+  active.forEach(function(r){
+    var lv = Math.log((r._volBasis || 0) + 1);
+    var VW = lr > 0 ? (lv - lmin) / lr : 1;                    // 0 (smallest) … 1 (largest)
+    r.goVolFactor = GOI_DIFF_FLOOR + (1 - GOI_DIFF_FLOOR) * VW; // 0.70 … 1.00
+    r.goScore = parseFloat(_goCap(r.goEff * r.goVolFactor).toFixed(2));
+  });
+  active.slice().sort(function(a,b){ return b.goScore - a.goScore; }).forEach(function(r,i){ r.goRank = i+1; });
 }
 
 function renderGoiTable() {
@@ -3148,21 +3206,24 @@ function renderGoiTable() {
       ? '<img src="'+_eoEsc(r.photo_url)+'" class="eo-thumb" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="eo-thumb-ph" style="display:none;">&#128100;</span>'
       : '<span class="eo-thumb-ph">&#128100;</span>';
     var idEsc=_eoEsc(r.identity_no).replace(/'/g,"\\'");
-    var scoreCell = r.goScore==null ? '<span style="font-size:11px;color:#94a3b8;">—</span>' : goScoreBadge(r.goScore);
-    return '<tr>'+
-      '<td class="eo-slno">'+(idx+1)+'</td>'+
+    var postsHeldCell = '<td class="eo-num">'+(r.posts_held>0
+          ? '<span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'all\')">'+r.posts_held+'</span>'
+          : '0')+'</td>';
+    var idCells = '<td class="eo-slno">'+(idx+1)+'</td>'+
       '<td class="eo-photo-cell">'+photoHtml+'</td>'+
       '<td class="eo-name" title="'+_eoEsc(r.name)+'">'+_eoEsc(r.name)+'</td>'+
       '<td class="pp-post">'+_eoEsc(r.present_post||'—')+'</td>'+
-      '<td class="eo-num">'+(r.posts_held>0
-          ? '<span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'all\')">'+r.posts_held+'</span>'
-          : '0')+'</td>'+
-      '<td class="eo-num">'+(r.matchedPosts>0
-          ? '<span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'funds\')">'+r.matchedPosts+'</span>'
-          : '<span style="color:#94a3b8;">0</span>')+'</td>'+
-      '<td class="eo-num">'+(r.schemes>0
-          ? '<span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'funds\')">'+r.schemes+'</span>'
-          : '<span style="color:#94a3b8;">0</span>')+'</td>'+
+      postsHeldCell;
+    if (r.schemes <= 0) {
+      // Officer holds posts but none are linked to GoI fund schemes → one clear message
+      return '<tr style="background:#fcfdfd;">'+ idCells +
+        '<td colspan="4" style="text-align:center;color:#94a3b8;font-style:italic;font-weight:600;">&#8212; No GoI Funds linked to the posts held during the report period &#8212;</td>'+
+        '</tr>';
+    }
+    var scoreCell = r.goScore==null ? '<span style="font-size:11px;color:#94a3b8;">—</span>' : goScoreBadge(r.goScore);
+    return '<tr>'+ idCells +
+      '<td class="eo-num"><span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'funds\')">'+r.matchedPosts+'</span></td>'+
+      '<td class="eo-num"><span class="pp-clickable" style="color:#0f766e;font-weight:800;" onclick="openGoPostsPopup(\''+idEsc+'\',\'funds\')">'+r.schemes+'</span></td>'+
       '<td style="text-align:center;">'+scoreCell+'</td>'+
       '<td style="text-align:center;font-weight:800;color:#0f766e;">'+(r.goRank||'—')+'</td>'+
       '</tr>';
@@ -3231,17 +3292,27 @@ window.openGoPostsPopup = function (identityNo, mode){
     var catColor = p.category.indexOf('Secretariat')===0 ? '#1d4ed8' : p.category.indexOf('District')===0 ? '#9a3412' : '#0f766e';
     var clickable = p.schemes>0;
     // parent post row
-    var row = '<tr style="background:#f0fdfa;cursor:'+(clickable?'pointer':'default')+';" '+(clickable?'onclick="toggleGoPost('+pi+')"':'')+'>'+
-      '<td style="font-weight:800;color:#134e4a;">'+(clickable?'<span id="go-caret-'+pi+'" style="display:inline-block;width:13px;color:#0f766e;">▶</span> ':'<span style="display:inline-block;width:13px;"></span> ')+_eoEsc(p.post_name||'—')+'</td>'+
-      '<td><span style="font-size:10px;font-weight:800;color:'+catColor+';">'+_eoEsc(p.category)+'</span></td>'+
-      '<td style="text-align:center;font-weight:800;color:'+(p.schemes>0?'#0f766e':'#94a3b8')+';">'+p.schemes+'</td>'+
-      '<td style="text-align:right;">'+_goCr(p.A)+'</td>'+
-      '<td style="text-align:right;">'+_goCr(p.T)+'</td>'+
-      '<td style="text-align:right;">'+_goCr(p.I)+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:#16a34a;">'+_goCr(p.E)+'</td>'+
-      '<td style="text-align:right;color:#dc2626;">'+_goCr(p.U)+'</td>'+
-      '<td style="text-align:center;font-weight:800;color:'+_goUtilCol(pu)+';">'+(p.schemes>0?pu+'%':'—')+'</td>'+
-      '</tr>';
+    var row;
+    if (!clickable) {
+      // Post is not linked to any GoI fund scheme → one clear message instead of a row of ₹0.00 Cr zeros
+      row = '<tr style="background:#f8fafc;cursor:default;">'+
+        '<td style="font-weight:800;color:#64748b;"><span style="display:inline-block;width:13px;"></span> '+_eoEsc(p.post_name||'—')+'</td>'+
+        '<td><span style="font-size:10px;font-weight:800;color:'+catColor+';">'+_eoEsc(p.category)+'</span></td>'+
+        '<td colspan="7" style="text-align:center;color:#94a3b8;font-style:italic;font-weight:600;">&#8212; No GoI Funds linked to this post &#8212;</td>'+
+        '</tr>';
+    } else {
+      row = '<tr style="background:#f0fdfa;cursor:pointer;" onclick="toggleGoPost('+pi+')">'+
+        '<td style="font-weight:800;color:#134e4a;"><span id="go-caret-'+pi+'" style="display:inline-block;width:13px;color:#0f766e;">▶</span> '+_eoEsc(p.post_name||'—')+'</td>'+
+        '<td><span style="font-size:10px;font-weight:800;color:'+catColor+';">'+_eoEsc(p.category)+'</span></td>'+
+        '<td style="text-align:center;font-weight:800;color:#0f766e;">'+p.schemes+'</td>'+
+        '<td style="text-align:right;">'+_goCr(p.A)+'</td>'+
+        '<td style="text-align:right;">'+_goCr(p.T)+'</td>'+
+        '<td style="text-align:right;">'+_goCr(p.I)+'</td>'+
+        '<td style="text-align:right;font-weight:700;color:#16a34a;">'+_goCr(p.E)+'</td>'+
+        '<td style="text-align:right;color:#dc2626;">'+_goCr(p.U)+'</td>'+
+        '<td style="text-align:center;font-weight:800;color:'+_goUtilCol(pu)+';">'+pu+'%</td>'+
+        '</tr>';
+    }
     // child scheme rows (hidden)
     row += p.mainIdx.map(function(i){
       var r=_goRawData[i]; var t=_goNum(r.funds_transferred), e=_goNum(r.expenditure); var u=t>0?Math.round(e/t*100):0;
@@ -3352,26 +3423,13 @@ async function loadCombinedTable() {
   if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="eo-empty">&#8987; Loading all four score systems&hellip;</td></tr>';
 
   try {
-    // Load each capsule's data (they populate _eoData/_ppData/_swData/_goData)
-    await Promise.all([ loadEofficeTable(), loadPerceptionTable(), loadSwarnaTable(), loadGoiTable() ]);
-
-    // Recompute the peer-relative (TOPSIS) scores on the FULL officer set
-    if (typeof computeEoScores  === 'function') computeEoScores(_eoData || []);
-    if (typeof computeGoiScores === 'function') computeGoiScores(_goData || []);
-
-    // id → score maps (null when the officer has no data in that system)
-    var eoMap={}, ppMap={}, swMap={}, goMap={};
-    (_eoData||[]).forEach(function(r){ eoMap[r.identity_no] = r.noData ? null : (r.eoScore!=null?r.eoScore:null); });
-    (_ppData||[]).forEach(function(r){ ppMap[r.identity_no] = (r.ppScore!=null?r.ppScore:null); });
-    (_swData||[]).forEach(function(r){ swMap[r.identity_no] = (r.swScore!=null?r.swScore:null); });
-    (_goData||[]).forEach(function(r){ goMap[r.identity_no] = (r.goScore!=null?r.goScore:null); });
+    // Single normalised source — all four scores on a common 0–100 scale
+    var m = await window.getLive4ScoreMap();
 
     _cmpData = Object.keys(_eoOfficerMap || {}).map(function(id){
       var om = _eoOfficerMap[id] || {};
-      var eo = eoMap[id]!=null ? eoMap[id] : null;
-      var sw = swMap[id]!=null ? swMap[id] : null;
-      var go = goMap[id]!=null ? goMap[id] : null;
-      var pp = ppMap[id]!=null ? ppMap[id] : null;
+      var s  = m[id] || { eo:null, sw:null, go:null, pp:null };
+      var eo = s.eo, sw = s.sw, go = s.go, pp = s.pp;
       var vals = [eo, sw, go, pp].filter(function(v){ return v != null; });
       var fin = vals.length ? parseFloat((vals.reduce(function(a,b){return a+b;},0) / vals.length).toFixed(2)) : null;
       return {
@@ -3399,11 +3457,70 @@ async function loadCombinedTable() {
   }
 }
 
-window.cmpClearFilters = function () {
-  var c = document.getElementById('cmpCountFilter'); if (c) c.value = 'all';
-  ['cmpChkEo','cmpChkSw','cmpChkGo','cmpChkPp'].forEach(function(id){ var el=document.getElementById(id); if (el) el.checked=false; });
-  renderCombinedTable();
-};
+// Each tab = officers having EXACTLY this set of scores (set:null = every officer).
+var CMP_TABS = [
+  { id:'all',  label:'All Officers',                   set:null                  },
+  { id:'all4', label:'&#127919; All 4 Scores',         set:['eo','sw','go','pp'] },
+  { id:'noGo', label:'Except GoI Funds',               set:['eo','sw','pp']      },
+  { id:'noPp', label:'Except Public Perception',       set:['eo','sw','go']      },
+  { id:'noSw', label:'Except Swarna AP',               set:['eo','go','pp']      },
+  { id:'noEo', label:'Except e-Office',                set:['sw','go','pp']      },
+  { id:'eoSw', label:'e-Office + Swarna AP',           set:['eo','sw']           },
+  { id:'eoGo', label:'e-Office + GoI Funds',           set:['eo','go']           },
+  { id:'eoPp', label:'e-Office + Perception',          set:['eo','pp']           },
+  { id:'swGo', label:'Swarna AP + GoI Funds',          set:['sw','go']           },
+  { id:'swPp', label:'Swarna AP + Perception',         set:['sw','pp']           },
+  { id:'goPp', label:'GoI Funds + Perception',         set:['go','pp']           }
+];
+var _cmpTab = 'all4';   // default tab on open
+
+function cmpTabMatch(r, tab){ return tab.set===null ? true : cmpExactMatch(r, tab.set); }
+
+// available-score signature of an officer
+function cmpSig(r){
+  var s=[];
+  if (r.eoScore!=null) s.push('eo');
+  if (r.swScore!=null) s.push('sw');
+  if (r.goScore!=null) s.push('go');
+  if (r.ppScore!=null) s.push('pp');
+  return s;
+}
+function cmpExactMatch(r, set){
+  var s=cmpSig(r);
+  if (s.length!==set.length) return false;
+  for (var i=0;i<set.length;i++){ if (s.indexOf(set[i])===-1) return false; }
+  return true;
+}
+// officer-level (cadre/source/domicile/post-type/name) filter, shared by tabs + table
+function cmpPassesOfficer(r){
+  var om=_eoOfficerMap[r.identity_no]||{};
+  var cadreVal=(document.getElementById('fCadre')?.value||'').trim();
+  var sourceVal=(document.getElementById('fSource')?.value||'').trim();
+  var domVal=(document.getElementById('fDomicile')?.value||'').trim();
+  var postTypeVal=(document.getElementById('fPostType')?.value||'').trim();
+  var nameVal=(document.getElementById('searchName360')?.value||'').trim().toLowerCase();
+  if (cadreVal && om.cadre!==cadreVal) return false;
+  if (sourceVal && om.source!==sourceVal) return false;
+  if (domVal && om.domicile!==domVal) return false;
+  if (postTypeVal && om.postType!==postTypeVal) return false;
+  if (nameVal && r.name.toLowerCase().indexOf(nameVal)===-1) return false;
+  return true;
+}
+
+window.switchCmpTab = function(id){ _cmpTab = id; renderCombinedTable(); };
+
+function renderCmpTabs(){
+  var bar=document.getElementById('cmpTabBar'); if (!bar) return;
+  bar.innerHTML = CMP_TABS.map(function(t){
+    var n = _cmpData.filter(function(r){ return cmpPassesOfficer(r) && cmpTabMatch(r, t); }).length;
+    var on = (t.id===_cmpTab);
+    var style = on
+      ? 'background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:1.5px solid #7c3aed;box-shadow:0 2px 8px rgba(124,58,237,0.35);'
+      : 'background:#fff;color:#5b21b6;border:1.5px solid #ddd6fe;';
+    return '<button onclick="switchCmpTab(\''+t.id+'\')" style="padding:5px 13px;border-radius:18px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;'+style+'">'+
+      t.label+'<span style="font-size:10px;font-weight:900;background:'+(on?'rgba(255,255,255,0.22)':'#f3e8ff')+';color:'+(on?'#fff':'#7c3aed')+';border-radius:12px;padding:1px 7px;">'+n+'</span></button>';
+  }).join('');
+}
 
 function cmpBadge(score, big) {
   if (score == null) return '<span style="color:#cbd5e1;font-size:12px;">—</span>';
@@ -3417,42 +3534,19 @@ function cmpBadge(score, big) {
 }
 
 function renderCombinedTable() {
-  var cadreVal=(document.getElementById('fCadre')?.value||'').trim();
-  var sourceVal=(document.getElementById('fSource')?.value||'').trim();
-  var domVal=(document.getElementById('fDomicile')?.value||'').trim();
-  var postTypeVal=(document.getElementById('fPostType')?.value||'').trim();
-  var nameVal=(document.getElementById('searchName360')?.value||'').trim().toLowerCase();
-
-  var countF = document.getElementById('cmpCountFilter')?.value || 'all';
-  var checked = [];
-  if (document.getElementById('cmpChkEo')?.checked) checked.push('eo');
-  if (document.getElementById('cmpChkSw')?.checked) checked.push('sw');
-  if (document.getElementById('cmpChkGo')?.checked) checked.push('go');
-  if (document.getElementById('cmpChkPp')?.checked) checked.push('pp');
+  renderCmpTabs();
+  var tab = CMP_TABS.filter(function(t){ return t.id===_cmpTab; })[0] || CMP_TABS[0];
 
   var data = _cmpData.filter(function(r){
-    var om=_eoOfficerMap[r.identity_no]||{};
-    if (cadreVal && om.cadre!==cadreVal) return false;
-    if (sourceVal && om.source!==sourceVal) return false;
-    if (domVal && om.domicile!==domVal) return false;
-    if (postTypeVal && om.postType!==postTypeVal) return false;
-    if (nameVal && r.name.toLowerCase().indexOf(nameVal)===-1) return false;
-
-    var avail=[];
-    if (r.eoScore!=null) avail.push('eo');
-    if (r.swScore!=null) avail.push('sw');
-    if (r.goScore!=null) avail.push('go');
-    if (r.ppScore!=null) avail.push('pp');
-
-    if (checked.length) {
-      // exact combination match
-      if (avail.length !== checked.length) return false;
-      for (var i=0;i<checked.length;i++){ if (avail.indexOf(checked[i])===-1) return false; }
-    } else if (countF !== 'all') {
-      if (r.count !== parseInt(countF,10)) return false;
-    }
-    return true;
+    return cmpPassesOfficer(r) && cmpTabMatch(r, tab);
   });
+
+  // Rank WITHIN this group by composite score (nulls last) — independent of display sort
+  data.slice().sort(function(a,b){
+    if (a.finalScore==null && b.finalScore==null) return 0;
+    if (a.finalScore==null) return 1; if (b.finalScore==null) return -1;
+    return b.finalScore - a.finalScore;
+  }).forEach(function(r,i){ r._grpRank = r.finalScore==null ? null : i+1; });
 
   var col=_cmpSortCol, dir=_cmpSortDir;
   data.sort(function(a,b){
@@ -3476,7 +3570,7 @@ function renderCombinedTable() {
   if (cnt) cnt.textContent = data.length + ' officers shown';
 
   var tbody=document.getElementById('cmpTbody');
-  if (!data.length){ tbody.innerHTML='<tr><td colspan="11" class="eo-empty">No officers match the current filters.</td></tr>'; return; }
+  if (!data.length){ tbody.innerHTML='<tr><td colspan="11" class="eo-empty">No officers have exactly this combination of scores'+( (document.getElementById('fCadre')?.value||document.getElementById('searchName360')?.value) ? ' under the current filters' : '')+'.</td></tr>'; return; }
 
   tbody.innerHTML = data.map(function(r, idx){
     var photoHtml = r.photo_url
@@ -3495,14 +3589,14 @@ function renderCombinedTable() {
       '<td style="text-align:center;">'+cmpBadge(r.ppScore)+'</td>'+
       '<td style="text-align:center;"><span style="display:inline-block;font-size:12px;font-weight:900;color:'+cntCol+';background:'+cntBg+';border-radius:20px;padding:2px 10px;">'+r.count+'</span></td>'+
       '<td style="text-align:center;">'+cmpBadge(r.finalScore, true)+'</td>'+
-      '<td style="text-align:center;font-weight:800;color:#7c3aed;">'+(r.rank||'—')+'</td>'+
+      '<td style="text-align:center;font-weight:800;color:#7c3aed;">'+(r._grpRank||'—')+'</td>'+
       '</tr>';
   }).join('');
 }
 
 window.sortCombined = function(col){
   if (_cmpSortCol===col){ _cmpSortDir = _cmpSortDir==='asc'?'desc':'asc'; }
-  else { _cmpSortCol=col; _cmpSortDir = (col==='officer_id'||col==='name'||col==='rank')?'asc':'desc'; }
+  else { _cmpSortCol=col; _cmpSortDir = (col==='officer_id'||col==='name'||col==='_grpRank')?'asc':'desc'; }
   renderCombinedTable();
 };
 

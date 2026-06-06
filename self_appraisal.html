@@ -196,6 +196,7 @@
     .loading-msg { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
     .empty-msg   { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
   </style>
+  <link rel="stylesheet" href="responsive_fit.css">
 </head>
 <body>
 
@@ -393,7 +394,9 @@
       if (_session.officer_id) {
         q = q.eq('id', _session.officer_id);
       } else {
-        q = q.eq('identity_no', _session.email);
+        // email format: firstname.identity_no@domain — extract the identity_no suffix
+        var idFromEmail = (_session.email.split('@')[0].split('.').pop()) || _session.email;
+        q = q.eq('identity_no', idFromEmail);
       }
       var res = await q.maybeSingle();
       if (res.error) throw res.error;
@@ -411,9 +414,61 @@
         '<span class="officer-badge">' + em + ' ' + htmlEsc(_officer.name_of_officer) +
         ' &nbsp;|&nbsp; ' + htmlEsc(_officer.service_type || _session.role.toUpperCase()) + '</span>';
 
+      if (!await checkSvcGate()) return; // per-service gate
       await loadCurrentDraft();
     } catch(e) {
       document.getElementById('formLoadingMsg').textContent = 'Error loading profile: ' + e.message;
+    }
+  }
+
+  // ================================================================
+  // Per-service gate: checks self_appraisal_IAS / _IPS / _IFS
+  // ================================================================
+  async function checkSvcGate() {
+    var svc = (_officer.service_type || '').toUpperCase();
+    try {
+      var { data } = await _supabase
+        .from('module_control')
+        .select('is_paused, deadline, notes')
+        .eq('module_name', 'self_appraisal_' + svc)
+        .maybeSingle();
+      if (!data) return true;
+      var isPaused  = !!data.is_paused;
+      var isExpired = data.deadline && new Date() > new Date(data.deadline);
+      if (!isPaused && !isExpired) return true;
+      var reason = isPaused
+        ? '&#9208; Data entry has been paused by the administrator.'
+        : '&#9200; The deadline has passed (' + new Date(data.deadline).toLocaleString('en-IN') + ').';
+      var overlay = document.createElement('div');
+      overlay.style.cssText =
+        'position:fixed;inset:0;background:rgba(15,12,41,0.92);z-index:99999;' +
+        'display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;';
+      overlay.innerHTML =
+        '<div style="background:#fff;border-radius:20px;padding:40px 44px;max-width:480px;width:94%;' +
+               'box-shadow:0 24px 60px rgba(0,0,0,0.5);text-align:center;">' +
+          '<div style="font-size:52px;margin-bottom:16px;">' + (isPaused ? '&#9208;' : '&#128274;') + '</div>' +
+          '<div style="font-size:20px;font-weight:800;color:#1e1b4b;margin-bottom:10px;">' +
+            'Self Appraisal &mdash; ' + htmlEsc(svc) + ' &mdash; ' + (isPaused ? 'Paused' : 'Deadline Passed') +
+          '</div>' +
+          '<div style="font-size:14px;color:#64748b;margin-bottom:' + (data.notes ? '10px' : '24px') + ';line-height:1.6;">' +
+            reason +
+          '</div>' +
+          (data.notes
+            ? '<div style="font-size:13px;color:#475569;background:#f1f5f9;border-radius:10px;' +
+                          'padding:12px 16px;margin-bottom:24px;line-height:1.6;">' +
+                '<strong>Admin note:</strong> ' + htmlEsc(data.notes) +
+              '</div>'
+            : '') +
+          '<button onclick="window.location.href=\'landing.html\'" ' +
+            'style="padding:11px 28px;background:linear-gradient(135deg,#1e1b4b,#4338ca);' +
+                   'color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">' +
+            '&larr; Back to Home' +
+          '</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      return false;
+    } catch(e) {
+      return true; // DB error → allow access
     }
   }
 
