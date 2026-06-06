@@ -9,151 +9,28 @@
 
   const svc = (new URLSearchParams(window.location.search).get('service') || 'IAS').toUpperCase();
 
-  // ── 14 evaluation categories (same order as demo version) ──────
+  // ── 4 live evaluation categories (from the capsule scores) ──────
   const WHEEL_CATS = [
-    { label:'e-Office',          color:'#6366f1', light:'#a5b4fc', live:true  },
-    { label:'Swarna AP',         color:'#8b5cf6', light:'#c4b5fd', live:false },
-    { label:'GSDP',              color:'#d946ef', light:'#f0abfc', live:false },
-    { label:'GoI Funds',         color:'#ec4899', light:'#f9a8d4', live:true  },
-    { label:'Public Perception', color:'#f43f5e', light:'#fda4af', live:true  },
-    { label:'Innovations',       color:'#f97316', light:'#fdba74', live:false },
-    { label:'Digitalisation',    color:'#ca8a04', light:'#fde047', live:false },
-    { label:'New Policies',      color:'#65a30d', light:'#bef264', live:false },
-    { label:'De Regularisation', color:'#16a34a', light:'#86efac', live:false },
-    { label:'Integrity Index',   color:'#0d9488', light:'#6ee7b7', live:false },
-    { label:'Party Feedback',    color:'#0891b2', light:'#67e8f9', live:false },
-    { label:'Media Feedback',    color:'#2563eb', light:'#93c5fd', live:false },
-    { label:'Leadership Skills', color:'#7c3aed', light:'#c4b5fd', live:false },
-    { label:'CMO Score',         color:'#b45309', light:'#fcd34d', live:false },
+    { label:'e-Office',          color:'#6366f1', light:'#a5b4fc', live:true },
+    { label:'Swarna AP',         color:'#16a34a', light:'#86efac', live:true },
+    { label:'GoI Funds',         color:'#0d9488', light:'#5eead4', live:true },
+    { label:'Public Perception', color:'#ea580c', light:'#fdba74', live:true },
   ];
+  const NCATS = WHEEL_CATS.length;
 
   const CAT_DETAILS = [
-    { icon:'💻', source:'e-Office System — Data entered by e-Office Operator',
-      desc:'File processing efficiency — disposal rate, avg clearance time, and speed distribution across time brackets.',
-      metrics:[
-        { label:'Disposal Rate',          val:null },
-        { label:'Avg Processing Time',    val:null },
-        { label:'< 1 Day Clearances',     val:null },
-        { label:'Files Pending (Inv.)',   val:null },
-        { label:'Processing Speed Index', val:null },
-      ]},
-    { icon:'⭐', source:'Swarna AP Portal — Uploaded by Swarna Operator',
-      desc:'Annual performance score based on KPIs under the Swarna Andhra Pradesh governance framework.',
-      metrics:[
-        { label:'KPI Achievement Rate',   val:null },
-        { label:'Target vs Actual',       val:null },
-        { label:'Citizen Service Score',  val:null },
-        { label:'Field Visit Compliance', val:null },
-        { label:'Reporting Punctuality',  val:null },
-      ]},
-    { icon:'📈', source:'GSDP Portal — Uploaded by GSDP Operator',
-      desc:'Gross State Domestic Product contribution and economic indicators from the officer\'s jurisdiction.',
-      metrics:[
-        { label:'GSDP Growth Rate',       val:null },
-        { label:'Sectoral Contribution',  val:null },
-        { label:'Investment Facilitated', val:null },
-        { label:'Revenue Collection',     val:null },
-        { label:'Infrastructure Index',   val:null },
-      ]},
-    { icon:'🏛️', source:'GoI Funds Portal — Uploaded by GoI Funds Operator',
-      desc:'Utilization efficiency of Government of India funds and centrally sponsored schemes.',
-      metrics:[
-        { label:'Fund Utilization Rate',  val:null },
-        { label:'Timely Claims Filed',    val:null },
-        { label:'Scheme Completion Rate', val:null },
-        { label:'Beneficiary Coverage',   val:null },
-        { label:'Audit Compliance',       val:null },
-      ]},
-    { icon:'👥', source:'Perception Survey — Uploaded by Perception Operator',
-      desc:'Citizen satisfaction and perception scores from structured field surveys.',
-      metrics:[
-        { label:'Overall Satisfaction',   val:null },
-        { label:'Accessibility Score',    val:null },
-        { label:'Grievance Resolution',   val:null },
-        { label:'Service Efficiency',     val:null },
-        { label:'Transparency Index',     val:null },
-      ]},
-    { icon:'💡', source:'Self Appraisal — Expert Review Panel Score',
-      desc:'Innovations introduced — score awarded by the Expert Review Committee.',
-      metrics:[
-        { label:'Implementation',         val:null },
-        { label:'Impact Assessment',      val:null },
-        { label:'Replication Potential',  val:null },
-        { label:'Stakeholder Approval',   val:null },
-        { label:'Sustainability',         val:null },
-      ]},
-    { icon:'📱', source:'Self Appraisal — Expert Review Panel Score',
-      desc:'Digital transformation initiatives — score awarded by the Expert Review Committee.',
-      metrics:[
-        { label:'Digital Services',       val:null },
-        { label:'Citizen App Adoption',   val:null },
-        { label:'Paperless Processes',    val:null },
-        { label:'Data Accuracy',          val:null },
-        { label:'Tech Training',          val:null },
-      ]},
-    { icon:'📋', source:'Self Appraisal — Expert Review Panel Score',
-      desc:'Policies framed and implemented — score by the Expert Review Committee.',
-      metrics:[
-        { label:'Policies Drafted',       val:null },
-        { label:'Policies Notified',      val:null },
-        { label:'Stakeholder Consult.',   val:null },
-        { label:'Implementation Rate',    val:null },
-        { label:'Outcome Monitoring',     val:null },
-      ]},
-    { icon:'✂️', source:'Self Appraisal — Expert Review Panel Score',
-      desc:'De-Regularisation — simplification of compliance processes. Score by the Expert Committee.',
-      metrics:[
-        { label:'Regulations Removed',    val:null },
-        { label:'Process Steps Reduced',  val:null },
-        { label:'Compliance Reduction',   val:null },
-        { label:'Business Ease Impact',   val:null },
-        { label:'Citizen Feedback',       val:null },
-      ]},
-    { icon:'🛡️', source:'Integrity Data — Uploaded by Integrity Operator',
-      desc:'Composite integrity score based on ACB records, vigilance clearance and conduct.',
-      metrics:[
-        { label:'ACB Cases (Clean=100)',  val:null },
-        { label:'Complaint Resolution',   val:null },
-        { label:'Vigilance Clearance',    val:null },
-        { label:'Asset Declaration',      val:null },
-        { label:'Conduct Score',          val:null },
-      ]},
-    { icon:'🤝', source:'Party Feedback — Uploaded by Party Operator',
-      desc:'Feedback scores from ruling party functionaries and elected representatives.',
-      metrics:[
-        { label:'MLA Feedback Score',     val:null },
-        { label:'MP Feedback Score',      val:null },
-        { label:'Zilla Parishad Score',   val:null },
-        { label:'Mandal Parishad Score',  val:null },
-        { label:'Village Sarpanch Score', val:null },
-      ]},
-    { icon:'📰', source:'Media Feedback — Uploaded by Media Operator',
-      desc:'Sentiment analysis of print, digital and social media coverage of the officer\'s work.',
-      metrics:[
-        { label:'Positive Coverage %',    val:null },
-        { label:'Neutral/Neg. (Inv.)',    val:null },
-        { label:'Social Media Sentiment', val:null },
-        { label:'Print Media Score',      val:null },
-        { label:'Digital Media Score',    val:null },
-      ]},
-    { icon:'🎯', source:'Self Appraisal — Expert Review Panel Score',
-      desc:'Leadership qualities, team management and institutional capacity building.',
-      metrics:[
-        { label:'Team Building',          val:null },
-        { label:'Decision Making',        val:null },
-        { label:'Crisis Management',      val:null },
-        { label:'Mentoring & Training',   val:null },
-        { label:'Stakeholder Coord.',     val:null },
-      ]},
-    { icon:'🏆', source:'CMO Assessment — Chief Minister\'s Office',
-      desc:'Direct performance assessment by the Chief Minister\'s Office on special assignments.',
-      metrics:[
-        { label:'Special Assignment',     val:null },
-        { label:'Responsiveness',         val:null },
-        { label:'Report Quality',         val:null },
-        { label:'Field Reliability',      val:null },
-        { label:'CMO Interaction Rating', val:null },
-      ]},
+    { icon:'💻', source:'e-Office Live Data — file movement system',
+      desc:'File processing efficiency — disposal rate, clearance speed, volume and consistency (TOPSIS, 0–100).',
+      metrics:[] },
+    { icon:'⭐', source:'Swarnandhra KPI — District / Department / HoD scores',
+      desc:'Swarna Andhra Pradesh KPI score, days-weighted across the officer\'s posts (0–100).',
+      metrics:[] },
+    { icon:'💰', source:'GoI (CSS) Funds — utilization data',
+      desc:'Government of India fund utilization — spending, absorption, idle & untapped funds (TOPSIS, 0–100).',
+      metrics:[] },
+    { icon:'👥', source:'I&PR Public Perception — district campaign surveys',
+      desc:'Citizen perception score, period-weighted across the officer\'s posts and campaigns (0–100).',
+      metrics:[] },
   ];
 
   const CADRE_COLORS = {
@@ -180,7 +57,7 @@
   let activeSegSet   = new Set();
   let sortKey = 'seniority';
   let sortDir = 'asc';
-  let weights = new Array(14).fill(1);
+  let weights = new Array(NCATS).fill(1);
   let batchRange   = { lo:0, hi:9999 };
   let retireRange  = { lo:0, hi:9999 };
   let batchExtent  = { min:0, max:9999 };
@@ -231,23 +108,14 @@
   }
 
   // Assemble all 14 scores for one officer (null = pending/unavailable)
-  function buildScores(idNo, rawData) {
-    const id = String(idNo);
+  // Build the 4 live scores (0–100) for an officer from the capsule-score map.
+  function buildScores(idNo, scoreMap) {
+    const s = (scoreMap && scoreMap[String(idNo)]) || {};
     return [
-      computeEofficeScore(rawData.eoffice[id]),     // 0  e-Office    LIVE
-      null,                                          // 1  Swarna AP   pending
-      null,                                          // 2  GSDP        pending
-      computeGoifundsScore(rawData.goifunds[id]),   // 3  GoI Funds   LIVE
-      computePerceptionScore(rawData.perception[id]),// 4  Perception  LIVE
-      null,                                          // 5  Innovations pending
-      null,                                          // 6  Digitalisation pending
-      null,                                          // 7  New Policies pending
-      null,                                          // 8  De-Reg      pending
-      null,                                          // 9  Integrity   pending
-      null,                                          // 10 Party       pending
-      null,                                          // 11 Media       pending
-      null,                                          // 12 Leadership  pending
-      null,                                          // 13 CMO Score   pending
+      s.eo != null ? s.eo : null,   // 0  e-Office
+      s.sw != null ? s.sw : null,   // 1  Swarna AP
+      s.go != null ? s.go : null,   // 2  GoI Funds
+      s.pp != null ? s.pp : null,   // 3  Public Perception
     ];
   }
 
@@ -312,19 +180,45 @@
 
   function computeOfficerRanks(grpList) {
     const N = grpList.length;
+
+    // Per-category rank — only among officers who HAVE that score
+    grpList.forEach(g => { g.catRanks = new Array(NCATS).fill('—'); });
     WHEEL_CATS.forEach((_, ci) => {
-      const order = [...grpList].sort((a, b) => (b.scores[ci] || 0) - (a.scores[ci] || 0));
-      order.forEach((grp, pos) => {
-        if (!grp.catRanks) grp.catRanks = new Array(14).fill(0);
-        grp.catRanks[ci] = pos + 1;
-      });
+      const have = grpList.filter(g => g.scores[ci] != null)
+                          .sort((a, b) => (b.scores[ci] || 0) - (a.scores[ci] || 0));
+      have.forEach((grp, pos) => { grp.catRanks[ci] = pos + 1; });
     });
-    const byAvg = [...grpList].sort((a, b) => {
-      const sa = a.scores.reduce((s, v) => s + (v || 0), 0);
-      const sb = b.scores.reduce((s, v) => s + (v || 0), 0);
-      return sb - sa;
+
+    // Composite = average of the officer's AVAILABLE scores; availability signature
+    grpList.forEach(g => {
+      const vals = g.scores.filter(v => v != null);
+      g.composite  = vals.length ? +(vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(2) : null;
+      g.scoreCount = vals.length;
+      g.availSig   = g.scores.map(v => v != null ? '1' : '0').join('');
+      g.peerLabel  = WHEEL_CATS.filter((_, i) => g.scores[i] != null).map(c => c.label).join(' + ') || 'No live scores';
     });
-    byAvg.forEach((grp, pos) => { grp.overallRank = pos + 1; });
+
+    // Overall rank by composite (officers with no scores ranked last)
+    const ranked = [...grpList].sort((a, b) => {
+      if (a.composite == null && b.composite == null) return 0;
+      if (a.composite == null) return 1;
+      if (b.composite == null) return -1;
+      return b.composite - a.composite;
+    });
+    let scoredN = 0;
+    ranked.forEach((g, pos) => { g.overallRank = g.composite == null ? '—' : (++scoredN, pos + 1); });
+    grpList.forEach(g => { g.overallTotal = grpList.filter(x => x.composite != null).length; });
+
+    // Peer rank — among officers who share the SAME set of available parameters
+    const groups = {};
+    grpList.forEach(g => { (groups[g.availSig] = groups[g.availSig] || []).push(g); });
+    Object.values(groups).forEach(list => {
+      const peers = list.filter(g => g.composite != null)
+                        .sort((a, b) => (b.composite || 0) - (a.composite || 0));
+      peers.forEach((g, pos) => { g.peerRank = pos + 1; });
+      list.forEach(g => { g.peerTotal = peers.length; if (g.composite == null) g.peerRank = '—'; });
+    });
+
     grpList.forEach(grp => { grp.totalOfficers = N; });
   }
 
@@ -346,9 +240,9 @@
     Promise.all([
       loadOfficerData(svc),
       loadPhotos(svc),
-      loadScoreData(),
+      (typeof window.getLive4ScoreMap === 'function' ? window.getLive4ScoreMap() : Promise.resolve({})),
       _supabase.from('post_type_options').select('label').eq('service_type', svc).order('sort_order').order('label')
-    ]).then(([rows, photos, rawData, ptResult]) => {
+    ]).then(([rows, photos, scoreMap, ptResult]) => {
       photoMap = photos;
       postTypeOrder = (ptResult.data || []).map(r => r.label);
 
@@ -368,10 +262,10 @@
         );
       }
 
-      // Build live scores for each officer
+      // Build the 4 live capsule scores for each officer
       for (const grp of Object.values(grouped)) {
         const idNo = String(grp.meta['IdentityNo.'] || '').trim();
-        grp.scores = buildScores(idNo, rawData);
+        grp.scores = buildScores(idNo, scoreMap);
       }
 
       computeOfficerRanks(Object.values(grouped));
@@ -534,7 +428,7 @@
 
   window.resetSort360 = function () {
     sortKey = 'seniority'; sortDir = 'asc';
-    weights = new Array(14).fill(1);
+    weights = new Array(NCATS).fill(1);
     const sel = document.getElementById('sortSelect360');
     if (sel) sel.value = 'seniority';
     const btn = document.getElementById('sortDirBtn');
@@ -698,23 +592,34 @@
     const entry = allOfficers.find(([n]) => n === name);
     if (!entry) return;
     const [, grpData] = entry;
-    const scores = grpData.scores || new Array(14).fill(null);
-    const ranks  = grpData.catRanks || new Array(14).fill('—');
+    const scores = grpData.scores || new Array(NCATS).fill(null);
+    const ranks  = grpData.catRanks || new Array(NCATS).fill('—');
     currentWheelData = { scores, ranks, grp: grpData };
 
     document.getElementById('wheelName').textContent = name;
-    const overallRank = grpData.overallRank || '—';
-    const total       = grpData.totalOfficers || allOfficers.length;
-    const liveCount   = scores.filter(s => s !== null).length;
-    const avgScore    = liveCount
-      ? (scores.reduce((s, v) => s + (v || 0), 0) / liveCount).toFixed(2)
-      : '—';
-    document.getElementById('wheelRankBadge').textContent = `Overall Rank #${overallRank} of ${total}`;
-    document.getElementById('wheelAvgBadge').textContent  = liveCount
-      ? `Live Avg: ${avgScore}/10 (${liveCount}/14 parameters)`
-      : 'No live data yet';
+    const meta        = grpData.meta || {};
+    const identityNo  = String(meta['IdentityNo.'] || '').trim();
+    const photoUrl    = photoMap[identityNo] || NO_PHOTO_SVG;
+    const presentPost = (meta.currentposting || meta.PostType || '').trim();
+    const postEl = document.getElementById('wheelPost');
+    if (postEl) postEl.textContent = presentPost ? '📋 ' + presentPost : '';
 
-    drawWheel(scores, name);
+    const liveCount   = scores.filter(s => s !== null).length;
+    const avgScore    = grpData.composite != null ? grpData.composite.toFixed(2) : '—';
+    const peerRank    = grpData.peerRank || '—';
+    const peerTot     = grpData.peerTotal || 0;
+    const peerLabel   = grpData.peerLabel || '—';
+
+    document.getElementById('wheelPeerBadge').textContent = `👥 Peer Rank #${peerRank} of ${peerTot}`;
+    document.getElementById('wheelAvgBadge').textContent  = liveCount
+      ? `Composite ${avgScore}/100 · ${liveCount}/${NCATS} scores`
+      : 'No live data yet';
+    var noteEl = document.getElementById('wheelPeerNote');
+    if (noteEl) noteEl.innerHTML = liveCount
+      ? `Peer rank is among officers who share the same parameters: <b>${esc(peerLabel)}</b>`
+      : 'No live scores available for this officer yet.';
+
+    drawWheel(scores, name, photoUrl);
     document.getElementById('wheelOverlay').classList.add('open');
 
     const closeBtn = document.getElementById('wheelClose');
@@ -731,109 +636,151 @@
     });
   }
 
-  function drawWheel(scores, officerName) {
+  function drawWheel(scores, officerName, photoUrl) {
     const svg = document.getElementById('wheelSvg');
     if (!svg) return;
-    const N = WHEEL_CATS.length; // 14
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const N = NCATS;
     const cx = 320, cy = 320;
-    const outerR = 280, innerR = 70;
+    const innerR = 84, outerR = 262;
+    const maxScore = 100;
     const angleStep = (2 * Math.PI) / N;
-    const startOffset = -Math.PI / 2;
-
-    const maxScore = 10;
+    const gap = 0.05;
+    const startOffset = -Math.PI / 2 - angleStep / 2;  // first segment centred at top
 
     svg.innerHTML = '';
     activeSegSet.clear();
 
+    const el = (n, attrs) => { const e = document.createElementNS(SVGNS, n); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    const polar = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    const sector = (r1, r2, a1, a2) => {
+      const [x1,y1]=polar(r1,a1), [x2,y2]=polar(r2,a1), [x3,y3]=polar(r2,a2), [x4,y4]=polar(r1,a2);
+      const laf = (a2 - a1) > Math.PI ? 1 : 0;
+      return `M ${x1} ${y1} L ${x2} ${y2} A ${r2} ${r2} 0 ${laf} 1 ${x3} ${y3} L ${x4} ${y4} A ${r1} ${r1} 0 ${laf} 0 ${x1} ${y1} Z`;
+    };
+
+    // ── defs: per-segment gradients, glow, centre gradient ──
+    const defs = el('defs', {});
     WHEEL_CATS.forEach((cat, i) => {
-      const startA = startOffset + i * angleStep;
-      const endA   = startA + angleStep - 0.018;
-      const sc     = scores[i];
+      const g = el('radialGradient', { id:'wseg'+i, cx:'50%', cy:'50%', r:'78%' });
+      g.appendChild(el('stop', { offset:'0%',  'stop-color':cat.light }));
+      g.appendChild(el('stop', { offset:'100%','stop-color':cat.color }));
+      defs.appendChild(g);
+    });
+    const glow = el('filter', { id:'wglow', x:'-40%', y:'-40%', width:'180%', height:'180%' });
+    glow.appendChild(el('feDropShadow', { dx:'0', dy:'0', stdDeviation:'5', 'flood-color':'rgba(0,0,0,0.28)' }));
+    defs.appendChild(glow);
+    const cg = el('radialGradient', { id:'wcentre', cx:'50%', cy:'40%', r:'70%' });
+    cg.appendChild(el('stop', { offset:'0%','stop-color':'#fffdf7' }));
+    cg.appendChild(el('stop', { offset:'100%','stop-color':'#fcd34d' }));
+    defs.appendChild(cg);
+    // circular clip for the centre photo
+    const clip = el('clipPath', { id:'wphotoClip' });
+    clip.appendChild(el('circle', { cx, cy, r: innerR - 4 }));
+    defs.appendChild(clip);
+    svg.appendChild(defs);
+
+    WHEEL_CATS.forEach((cat, i) => {
+      const a1 = startOffset + i * angleStep + gap / 2;
+      const a2 = startOffset + (i + 1) * angleStep - gap / 2;
+      const midA = (a1 + a2) / 2;
+      const sc = scores[i];
       const isNull = sc === null;
-      const frac   = isNull ? 0 : Math.max(0.06, (sc || 0) / maxScore);
-      const segR   = innerR + (outerR - innerR) * frac;
-      const color  = isNull ? '#94a3b8' : cat.color;
-      const light  = isNull ? '#e2e8f0' : cat.light;
+      const frac = isNull ? 0 : Math.max(0.05, sc / maxScore);
+      const segR = innerR + (outerR - innerR) * frac;
 
-      function polar(r, a) { return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
-      const [x1,y1] = polar(innerR, startA);
-      const [x2,y2] = polar(segR,   startA);
-      const [x3,y3] = polar(segR,   endA);
-      const [x4,y4] = polar(innerR, endA);
+      // 1) faint full-range "gauge track"
+      const track = el('path', {
+        d: sector(innerR, outerR, a1, a2),
+        fill: isNull ? '#f1f5f9' : cat.light + '22',
+        stroke: isNull ? '#cbd5e1' : cat.light + '99',
+        'stroke-width': '1.5', cursor: 'pointer'
+      });
+      if (isNull) track.setAttribute('stroke-dasharray', '6 6');
+      track.addEventListener('click', () => onSegClick(i, officerName));
+      svg.appendChild(track);
 
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const laf  = angleStep > Math.PI ? 1 : 0;
-      path.setAttribute('d',
-        `M ${x1} ${y1} L ${x2} ${y2} A ${segR} ${segR} 0 ${laf} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerR} ${innerR} 0 ${laf} 0 ${x1} ${y1} Z`
-      );
-      path.setAttribute('fill',          isNull ? '#f1f5f9' : light + '55');
-      path.setAttribute('stroke',        color);
-      path.setAttribute('stroke-width',  '1.8');
-      path.setAttribute('cursor',        'pointer');
-      path.setAttribute('data-index',    i);
-      path.style.transition = 'opacity 0.18s';
-      path.addEventListener('mouseenter', () => { path.style.opacity = '0.82'; });
-      path.addEventListener('mouseleave', () => { path.style.opacity = '1'; });
-      path.addEventListener('click', () => onSegClick(i, officerName));
-      svg.appendChild(path);
+      // 2) coloured value arc with glow + bloom-in animation
+      if (!isNull) {
+        const seg = el('path', {
+          d: sector(innerR, segR, a1, a2), fill: 'url(#wseg'+i+')',
+          stroke: cat.color, 'stroke-width': '3', 'stroke-linejoin': 'round',
+          filter: 'url(#wglow)', cursor: 'pointer'
+        });
+        seg.style.opacity = '0';
+        seg.style.transition = 'opacity 0.55s ease ' + (i * 0.13) + 's';
+        seg.addEventListener('mouseenter', () => seg.style.opacity = '0.85');
+        seg.addEventListener('mouseleave', () => seg.style.opacity = '1');
+        seg.addEventListener('click', () => onSegClick(i, officerName));
+        svg.appendChild(seg);
+        requestAnimationFrame(() => requestAnimationFrame(() => { seg.style.opacity = '1'; }));
+      }
 
-      // Label
-      const midA    = startA + angleStep / 2;
-      const labelR  = segR + 22;
-      const [lx,ly] = polar(labelR, midA);
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', lx); text.setAttribute('y', ly);
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('dominant-baseline', 'middle');
-      text.setAttribute('font-size', '8.5');
-      text.setAttribute('font-weight', '700');
-      text.setAttribute('fill', isNull ? '#94a3b8' : color);
-      text.setAttribute('font-family', 'Inter,Arial,sans-serif');
-      text.textContent = isNull ? cat.label.split(' ')[0] + ' N·A' : cat.label.split(' ')[0];
-      svg.appendChild(text);
+      // 3) icon + label outside the ring
+      const [lx, ly] = polar(outerR + 38, midA);
+      svg.appendChild(Object.assign(el('text', {
+        x: lx, y: ly - 10, 'text-anchor': 'middle', 'font-size': '24'
+      }), { textContent: (CAT_DETAILS[i] && CAT_DETAILS[i].icon) || '' }));
+      svg.appendChild(Object.assign(el('text', {
+        x: lx, y: ly + 11, 'text-anchor': 'middle', 'font-size': '12.5', 'font-weight': '800',
+        fill: isNull ? '#94a3b8' : cat.color, 'font-family': 'Inter,Arial,sans-serif'
+      }), { textContent: cat.label }));
 
-      // Score value inside segment
-      if (!isNull && frac > 0.15) {
-        const valR    = innerR + (segR - innerR) * 0.58;
-        const [vx,vy] = polar(valR, midA);
-        const vt = document.createElementNS('http://www.w3.org/2000/svg','text');
-        vt.setAttribute('x', vx); vt.setAttribute('y', vy);
-        vt.setAttribute('text-anchor','middle'); vt.setAttribute('dominant-baseline','middle');
-        vt.setAttribute('font-size','9'); vt.setAttribute('font-weight','900');
-        vt.setAttribute('fill', color); vt.setAttribute('font-family','Inter,Arial,sans-serif');
-        vt.textContent = sc.toFixed(1);
+      // 4) score value (filled) or "Not Available" (null)
+      if (!isNull) {
+        const [vx, vy] = polar(innerR + (segR - innerR) * 0.62, midA);
+        const vt = el('text', {
+          x: vx, y: vy, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': '24', 'font-weight': '900', fill: '#ffffff',
+          stroke: cat.color, 'stroke-width': '0.6', 'paint-order': 'stroke',
+          'font-family': 'Inter,Arial,sans-serif'
+        });
+        vt.textContent = sc.toFixed(2);
         svg.appendChild(vt);
+      } else {
+        const [vx, vy] = polar((innerR + outerR) / 2, midA);
+        svg.appendChild(Object.assign(el('text', {
+          x: vx, y: vy - 7, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': '14', 'font-weight': '800', fill: '#94a3b8', 'font-family': 'Inter,Arial,sans-serif'
+        }), { textContent: 'Score' }));
+        svg.appendChild(Object.assign(el('text', {
+          x: vx, y: vy + 11, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': '12.5', 'font-weight': '800', fill: '#cbd5e1', 'font-family': 'Inter,Arial,sans-serif'
+        }), { textContent: 'Not Available' }));
       }
     });
 
-    // Centre circle
-    const cCircle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    cCircle.setAttribute('cx',cx); cCircle.setAttribute('cy',cy); cCircle.setAttribute('r',innerR);
-    cCircle.setAttribute('fill','url(#centreGrad)'); cCircle.setAttribute('stroke','#f59e0b'); cCircle.setAttribute('stroke-width','2');
-    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-    const grad = document.createElementNS('http://www.w3.org/2000/svg','radialGradient');
-    grad.setAttribute('id','centreGrad'); grad.setAttribute('cx','50%'); grad.setAttribute('cy','50%');
-    const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop');
-    s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#fffbeb');
-    const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop');
-    s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','#fef3c7');
-    grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); svg.insertBefore(defs,svg.firstChild);
-    svg.appendChild(cCircle);
+    // ── centre: officer photo + composite badge ──
+    const liveCount = scores.filter(s => s !== null).length;
+    const avg = liveCount ? (scores.reduce((s, v) => s + (v || 0), 0) / liveCount) : null;
 
-    const liveCount = scores.filter(s=>s!==null).length;
-    const avgScore  = liveCount ? (scores.reduce((s,v)=>s+(v||0),0)/liveCount) : null;
-    const ctxt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    ctxt.setAttribute('x',cx); ctxt.setAttribute('y',cy-8); ctxt.setAttribute('text-anchor','middle');
-    ctxt.setAttribute('font-size','20'); ctxt.setAttribute('font-weight','900'); ctxt.setAttribute('fill','#78350f');
-    ctxt.setAttribute('font-family','Inter,Arial,sans-serif');
-    ctxt.textContent = avgScore !== null ? avgScore.toFixed(1) : '—';
-    svg.appendChild(ctxt);
-    const csub = document.createElementNS('http://www.w3.org/2000/svg','text');
-    csub.setAttribute('x',cx); csub.setAttribute('y',cy+12); csub.setAttribute('text-anchor','middle');
-    csub.setAttribute('font-size','8'); csub.setAttribute('font-weight','700'); csub.setAttribute('fill','#b45309');
-    csub.setAttribute('font-family','Inter,Arial,sans-serif');
-    csub.textContent = liveCount + '/14 live';
-    svg.appendChild(csub);
+    svg.appendChild(el('circle', { cx, cy, r: innerR + 6, fill: 'none', stroke: '#f59e0b', 'stroke-width': '1', opacity: '0.4' }));
+    // photo backing (in case of transparent PNG)
+    svg.appendChild(el('circle', { cx, cy, r: innerR - 4, fill: '#fef3c7' }));
+    // the photo, clipped to a circle
+    const img = el('image', {
+      x: cx - (innerR - 4), y: cy - (innerR - 4),
+      width: 2 * (innerR - 4), height: 2 * (innerR - 4),
+      preserveAspectRatio: 'xMidYMid slice', 'clip-path': 'url(#wphotoClip)'
+    });
+    img.setAttribute('href', photoUrl || '');
+    img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', photoUrl || '');
+    img.setAttribute('filter', 'url(#wglow)');
+    svg.appendChild(img);
+    // gold rim over the photo
+    svg.appendChild(el('circle', { cx, cy, r: innerR, fill: 'none', stroke: '#d97706', 'stroke-width': '3' }));
+
+    // composite badge at the bottom of the photo
+    if (avg != null) {
+      svg.appendChild(el('rect', {
+        x: cx - 46, y: cy + innerR - 22, width: 92, height: 30, rx: 15,
+        fill: '#7c2d12', stroke: '#fbbf24', 'stroke-width': '1.5', filter: 'url(#wglow)'
+      }));
+      svg.appendChild(Object.assign(el('text', {
+        x: cx, y: cy + innerR - 1, 'text-anchor': 'middle', 'font-size': '16', 'font-weight': '900',
+        fill: '#fde68a', 'font-family': 'Inter,Arial,sans-serif'
+      }), { textContent: avg.toFixed(2) }));
+    }
   }
 
   function onSegClick(idx, officerName) {
@@ -881,7 +828,7 @@
               }).join('')
           }
         </div>
-        <div class="sdp-expand-hint">${isNull ? 'Data will appear once loaded' : `Score: ${sc !== null ? sc.toFixed(2) : '—'} / 10`}</div>
+        <div class="sdp-expand-hint">${isNull ? 'Data will appear once loaded' : `Score: ${sc !== null ? sc.toFixed(2) : '—'} / 100`}</div>
       </div>`;
 
     const wb = document.getElementById('wheelBox');
@@ -922,7 +869,7 @@
   };
 
   window.resetWeights = function () {
-    weights = new Array(14).fill(1);
+    weights = new Array(NCATS).fill(1);
     WHEEL_CATS.forEach((_, i) => {
       const sl = document.getElementById('wSlider' + i); if (sl) sl.value = 1;
       const vl = document.getElementById('wVal' + i);    if (vl) vl.textContent = '1';

@@ -4,501 +4,1272 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Dashboard | AIS Officers</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase_config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: #eef2ff; min-height: 100vh; }
 
-    /* ── Header ── */
-    .top-header {
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4f46e5 100%);
-      padding: 14px 24px; display: flex; align-items: center; gap: 14px;
-      box-shadow: 0 4px 16px rgba(30,27,75,0.45);
+    /* ── Top nav ── */
+    .top-nav {
+      background: linear-gradient(135deg, #0f0c29 0%, #1e1b4b 50%, #312e81 100%);
+      padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 20px rgba(15,12,41,0.5); position: sticky; top: 0; z-index: 100;
     }
-    .ap-seal {
-      width: 46px; height: 46px; border-radius: 50%;
-      border: 2px solid rgba(165,180,252,0.5); background: rgba(255,255,255,0.1);
-      display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
-    }
-    .header-text { flex: 1; }
-    .header-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #a5b4fc; }
-    .header-title { font-size: clamp(14px,1.6vw,20px); font-weight: 800; color: #fff; }
-    .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
-    .btn-h {
-      padding: 9px 16px; border-radius: 8px; font-family: 'Inter', sans-serif;
-      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; border: none;
-    }
-    .btn-h-appraisal {
-      background: linear-gradient(135deg, #7c3aed, #4c1d95);
-      color: #ede9fe; box-shadow: 0 3px 10px rgba(124,58,237,0.4);
-    }
-    .btn-h-appraisal:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(124,58,237,0.55); }
-    .btn-h-dashboard {
-      background: rgba(255,255,255,0.12); border: 1px solid rgba(165,180,252,0.4); color: #a5b4fc;
-    }
-    .btn-h-dashboard:hover { background: rgba(255,255,255,0.22); }
-    .btn-h-logout {
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(165,180,252,0.3); color: #a5b4fc;
-    }
-    .btn-h-logout:hover { background: rgba(255,255,255,0.18); }
+    .nav-seal { font-size: 24px; flex-shrink: 0; }
+    .nav-text { flex: 1; }
+    .nav-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #818cf8; }
+    .nav-title { font-size: 14px; font-weight: 800; color: #fff; }
+    .nav-actions { display: flex; gap: 8px; }
+    .nav-btn { padding: 7px 14px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap; }
+    .nav-btn-ghost  { background: rgba(255,255,255,0.1); color: #a5b4fc; border: 1px solid rgba(165,180,252,0.25); }
+    .nav-btn-ghost:hover  { background: rgba(255,255,255,0.2); }
+    .nav-btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .nav-btn-danger:hover { background: rgba(239,68,68,0.25); }
 
-    /* ── Officer profile bar ── */
-    .profile-bar {
-      background: #fff; padding: 10px 24px;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-      border-bottom: 2px solid #c7d2fe; box-shadow: 0 2px 8px rgba(30,27,75,0.07);
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0f0c29 0%, #1e1b4b 40%, #312e81 70%, #4338ca 100%);
+      padding: 28px 28px 32px; position: relative; overflow: hidden;
     }
-    .profile-left { display: flex; align-items: center; gap: 12px; }
-    .profile-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 80% 50%, rgba(99,102,241,0.18) 0%, transparent 60%);
+      pointer-events: none;
     }
-    .profile-name { font-size: 15px; font-weight: 800; color: #1e1b4b; }
-    .profile-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
-    .svc-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
-    }
-    .svc-ias { background: #dbeafe; color: #1e40af; }
-    .svc-ips { background: #fce7f3; color: #9d174d; }
-    .svc-ifs { background: #dcfce7; color: #14532d; }
+    .hero-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 24px; position: relative; flex-wrap: wrap; }
+    .hero-photo-wrap { position: relative; flex-shrink: 0; }
+    .hero-photo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid rgba(165,180,252,0.5); object-fit: cover; display: block; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+    .hero-photo-placeholder { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,#4f46e5,#7c3aed); border: 3px solid rgba(165,180,252,0.5); display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 8px 28px rgba(0,0,0,0.4); flex-shrink: 0; }
+    .hero-svc-ring { position: absolute; bottom: -2px; right: -2px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #1e1b4b; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .hero-svc-ring.ias { background: #fef3c7; } .hero-svc-ring.ips { background: #fee2e2; } .hero-svc-ring.ifs { background: #d1fae5; }
+    .hero-info { flex: 1; min-width: 0; }
+    .hero-name { font-size: clamp(18px,2.2vw,26px); font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .hero-badge { padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); }
+    .badge-svc   { background: rgba(99,102,241,0.3); color: #c7d2fe; }
+    .badge-cadre { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .badge-batch { background: rgba(251,191,36,0.2); color: #fde68a; }
+    .hero-posting { font-size: 13px; color: #a5b4fc; margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Completion ring ── */
+    .hero-completion { flex-shrink: 0; text-align: center; }
+    .completion-ring-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto; }
+    .completion-ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg   { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 6; }
+    .ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+    .completion-pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; color: #fff; }
+    .completion-label { font-size: 10px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
 
     /* ── Page ── */
-    .page-content { padding: 20px 24px 48px; max-width: 1100px; margin: 0 auto; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+    .sec-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .sec-hdr-line  { flex: 1; height: 2px; background: linear-gradient(to right, #c7d2fe, transparent); }
+    .sec-hdr-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #64748b; white-space: nowrap; }
 
-    /* ── Section heading ── */
-    .section-heading {
-      font-size: 12px; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #e0e7ff;
-      display: flex; align-items: center; gap: 8px;
+    /* ── Task grid ── */
+    .task-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 36px; }
+    .task-card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(79,70,229,0.08); border: 1.5px solid #e0e7ff; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+    .task-card:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(79,70,229,0.14); }
+    .task-card-banner { padding: 20px 22px 18px; position: relative; overflow: hidden; }
+    .task-card-banner::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none; }
+    .task-banner-sa    { background: linear-gradient(135deg,#4c1d95,#7c3aed); }
+    .task-banner-edu   { background: linear-gradient(135deg,#1e3a8a,#2563eb); }
+    .task-banner-skill { background: linear-gradient(135deg,#064e3b,#059669); }
+    .task-banner-hobby { background: linear-gradient(135deg,#78350f,#d97706); }
+    .task-card-ico   { font-size: 40px; margin-bottom: 10px; display: block; }
+    .task-card-title { font-size: 16px; font-weight: 800; color: #fff; }
+    .task-card-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; line-height: 1.5; }
+    .task-status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 10px; border: 1px solid rgba(255,255,255,0.2); }
+    .pill-done    { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .pill-partial { background: rgba(251,191,36,0.25); color: #fde68a; }
+    .pill-none    { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); }
+    .task-card-body { padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .task-items { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+    .task-chip { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
+    .task-chip.sa    { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+    .task-chip.edu   { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .task-chip.skill { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .task-chip.hobby { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+    .task-empty { font-size: 12px; color: #94a3b8; font-style: italic; }
+    .task-card-btn { margin-top: auto; padding: 11px 18px; border-radius: 10px; border: none; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s; text-align: center; width: 100%; }
+    .btn-sa    { background: linear-gradient(135deg,#7c3aed,#4c1d95); color:#fff; box-shadow:0 3px 12px rgba(124,58,237,0.35); }
+    .btn-edu   { background: linear-gradient(135deg,#2563eb,#1e3a8a); color:#fff; box-shadow:0 3px 12px rgba(37,99,235,0.35); }
+    .btn-skill { background: linear-gradient(135deg,#059669,#064e3b); color:#fff; box-shadow:0 3px 12px rgba(5,150,105,0.35); }
+    .btn-hobby { background: linear-gradient(135deg,#d97706,#78350f); color:#fff; box-shadow:0 3px 12px rgba(217,119,6,0.35); }
+    .task-card-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Performance tiles ── */
+    .perf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px,1fr)); gap: 12px; }
+    .perf-tile { background: #fff; border-radius: 14px; padding: 16px 14px; border: 1.5px solid #e0e7ff; text-align: center; box-shadow: 0 2px 10px rgba(79,70,229,0.06); }
+    .perf-tile-ico   { font-size: 22px; margin-bottom: 6px; }
+    .perf-tile-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 8px; }
+    .perf-tile-score { font-size: 32px; font-weight: 900; line-height: 1; }
+    .perf-bar { height: 4px; border-radius: 4px; background: #f1f5f9; overflow: hidden; margin-top: 8px; }
+    .perf-bar-fill { height: 100%; border-radius: 4px; }
+    .perf-none { font-size: 11px; color: #cbd5e1; font-style: italic; }
+    .score-green { color: #059669; } .score-blue { color: #2563eb; } .score-amber { color: #d97706; } .score-red { color: #dc2626; } .score-grey { color: #94a3b8; }
+
+    /* ── Modal overlay ── */
+    .modal-ov { position: fixed; inset: 0; background: rgba(15,12,41,0.72); backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.22s; padding: 20px; }
+    .modal-ov.open { opacity: 1; pointer-events: auto; }
+    .modal-box { background: #fff; border-radius: 22px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 28px 70px rgba(0,0,0,0.35); transform: scale(0.93); transition: transform 0.22s; }
+    .modal-ov.open .modal-box { transform: scale(1); }
+    .modal-hdr { padding: 20px 26px 16px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; background: #fff; z-index: 10; border-bottom: 1.5px solid #f1f5f9; border-radius: 22px 22px 0 0; }
+    .modal-hdr-ico   { font-size: 28px; }
+    .modal-hdr-title { font-size: 17px; font-weight: 800; color: #1e1b4b; flex: 1; }
+    .modal-hdr-sub   { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; background: #f8fafc; border: 1.5px solid #e2e8f0; cursor: pointer; font-size: 16px; color: #64748b; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .modal-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+    .modal-body { padding: 22px 26px 28px; }
+
+    /* ── Modal tabs ── */
+    .mtabs { display: flex; gap: 4px; background: #f8fafc; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+    .mtab { flex: 1; padding: 8px; border-radius: 8px; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .mtab.active { background: #fff; color: #4338ca; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+    /* ── Form ── */
+    .form-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 6px; display: block; }
+    .form-inp { width: 100%; padding: 10px 14px; border-radius: 9px; border: 1.5px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; outline: none; transition: border-color 0.15s; background: #fff; }
+    .form-inp:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    .form-select { width: 100%; padding: 10px 14px; border-radius: 9px; border: 1.5px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; outline: none; background: #fff; cursor: pointer; }
+    .form-select:focus { border-color: #6366f1; }
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-grp   { display: flex; flex-direction: column; }
+
+    /* ── Dynamic entry rows ── */
+    .entry-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .entry-row { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px 12px; position: relative; }
+    .entry-row-del { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 6px; background: #fee2e2; border: none; cursor: pointer; color: #dc2626; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .entry-row-del:hover { background: #fca5a5; }
+    .add-row-btn { width: 100%; padding: 9px; border-radius: 9px; border: 2px dashed #c7d2fe; background: #f8fafc; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #6366f1; transition: all 0.15s; margin-bottom: 16px; }
+    .add-row-btn:hover { background: #eef2ff; border-color: #6366f1; }
+
+    /* ── Chips ── */
+    .chip-area { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px; min-height: 64px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; margin-bottom: 14px; }
+    .chip-item { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .chip-skill { background: #d1fae5; color: #065f46; border: 1.5px solid #a7f3d0; }
+    .chip-hobby { background: #fef3c7; color: #92400e; border: 1.5px solid #fde68a; }
+    .chip-del   { background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; font-size: 13px; line-height: 1; padding: 0; }
+    .chip-del:hover { opacity: 1; }
+    .chip-level { font-size: 10px; opacity: 0.7; }
+
+    /* ── Self Appraisal modal ── */
+    /* Expert review banner */
+    .sa-expert-banner {
+      background: linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);
+      border-radius: 14px; padding: 18px 22px; margin-bottom: 18px; display: flex; gap: 16px; align-items: flex-start;
     }
+    .sa-expert-ico { font-size: 32px; flex-shrink: 0; margin-top: 2px; }
+    .sa-expert-title { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .sa-expert-body  { font-size: 12px; color: #c7d2fe; line-height: 1.65; }
+    .sa-expert-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .sa-expert-pill  { padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e7ff; }
+    /* Status banner */
+    .sa-status { border-radius: 10px; padding: 11px 16px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    .sa-status.new       { background: #eef2ff; border: 1.5px solid #c7d2fe; color: #3730a3; }
+    .sa-status.draft     { background: #fefce8; border: 1.5px solid #fcd34d; color: #854d0e; }
+    .sa-status.submitted { background: #f0fdf4; border: 1.5px solid #86efac; color: #14532d; }
+    /* Section cards */
+    .sa-section { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; }
+    .sa-section-hdr { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .sa-section-num { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#4f46e5,#312e81); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .sa-section-title { font-size: 13px; font-weight: 800; color: #1e1b4b; margin-bottom: 3px; }
+    .sa-section-hint  { font-size: 11px; color: #64748b; line-height: 1.55; }
+    .sa-textarea { width: 100%; padding: 12px 14px; border-radius: 9px; border: 1.5px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; resize: vertical; min-height: 110px; outline: none; background: #fff; transition: border-color 0.15s; line-height: 1.6; }
+    .sa-textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .sa-textarea:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
+    .sa-char-count { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 4px; }
+    /* SA structured rows */
+    .sa-row-headers { display: grid; grid-template-columns: 30px 1fr 1fr; gap: 10px; padding: 0 2px 4px; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; }
+    .sa-row-header-cell { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; }
+    .sa-entry-row { display: grid; grid-template-columns: 30px 1fr 1fr; gap: 10px; margin-bottom: 8px; align-items: center; }
+    .sa-entry-row:last-child { margin-bottom: 0; }
+    .sa-row-badge { width: 26px; height: 26px; border-radius: 50%; background: #e0e7ff; color: #4338ca; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sa-entry-inp { padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 12px; color: #1e293b; outline: none; width: 100%; background: #fff; transition: border-color 0.15s; }
+    .sa-entry-inp:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .sa-entry-inp:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
+    .sa-entry-inp::placeholder { color: #c7d2fe; font-style: italic; font-size: 11px; }
+    /* SA action row */
+    .sa-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .sa-btn-draft  { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #c7d2fe; background: #eef2ff; color: #4338ca; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .sa-btn-draft:hover  { background: #e0e7ff; }
+    .sa-btn-draft:disabled { opacity: 0.45; cursor: not-allowed; }
+    .sa-btn-submit { flex: 2; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg,#7c3aed,#4c1d95); color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(124,58,237,0.4); transition: all 0.18s; }
+    .sa-btn-submit:hover  { opacity: 0.9; transform: translateY(-1px); }
+    .sa-btn-submit:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .sa-submitted-card { background: linear-gradient(135deg,#f0fdf4,#dcfce7); border: 2px solid #86efac; border-radius: 14px; padding: 18px 22px; margin-top: 10px; text-align: center; }
+    .sa-submitted-card-title { font-size: 18px; font-weight: 800; color: #14532d; margin-bottom: 6px; }
+    .sa-submitted-card-sub   { font-size: 12px; color: #166534; margin-bottom: 14px; line-height: 1.6; }
+    .sa-btn-new { padding: 10px 24px; border-radius: 10px; border: 2px solid #86efac; background: #fff; color: #059669; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .sa-btn-new:hover { background: #f0fdf4; }
 
-    /* ── Module grid ── */
-    .mod-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-      gap: 16px; margin-bottom: 28px;
+    /* ── Save btn ── */
+    .modal-save { width: 100%; padding: 13px; border-radius: 12px; border: none; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.18s; margin-top: 8px; background: linear-gradient(135deg,#4f46e5,#312e81); color: #fff; box-shadow: 0 4px 16px rgba(79,70,229,0.4); }
+    .modal-save:hover { opacity: 0.9; transform: translateY(-1px); }
+    .modal-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Toast ── */
+    #toastRoot { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+    .toast { background: #fff; border-radius: 14px; padding: 14px 20px; min-width: 280px; max-width: 400px; box-shadow: 0 10px 32px rgba(15,12,41,0.18); display: flex; align-items: center; gap: 12px; pointer-events: all; border-left: 5px solid #4338ca; animation: tIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .toast.ok  { border-left-color: #059669; }
+    .toast.err { border-left-color: #dc2626; }
+    .toast.hiding { animation: tOut 0.2s ease-in both; }
+    .toast-msg { font-size: 13px; font-weight: 600; color: #1e1b4b; flex: 1; }
+    @keyframes tIn  { from{opacity:0;transform:translateY(-16px) scale(0.94)} to{opacity:1;transform:none} }
+    @keyframes tOut { from{opacity:1} to{opacity:0;transform:translateY(-10px) scale(0.94)} }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .task-grid  { grid-template-columns: 1fr; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .nav-title  { display: none; }
     }
-
-    /* ── Module card ── */
-    .mod-card {
-      background: #fff; border-radius: 16px;
-      border: 2px solid #e0e7ff;
-      box-shadow: 0 2px 12px rgba(79,70,229,0.07);
-      padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;
-      transition: box-shadow 0.2s, transform 0.15s;
+    @media (max-width: 480px) {
+      .perf-grid { grid-template-columns: repeat(2,1fr); }
     }
-    .mod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,70,229,0.14); }
-    .mod-card-header {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .mod-icon {
-      width: 38px; height: 38px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0;
-    }
-    .mod-title { font-size: 13px; font-weight: 700; color: #1e1b4b; }
-    .mod-sub   { font-size: 11px; color: #94a3b8; margin-top: 1px; }
-
-    .mod-score {
-      font-size: 40px; font-weight: 900; line-height: 1;
-    }
-    .mod-score-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
-
-    .mod-row { display: flex; align-items: center; justify-content: space-between; }
-    .mod-key { font-size: 11px; color: #94a3b8; }
-    .mod-val { font-size: 12px; font-weight: 700; color: #334155; }
-
-    .mod-empty { font-size: 12px; color: #94a3b8; font-style: italic; text-align: center; padding: 8px 0; }
-
-    .mod-tag {
-      display: inline-block; padding: 2px 9px; border-radius: 20px;
-      font-size: 11px; font-weight: 700;
-    }
-    .tag-submitted { background: #dcfce7; color: #14532d; }
-    .tag-draft     { background: #fef9c3; color: #854d0e; }
-    .tag-none      { background: #f1f5f9; color: #94a3b8; }
-
-    .mod-link {
-      margin-top: auto; padding: 8px 16px; border-radius: 8px; border: none;
-      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-      cursor: pointer; transition: all 0.18s; text-align: center;
-    }
-    .mod-link-primary {
-      background: linear-gradient(135deg, #4f46e5, #312e81);
-      color: #fff; box-shadow: 0 3px 10px rgba(79,70,229,0.3);
-    }
-    .mod-link-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(79,70,229,0.45); }
-    .mod-link-secondary {
-      background: #eef2ff; color: #4f46e5; border: 1.5px solid #c7d2fe;
-    }
-    .mod-link-secondary:hover { background: #e0e7ff; }
-
-    /* score ring colours */
-    .score-green  { color: #059669; }
-    .score-blue   { color: #2563eb; }
-    .score-amber  { color: #d97706; }
-    .score-red    { color: #dc2626; }
-    .score-grey   { color: #94a3b8; }
-
-    /* ── mini bar ── */
-    .mini-bar-wrap { background: #f1f5f9; border-radius: 6px; height: 6px; overflow: hidden; }
-    .mini-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
-
-    /* ── entries list ── */
-    .entry-list { display: flex; flex-direction: column; gap: 6px; }
-    .entry-item {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 12px; background: #f8fafc; border-radius: 7px; padding: 6px 10px;
-    }
-    .entry-item-label { color: #475569; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .entry-item-score { font-weight: 800; margin-left: 10px; }
-
-    /* ── Loading ── */
-    .loading-spinner { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
   </style>
 </head>
 <body>
 
-<!-- ══ Header ══ -->
-<header class="top-header">
-  <div class="ap-seal">&#127961;</div>
-  <div class="header-text">
-    <div class="header-label">Government of Andhra Pradesh — CMO</div>
-    <div class="header-title">My Officer Dashboard</div>
-  </div>
-  <div class="header-actions">
-    <button class="btn-h btn-h-appraisal" onclick="location.href='self_appraisal.html'">&#128221; Self Appraisal</button>
-    <button class="btn-h btn-h-dashboard" onclick="location.href='landing.html'">&#128200; Main Dashboard</button>
-    <button class="btn-h btn-h-logout" onclick="signOut()">&#128274; Sign Out</button>
-  </div>
-</header>
+<div id="toastRoot"></div>
 
-<!-- ══ Profile bar ══ -->
-<div class="profile-bar">
-  <div class="profile-left">
-    <div class="profile-avatar" id="profileAvatar">👤</div>
-    <div>
-      <div class="profile-name" id="profileName">Loading…</div>
-      <div class="profile-meta" id="profileMeta"></div>
+<!-- ══ Top Nav ══ -->
+<nav class="top-nav">
+  <div class="nav-seal">🏛️</div>
+  <div class="nav-text">
+    <div class="nav-label">Government of Andhra Pradesh — CMO</div>
+    <div class="nav-title">AIS Officers Portal</div>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn nav-btn-ghost" onclick="location.href='landing.html'">📊 Dashboard</button>
+    <button class="nav-btn nav-btn-danger" onclick="signOut()">⏏ Sign Out</button>
+  </div>
+</nav>
+
+<!-- ══ Hero ══ -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-photo-wrap" id="heroPhotoWrap">
+      <div class="hero-photo-placeholder" id="heroAvatar">👤</div>
+      <div class="hero-svc-ring" id="heroSvcRing"></div>
+    </div>
+    <div class="hero-info">
+      <div class="hero-name" id="heroName">Loading…</div>
+      <div class="hero-badges" id="heroBadges"></div>
+      <div class="hero-posting" id="heroPosting"></div>
+    </div>
+    <div class="hero-completion">
+      <div class="completion-ring-wrap">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle class="ring-bg"   cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" id="ringFill" cx="40" cy="40" r="34"
+            stroke="#818cf8" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+        </svg>
+        <div class="completion-pct" id="completionPct">0%</div>
+      </div>
+      <div class="completion-label">Profile Complete</div>
     </div>
   </div>
-  <span id="svcBadge"></span>
 </div>
 
-<!-- ══ Page content ══ -->
-<div class="page-content" id="pageContent">
-  <div class="loading-spinner">Loading your dashboard…</div>
+<!-- ══ Page ══ -->
+<div class="page">
+
+  <div class="sec-hdr">
+    <div class="sec-hdr-title">📋 My Profile Tasks</div>
+    <div class="sec-hdr-line"></div>
+  </div>
+  <div class="task-grid" id="taskGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:28px;color:#94a3b8;font-size:13px;">Loading your profile…</div>
+  </div>
+
+  <div class="sec-hdr">
+    <div class="sec-hdr-title">📊 My Performance Overview</div>
+    <div class="sec-hdr-line"></div>
+  </div>
+  <div class="perf-grid" id="perfGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Loading…</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL — Self Appraisal
+══════════════════════════════════════════ -->
+<div class="modal-ov" id="saModal">
+  <div class="modal-box" style="max-width:800px;">
+
+    <!-- Sticky header -->
+    <div class="modal-hdr" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:22px 22px 0 0;border-bottom:none;">
+      <div class="modal-hdr-ico">📝</div>
+      <div style="flex:1;">
+        <div class="modal-hdr-title" style="color:#fff;">Self Appraisal</div>
+        <div class="modal-hdr-sub" style="color:#ede9fe;">Annual performance self-assessment report</div>
+      </div>
+      <button class="modal-close" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.2);color:#fff;" onclick="closeModal('saModal')">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Expert review banner -->
+      <div class="sa-expert-banner">
+        <div class="sa-expert-ico">🏛️</div>
+        <div>
+          <div class="sa-expert-title">Expert Panel Review Process</div>
+          <div class="sa-expert-body">
+            Your Self Appraisal responses will be carefully evaluated by a dedicated panel of experts comprising both
+            <strong style="color:#e0e7ff;">serving IAS, IPS &amp; IFS officers</strong> and
+            <strong style="color:#e0e7ff;">distinguished retired officers</strong> of the service.
+            Each section will be <strong style="color:#a5f3fc;">independently reviewed and scored</strong> by every
+            member of the panel. Your final score for each section will be the
+            <strong style="color:#a5f3fc;">average of all expert ratings</strong> — ensuring an objective,
+            fair and well-rounded assessment of your contributions.
+          </div>
+          <div class="sa-expert-pills">
+            <span class="sa-expert-pill">👨‍💼 Serving Officers</span>
+            <span class="sa-expert-pill">🎖️ Retired Officers</span>
+            <span class="sa-expert-pill">⚖️ Independent Assessment</span>
+            <span class="sa-expert-pill">📊 Averaged Scoring</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status banner -->
+      <div class="sa-status new" id="saStatusBanner">
+        📋 New appraisal — fill in the sections below and save your progress.
+      </div>
+
+      <!-- Sections rendered by JS -->
+      <div id="saSectionsContainer"></div>
+
+      <!-- Action buttons (hidden when submitted) -->
+      <div id="saActionRow">
+        <div style="font-size:11px;color:#94a3b8;background:#f8fafc;border-radius:9px;padding:10px 14px;margin-bottom:12px;line-height:1.65;">
+          💾 <strong>Save Draft</strong> — saves your progress; you can edit and return anytime. &nbsp;|&nbsp;
+          ✅ <strong>Submit</strong> — finalises the appraisal and <strong>locks it</strong>. It cannot be edited after submission.
+        </div>
+        <div class="sa-actions">
+          <button class="sa-btn-draft"  id="saBtnDraft"  onclick="saveSADraft()">💾 Save Draft</button>
+          <button class="sa-btn-submit" id="saBtnSubmit" onclick="confirmSASubmit()">✅ Submit Appraisal</button>
+        </div>
+      </div>
+
+      <!-- Submitted state -->
+      <div id="saSubmittedCard" style="display:none;" class="sa-submitted-card">
+        <div style="font-size:40px;margin-bottom:10px;">🎉</div>
+        <div class="sa-submitted-card-title">Appraisal Submitted!</div>
+        <div class="sa-submitted-card-sub" id="saSubmittedMsg">
+          Your appraisal has been submitted and is now locked for expert review.
+        </div>
+        <button class="sa-btn-new" onclick="startNewSA()">➕ Start New Appraisal</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL — Education & Certifications
+══════════════════════════════════════════ -->
+<div class="modal-ov" id="eduModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-hdr-ico">🎓</div>
+      <div style="flex:1;">
+        <div class="modal-hdr-title">Education &amp; Certifications</div>
+        <div class="modal-hdr-sub">Academic qualifications, professional certificates and training courses</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('eduModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mtabs">
+        <button class="mtab active" id="eduTab1" onclick="switchEduTab(1)">🎓 Academic Qualifications</button>
+        <button class="mtab"        id="eduTab2" onclick="switchEduTab(2)">📜 Certificates &amp; Courses</button>
+      </div>
+
+      <div id="eduPanel1">
+        <div class="entry-rows" id="qualRows"></div>
+        <button class="add-row-btn" onclick="addQualRow()">＋ Add Qualification</button>
+      </div>
+
+      <div id="eduPanel2" style="display:none;">
+        <div class="entry-rows" id="certRows"></div>
+        <button class="add-row-btn" onclick="addCertRow()">＋ Add Certificate / Course</button>
+      </div>
+
+      <button class="modal-save" id="eduSaveBtn" onclick="saveExtras('edu')">💾 Save Education Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL — Skills & Expertise
+══════════════════════════════════════════ -->
+<div class="modal-ov" id="skillModal">
+  <div class="modal-box" style="max-width:580px;">
+    <div class="modal-hdr">
+      <div class="modal-hdr-ico">💡</div>
+      <div style="flex:1;">
+        <div class="modal-hdr-title">Skills &amp; Expertise</div>
+        <div class="modal-hdr-sub">Key competencies, technical skills and areas of professional expertise</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('skillModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chip-area" id="skillChips"></div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="form-grp">
+          <label class="form-lbl">Skill / Competency</label>
+          <input type="text" class="form-inp" id="skillName" placeholder="e.g. Project Management" onkeydown="if(event.key==='Enter')addSkill()">
+        </div>
+        <div class="form-grp">
+          <label class="form-lbl">Category</label>
+          <select class="form-select" id="skillCat">
+            <option>Management</option><option>Technical</option><option>Policy &amp; Governance</option>
+            <option>Finance &amp; Budgeting</option><option>Legal &amp; Regulatory</option>
+            <option>Communication</option><option>Language</option><option>Soft Skills</option>
+            <option>Domain Expertise</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-grp">
+          <label class="form-lbl">Proficiency Level</label>
+          <select class="form-select" id="skillLevel">
+            <option>Beginner</option><option selected>Intermediate</option><option>Advanced</option><option>Expert</option>
+          </select>
+        </div>
+        <div class="form-grp" style="justify-content:flex-end;">
+          <label class="form-lbl">&nbsp;</label>
+          <button onclick="addSkill()" style="padding:10px 18px;border-radius:9px;border:none;background:linear-gradient(135deg,#059669,#064e3b);color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(5,150,105,0.35);">＋ Add Skill</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;background:#f8fafc;border-radius:9px;padding:10px 12px;margin-bottom:16px;">
+        💡 <strong>Suggestions:</strong> Project Management · Policy Formulation · Budget Management · Leadership · Data Analysis · Land Acquisition · Disaster Management · Public Relations · Court Case Management
+      </div>
+      <button class="modal-save" id="skillSaveBtn" onclick="saveExtras('skill')">💾 Save Skills</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL — Hobbies & Interests
+══════════════════════════════════════════ -->
+<div class="modal-ov" id="hobbyModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-hdr">
+      <div class="modal-hdr-ico">🎯</div>
+      <div style="flex:1;">
+        <div class="modal-hdr-title">Hobbies &amp; Interests</div>
+        <div class="modal-hdr-sub">Personal interests, hobbies, sports and activities outside work</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('hobbyModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chip-area" id="hobbyChips"></div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-grp">
+          <label class="form-lbl">Hobby / Interest</label>
+          <input type="text" class="form-inp" id="hobbyName" placeholder="e.g. Classical Music" onkeydown="if(event.key==='Enter')addHobby()">
+        </div>
+        <div class="form-grp">
+          <label class="form-lbl">Category</label>
+          <select class="form-select" id="hobbyCat">
+            <option>Sports &amp; Fitness</option><option>Arts &amp; Culture</option><option>Music &amp; Dance</option>
+            <option>Reading &amp; Writing</option><option>Travel &amp; Photography</option><option>Technology</option>
+            <option>Social Service</option><option>Cooking &amp; Gastronomy</option><option>Nature &amp; Environment</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;background:#f8fafc;border-radius:9px;padding:10px 12px;margin-bottom:16px;">
+        💡 <strong>Suggestions:</strong> Cricket · Classical Music · Reading · Yoga · Photography · Trekking · Cooking · Social Service · Chess · Painting · Badminton
+      </div>
+      <button onclick="addHobby()" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#d97706,#78350f);color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(217,119,6,0.35);margin-bottom:10px;">＋ Add Hobby / Interest</button>
+      <button class="modal-save" id="hobbySaveBtn" onclick="saveExtras('hobby')">💾 Save Hobbies &amp; Interests</button>
+    </div>
+  </div>
 </div>
 
 <script>
 // ================================================================
-// State
+// STATE
 // ================================================================
-var _session = null;
-var _officer = null;
+var _session  = null;
+var _officer  = null;
+var _extras   = { education:[], certifications:[], skills:[], hobbies:[] };
+var _perfData = {};
+var _eduTab   = 1;
 
 // ================================================================
-// Init
+// INIT
 // ================================================================
 (async function init() {
   _session = await requireAuth();
   if (!_session) return;
-
-  var role = (_session.role || '').toLowerCase();
-  if (role !== 'ias' && role !== 'ips' && role !== 'ifs') {
-    location.href = 'index.html'; return;
-  }
-
+  var role = (_session.role||'').toLowerCase();
+  if (role!=='ias' && role!=='ips' && role!=='ifs') { location.href='index.html'; return; }
   await loadOfficer();
-  renderPage();
+  await Promise.all([loadExtras(), loadPerf()]);
+  renderHero();
+  renderTasks();
+  renderPerf();
 })();
 
+// ================================================================
+// LOADERS
+// ================================================================
 async function loadOfficer() {
-  var q = _supabase.from('officers').select(
-    'id, identity_no, name_of_officer, service_type, current_posting, allotment_year, cadre'
-  );
-  if (_session.officer_id) q = q.eq('id', _session.officer_id);
-  else                      q = q.eq('identity_no', _session.email);
-  var { data } = await q.maybeSingle();
-  _officer = data;
+  var sel = 'id,identity_no,name_of_officer,service_type,current_posting,allotment_year,cadre,photo_url,email_id';
 
+  // Attempt 1 — officer_id stored in session (most reliable)
+  if (_session.officer_id) {
+    var { data: d1 } = await _supabase.from('officers').select(sel)
+      .eq('id', _session.officer_id).maybeSingle();
+    if (d1) { _officer = d1; return; }
+  }
+
+  // Attempt 2 — identity_no extracted from email local-part (e.g. firstname.AP2000001@domain)
+  var local = (_session.email || '').split('@')[0];
+  var parts = local.split('.');
+  for (var i = parts.length - 1; i >= 0; i--) {
+    if (parts[i].trim()) {
+      var { data: d2 } = await _supabase.from('officers').select(sel)
+        .ilike('identity_no', parts[i].trim()).maybeSingle();
+      if (d2) { _officer = d2; return; }
+    }
+  }
+
+  // Attempt 3 — match by email_id column directly
+  var { data: d3 } = await _supabase.from('officers').select(sel)
+    .ilike('email_id', (_session.email || '').trim()).maybeSingle();
+  if (d3) { _officer = d3; return; }
+
+  _officer = null;
+}
+
+async function loadExtras() {
   if (!_officer) return;
+  try {
+    var { data } = await _supabase.from('officer_extras')
+      .select('education,certifications,skills,hobbies')
+      .eq('identity_no', _officer.identity_no)
+      .maybeSingle();
+    if (data) {
+      _extras.education      = data.education      || [];
+      _extras.certifications = data.certifications || [];
+      _extras.skills         = data.skills         || [];
+      _extras.hobbies        = data.hobbies        || [];
+    }
+  } catch(e) {}
+}
 
-  var svcMap = { ias:'👤', ips:'🛡', ifs:'🌲' };
-  var svc    = (_officer.service_type || '').toUpperCase();
-  var svcL   = svc.toLowerCase();
-  document.getElementById('profileAvatar').textContent = svcMap[svcL] || '👤';
-  document.getElementById('profileName').textContent   = _officer.name_of_officer || _session.email;
-  document.getElementById('profileMeta').textContent   =
-    [_officer.current_posting, _officer.cadre, _officer.allotment_year ? 'Batch ' + _officer.allotment_year : '']
-    .filter(Boolean).join(' · ');
-  document.getElementById('svcBadge').innerHTML =
-    '<span class="svc-badge svc-' + svcL + '">' + (svcMap[svcL]||'') + ' ' + svc + '</span>';
+async function loadPerf() {
+  if (!_officer) return;
+  var id = _officer.identity_no;
+  var [saR,swR,intR,gsdpR,partyR,mediaR] = await Promise.all([
+    _supabase.from('self_appraisal').select('status,submitted_at,updated_at,entered_at').eq('identity_no',id).order('entered_at',{ascending:false}),
+    _supabase.from('swarna_data').select('swarna_score,period_from,period_to').eq('identity_no',id).order('period_from',{ascending:false}).limit(1),
+    _supabase.from('integrity_data').select('integrity_index,period_from').eq('identity_no',id).order('period_from',{ascending:false}).limit(1),
+    _supabase.from('gsdp_data').select('gsdp_score,period_from').eq('identity_no',id).order('period_from',{ascending:false}).limit(1),
+    _supabase.from('party_data').select('feedback_score').eq('identity_no',id),
+    _supabase.from('media_data').select('feedback_score').eq('identity_no',id)
+  ]);
+  _perfData = {
+    sa:    saR.data    || [],
+    sw:    (swR.data   || [])[0] || null,
+    int:   (intR.data  || [])[0] || null,
+    gsdp:  (gsdpR.data || [])[0] || null,
+    party: partyR.data || [],
+    media: mediaR.data || []
+  };
 }
 
 // ================================================================
-// Fetch all module data in parallel
+// RENDER — Hero
 // ================================================================
-async function renderPage() {
+function renderHero() {
   if (!_officer) {
-    document.getElementById('pageContent').innerHTML =
-      '<div class="loading-spinner" style="color:#dc2626;">Officer profile not found. Contact administrator.</div>';
+    document.getElementById('heroName').textContent = 'Officer profile not found';
+    document.getElementById('heroPosting').innerHTML =
+      '⚠️ No record matched for <strong>' + esc(_session.email) + '</strong>. ' +
+      'Please ask the administrator to link your account to your officer profile (set officer_id in user_roles).';
     return;
   }
+  var svc  = (_officer.service_type||'').toUpperCase();
+  var svcL = svc.toLowerCase();
+  var svcIco = { ias:'👤', ips:'🛡️', ifs:'🌲' };
 
-  var id = _officer.identity_no;
+  document.getElementById('heroName').textContent = _officer.name_of_officer || _session.email;
 
-  var [saRes, swRes, intRes, gsdpRes, partyRes, mediaRes] = await Promise.all([
-    _supabase.from('self_appraisal').select('*').eq('identity_no', id).order('entered_at', { ascending: false }),
-    _supabase.from('swarna_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
-    _supabase.from('integrity_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
-    _supabase.from('gsdp_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
-    _supabase.from('party_data').select('*').eq('identity_no', id).order('period_from', { ascending: false }),
-    _supabase.from('media_data').select('*').eq('identity_no', id).order('period_from', { ascending: false })
-  ]);
-
-  var sa    = saRes.data    || [];
-  var sw    = swRes.data    || [];
-  var integ = intRes.data   || [];
-  var gsdp  = gsdpRes.data  || [];
-  var party = partyRes.data || [];
-  var media = mediaRes.data || [];
-
-  var html =
-    '<div class="section-heading">📊 My Performance Modules</div>' +
-    '<div class="mod-grid">' +
-      cardSelfAppraisal(sa) +
-      cardSwarna(sw) +
-      cardIntegrity(integ) +
-      cardGsdp(gsdp) +
-      cardParty(party) +
-      cardMedia(media) +
-    '</div>';
-
-  document.getElementById('pageContent').innerHTML = html;
-}
-
-// ================================================================
-// Card builders
-// ================================================================
-
-function cardSelfAppraisal(rows) {
-  var latest = rows[0] || null;
-  var submitted = rows.filter(function(r) { return r.status === 'submitted'; }).length;
-  var draft     = rows.filter(function(r) { return r.status === 'draft'; }).length;
-
-  var statusTag, statusMsg, btnLabel, btnClass;
-  if (!latest) {
-    statusTag = '<span class="mod-tag tag-none">Not Started</span>';
-    statusMsg = 'No appraisal submitted yet.';
-    btnLabel  = '📝 Start Appraisal'; btnClass = 'mod-link-primary';
-  } else if (latest.status === 'submitted') {
-    statusTag = '<span class="mod-tag tag-submitted">✅ Submitted</span>';
-    statusMsg = 'Last submitted: ' + fmtDate(latest.submitted_at);
-    btnLabel  = '📝 New Appraisal'; btnClass = 'mod-link-secondary';
+  if (_officer.photo_url) {
+    var img = document.createElement('img');
+    img.className = 'hero-photo'; img.src = _officer.photo_url; img.alt = '';
+    img.onerror = function(){ img.style.display='none'; document.getElementById('heroAvatar').style.display='flex'; };
+    document.getElementById('heroPhotoWrap').prepend(img);
+    document.getElementById('heroAvatar').style.display = 'none';
   } else {
-    statusTag = '<span class="mod-tag tag-draft">✏️ Draft in Progress</span>';
-    statusMsg = 'Last saved: ' + fmtDate(latest.updated_at || latest.entered_at);
-    btnLabel  = '📝 Continue Draft'; btnClass = 'mod-link-primary';
+    document.getElementById('heroAvatar').textContent = svcIco[svcL] || '👤';
   }
 
-  var sectionsFilledMax = 0;
-  if (latest) {
-    ['innovations','digitalisations','new_policies','de_regularisation','leadership_skills'].forEach(function(s) {
-      if (latest[s] && latest[s].trim()) sectionsFilledMax++;
-    });
-  }
+  var ring = document.getElementById('heroSvcRing');
+  ring.className = 'hero-svc-ring ' + svcL;
+  ring.textContent = svcIco[svcL] || '';
 
-  return card({
-    icon: '📝', iconBg: '#eef2ff',
-    title: 'Self Appraisal', sub: submitted + ' submitted · ' + draft + ' draft',
-    body:
-      '<div class="mod-row">' +
-        '<span class="mod-key">Status</span>' + statusTag +
-      '</div>' +
-      (latest ? '<div class="mod-row"><span class="mod-key">Sections filled</span><span class="mod-val">' + sectionsFilledMax + ' / 5</span></div>' : '') +
-      '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + statusMsg + '</div>',
-    btn: btnLabel, btnClass: btnClass,
-    btnAction: "location.href='self_appraisal.html'"
-  });
+  var b = '';
+  if (svc)                      b += '<span class="hero-badge badge-svc">'  + svc + '</span>';
+  if (_officer.cadre)           b += '<span class="hero-badge badge-cadre">🗺️ ' + esc(_officer.cadre)  + ' Cadre</span>';
+  if (_officer.allotment_year)  b += '<span class="hero-badge badge-batch">🎓 ' + _officer.allotment_year + ' Batch</span>';
+  document.getElementById('heroBadges').innerHTML = b;
+
+  if (_officer.current_posting)
+    document.getElementById('heroPosting').innerHTML = '📍 ' + esc(_officer.current_posting);
+
+  updateCompletionRing();
 }
 
-function cardSwarna(rows) {
-  if (!rows.length) return card({ icon:'⭐', iconBg:'#fffbeb', title:'Swarna AP KPI', sub:'No data uploaded', body:'<div class="mod-empty">No Swarna AP KPI score recorded.</div>', btn:null });
-
-  var latest = rows[0];
-  var sc = parseFloat(latest.swarna_score) || 0;
-  var cls = scoreClass(sc);
-  var periods = rows.length;
-
-  return card({
-    icon:'⭐', iconBg:'#fffbeb',
-    title:'Swarna AP KPI', sub: periods + ' period' + (periods>1?'s':'') + ' recorded',
-    body:
-      '<div><div class="mod-score ' + cls + '">' + sc.toFixed(1) + '</div>' +
-      '<div class="mod-score-label">out of 100 — ' + fmtPeriod(latest.period_from, latest.period_to) + '</div></div>' +
-      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + sc + '%;background:' + scoreHex(sc) + '"></div></div>' +
-      (latest.department_post ? '<div class="mod-row"><span class="mod-key">Post</span><span class="mod-val" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(latest.department_post) + '</span></div>' : '') +
-      (latest.achievements    ? '<div style="font-size:11px;color:#64748b;margin-top:4px;font-style:italic;">"' + esc(latest.achievements).slice(0,100) + (latest.achievements.length>100?'…':'"') + '</div>' : ''),
-    btn: null
-  });
+function completionPct() {
+  var done = 0;
+  var saLatest = _perfData.sa && _perfData.sa[0];
+  if (saLatest && saLatest.status === 'submitted') done++;
+  if (_extras.education.length || _extras.certifications.length) done++;
+  if (_extras.skills.length)  done++;
+  if (_extras.hobbies.length) done++;
+  return Math.round(done / 4 * 100);
 }
 
-function cardIntegrity(rows) {
-  if (!rows.length) return card({ icon:'🔍', iconBg:'#ecfdf5', title:'Integrity Index', sub:'No data uploaded', body:'<div class="mod-empty">No Integrity Index recorded.</div>', btn:null });
-
-  var latest = rows[0];
-  var sc  = parseFloat(latest.integrity_index) || 0;
-  var cls = scoreClass(sc);
-  var corrupt = (latest.corrupt_activities || '').toLowerCase() === 'yes';
-
-  return card({
-    icon:'🔍', iconBg:'#ecfdf5',
-    title:'Integrity Index', sub: rows.length + ' period' + (rows.length>1?'s':'') + ' recorded',
-    body:
-      '<div><div class="mod-score ' + cls + '">' + sc.toFixed(1) + '</div>' +
-      '<div class="mod-score-label">out of 100 — ' + fmtPeriod(latest.period_from, latest.period_to) + '</div></div>' +
-      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + sc + '%;background:' + scoreHex(sc) + '"></div></div>' +
-      '<div class="mod-row"><span class="mod-key">Corrupt Activities</span>' +
-        '<span class="mod-tag" style="background:' + (corrupt?'#fee2e2':'#dcfce7') + ';color:' + (corrupt?'#991b1b':'#14532d') + ';">' +
-          (corrupt ? '⚠ Yes' : '✓ None') + '</span>' +
-      '</div>' +
-      (corrupt && latest.activity_details ? '<div style="font-size:11px;color:#dc2626;margin-top:4px;">' + esc(latest.activity_details).slice(0,80) + '</div>' : ''),
-    btn: null
-  });
-}
-
-function cardGsdp(rows) {
-  if (!rows.length) return card({ icon:'📊', iconBg:'#ecfdf5', title:'GSDP Contribution', sub:'No data uploaded', body:'<div class="mod-empty">No GSDP contribution recorded.</div>', btn:null });
-
-  var deptRows = rows.filter(function(r){ return r.contribution_type === 'Department'; });
-  var distRows = rows.filter(function(r){ return r.contribution_type === 'District'; });
-  var top = rows.slice(0, 4);
-
-  var listHtml = '<div class="entry-list">' +
-    top.map(function(r) {
-      var sc = parseFloat(r.gsdp_score) || 0;
-      return '<div class="entry-item">' +
-        '<span style="font-size:11px;margin-right:4px;">' + (r.contribution_type==='Department'?'🏛':'📍') + '</span>' +
-        '<span class="entry-item-label">' + esc(r.entity_name) + '</span>' +
-        '<span class="entry-item-score ' + scoreClass(sc) + '">' + sc.toFixed(0) + '</span>' +
-      '</div>';
-    }).join('') +
-    (rows.length > 4 ? '<div style="font-size:11px;color:#94a3b8;text-align:center;">+' + (rows.length-4) + ' more entries</div>' : '') +
-  '</div>';
-
-  return card({
-    icon:'📊', iconBg:'#ecfdf5',
-    title:'GSDP Contribution', sub: deptRows.length + ' dept · ' + distRows.length + ' district entries',
-    body: listHtml,
-    btn: null
-  });
-}
-
-function cardParty(rows) {
-  if (!rows.length) return card({ icon:'🎭', iconBg:'#fff1f2', title:'Party Feedback', sub:'No data uploaded', body:'<div class="mod-empty">No Party feedback recorded.</div>', btn:null });
-
-  var scores = rows.map(function(r) { return parseFloat(r.feedback_score) || 0; });
-  var avg  = scores.reduce(function(a,b){return a+b;},0) / scores.length;
-  var best = Math.max.apply(null, scores);
-  var low  = Math.min.apply(null, scores);
-
-  var sourceCount = {};
-  rows.forEach(function(r) {
-    sourceCount[r.feedback_from] = (sourceCount[r.feedback_from] || 0) + 1;
-  });
-  var topSource = Object.keys(sourceCount).sort(function(a,b){ return sourceCount[b]-sourceCount[a]; })[0];
-
-  return card({
-    icon:'🎭', iconBg:'#fff1f2',
-    title:'Party Feedback', sub: rows.length + ' feedback record' + (rows.length>1?'s':''),
-    body:
-      '<div><div class="mod-score ' + scoreClass(avg) + '">' + avg.toFixed(1) + '</div>' +
-      '<div class="mod-score-label">average score out of 100</div></div>' +
-      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + avg + '%;background:' + scoreHex(avg) + '"></div></div>' +
-      '<div class="mod-row"><span class="mod-key">Best / Lowest</span><span class="mod-val">' + best.toFixed(0) + ' / ' + low.toFixed(0) + '</span></div>' +
-      (topSource ? '<div class="mod-row"><span class="mod-key">Top source</span><span class="mod-val" style="max-width:160px;text-align:right;">' + esc(topSource) + '</span></div>' : ''),
-    btn: null
-  });
-}
-
-function cardMedia(rows) {
-  if (!rows.length) return card({ icon:'📰', iconBg:'#fefce8', title:'Media Feedback', sub:'No data uploaded', body:'<div class="mod-empty">No Media feedback recorded.</div>', btn:null });
-
-  var scores = rows.map(function(r) { return parseFloat(r.feedback_score) || 0; });
-  var avg  = scores.reduce(function(a,b){return a+b;},0) / scores.length;
-  var best = Math.max.apply(null, scores);
-  var low  = Math.min.apply(null, scores);
-
-  var top = rows.slice(0, 3);
-
-  return card({
-    icon:'📰', iconBg:'#fefce8',
-    title:'Media Feedback', sub: rows.length + ' outlet' + (rows.length>1?'s':'') + ' covered',
-    body:
-      '<div><div class="mod-score ' + scoreClass(avg) + '">' + avg.toFixed(1) + '</div>' +
-      '<div class="mod-score-label">average score out of 100</div></div>' +
-      '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + avg + '%;background:' + scoreHex(avg) + '"></div></div>' +
-      '<div class="mod-row"><span class="mod-key">Best / Lowest</span><span class="mod-val">' + best.toFixed(0) + ' / ' + low.toFixed(0) + '</span></div>' +
-      '<div class="entry-list" style="margin-top:6px;">' +
-        top.map(function(r) {
-          var sc = parseFloat(r.feedback_score)||0;
-          return '<div class="entry-item"><span class="entry-item-label">' + esc(r.media_details) + '</span>' +
-            '<span class="entry-item-score ' + scoreClass(sc) + '">' + sc.toFixed(0) + '</span></div>';
-        }).join('') +
-      '</div>',
-    btn: null
-  });
+function updateCompletionRing() {
+  var pct    = completionPct();
+  var circ   = 2 * Math.PI * 34;
+  var offset = circ - (pct / 100) * circ;
+  var fill   = document.getElementById('ringFill');
+  fill.style.strokeDashoffset = offset;
+  fill.style.stroke = pct >= 75 ? '#34d399' : pct >= 50 ? '#818cf8' : pct >= 25 ? '#fbbf24' : '#f87171';
+  document.getElementById('completionPct').textContent = pct + '%';
 }
 
 // ================================================================
-// Generic card renderer
+// RENDER — Task Cards
 // ================================================================
-function card(o) {
-  return '<div class="mod-card">' +
-    '<div class="mod-card-header">' +
-      '<div class="mod-icon" style="background:' + o.iconBg + '">' + o.icon + '</div>' +
-      '<div><div class="mod-title">' + o.title + '</div>' +
-      '<div class="mod-sub">' + esc(o.sub || '') + '</div></div>' +
+function renderTasks() {
+  document.getElementById('taskGrid').innerHTML =
+    buildCardSA() + buildCardEdu() + buildCardSkill() + buildCardHobby();
+}
+
+function buildCardSA() {
+  var rows = _perfData.sa || [];
+  var latest = rows[0] || null;
+  var pill, chips, btnLabel, btnAction;
+  if (!latest) {
+    pill = '<span class="task-status-pill pill-none">⬜ Not Started</span>';
+    chips = '<span class="task-empty">No appraisal submitted yet. Click below to start.</span>';
+    btnLabel = '📝 Start Self Appraisal →'; btnAction = "openSAModal()";
+  } else if (latest.status === 'submitted') {
+    pill = '<span class="task-status-pill pill-done">✅ Submitted</span>';
+    chips = '<span class="task-chip sa">Submitted on ' + fmtDate(latest.submitted_at) + '</span>';
+    btnLabel = '📝 New / View Appraisal →'; btnAction = "openSAModal()";
+  } else {
+    pill = '<span class="task-status-pill pill-partial">✏️ Draft In Progress</span>';
+    chips = '<span class="task-chip sa">Draft saved · ' + fmtDate(latest.updated_at||latest.entered_at) + '</span>';
+    btnLabel = '📝 Continue Draft →'; btnAction = "openSAModal()";
+  }
+  return mkTaskCard('task-banner-sa','📝','Self Appraisal','Annual performance report submitted directly by the officer',pill,chips,btnLabel,'btn-sa',btnAction);
+}
+
+function buildCardEdu() {
+  var total = _extras.education.length + _extras.certifications.length;
+  var pill, chips;
+  if (!total) {
+    pill  = '<span class="task-status-pill pill-none">⬜ Not Filled</span>';
+    chips = '<span class="task-empty">No education details added yet.</span>';
+  } else {
+    pill  = '<span class="task-status-pill pill-done">✅ ' + total + ' Record' + (total!==1?'s':'') + '</span>';
+    chips = _extras.education.slice(0,2).map(function(e){ return '<span class="task-chip edu">' + esc(e.degree||'—') + '</span>'; }).join('');
+    if (_extras.certifications.length) chips += '<span class="task-chip edu">+' + _extras.certifications.length + ' cert' + (_extras.certifications.length!==1?'s':'') + '</span>';
+  }
+  return mkTaskCard('task-banner-edu','🎓','Education &amp; Certifications','Academic degrees, professional certificates and training courses attended',pill,chips,
+    (total?'✏️ Update Education →':'🎓 Add Education →'),'btn-edu',"openModal('eduModal')");
+}
+
+function buildCardSkill() {
+  var total = _extras.skills.length;
+  var pill, chips;
+  if (!total) {
+    pill  = '<span class="task-status-pill pill-none">⬜ Not Filled</span>';
+    chips = '<span class="task-empty">No skills listed yet.</span>';
+  } else {
+    pill  = '<span class="task-status-pill pill-done">✅ ' + total + ' Skill' + (total!==1?'s':'') + '</span>';
+    chips = _extras.skills.slice(0,4).map(function(s){ return '<span class="task-chip skill">' + esc(s.name) + '</span>'; }).join('');
+    if (total > 4) chips += '<span class="task-chip" style="background:#f1f5f9;color:#94a3b8;">+' + (total-4) + ' more</span>';
+  }
+  return mkTaskCard('task-banner-skill','💡','Skills &amp; Expertise','Key competencies, technical skills and areas of professional expertise',pill,chips,
+    (total?'✏️ Update Skills →':'💡 Add Skills →'),'btn-skill',"openModal('skillModal');renderSkillChips()");
+}
+
+function buildCardHobby() {
+  var total = _extras.hobbies.length;
+  var pill, chips;
+  if (!total) {
+    pill  = '<span class="task-status-pill pill-none">⬜ Not Filled</span>';
+    chips = '<span class="task-empty">No hobbies or interests added yet.</span>';
+  } else {
+    pill  = '<span class="task-status-pill pill-done">✅ ' + total + ' Interest' + (total!==1?'s':'') + '</span>';
+    chips = _extras.hobbies.slice(0,4).map(function(h){ return '<span class="task-chip hobby">' + esc(h.name) + '</span>'; }).join('');
+    if (total > 4) chips += '<span class="task-chip" style="background:#f1f5f9;color:#94a3b8;">+' + (total-4) + ' more</span>';
+  }
+  return mkTaskCard('task-banner-hobby','🎯','Hobbies &amp; Interests','Personal interests, sports, hobbies and activities pursued outside work',pill,chips,
+    (total?'✏️ Update Hobbies →':'🎯 Add Hobbies →'),'btn-hobby',"openModal('hobbyModal');renderHobbyChips()");
+}
+
+function mkTaskCard(banner, ico, title, sub, pill, chips, btnLabel, btnCls, btnAction) {
+  return '<div class="task-card">' +
+    '<div class="task-card-banner ' + banner + '">' +
+      '<span class="task-card-ico">' + ico + '</span>' +
+      '<div class="task-card-title">' + title + '</div>' +
+      '<div class="task-card-sub">'   + sub   + '</div>' +
+      pill +
     '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:8px;flex:1;">' + o.body + '</div>' +
-    (o.btn ? '<button class="mod-link ' + (o.btnClass||'mod-link-secondary') + '" onclick="' + o.btnAction + '">' + o.btn + '</button>' : '') +
+    '<div class="task-card-body">' +
+      '<div class="task-items">' + chips + '</div>' +
+      '<button class="task-card-btn ' + btnCls + '" onclick="' + btnAction + '">' + btnLabel + '</button>' +
+    '</div>' +
   '</div>';
 }
 
 // ================================================================
-// Utilities
+// RENDER — Performance
 // ================================================================
+function renderPerf() {
+  var html = '';
+
+  var sa = _perfData.sa || [];
+  var submitted = sa.filter(function(r){ return r.status==='submitted'; }).length;
+  html += perfTile('📝','Self Appraisal', submitted ? submitted + (submitted===1?' Report':' Reports') : null, submitted?100:0, '#059669', true);
+
+  var sw = _perfData.sw;
+  var swSc = sw ? parseFloat(sw.swarna_score) : null;
+  html += perfTile('⭐','Swarna KPI', swSc!==null ? swSc.toFixed(1) : null, swSc, null, false);
+
+  var it = _perfData.int;
+  var itSc = it ? parseFloat(it.integrity_index) : null;
+  html += perfTile('🔍','Integrity', itSc!==null ? itSc.toFixed(1) : null, itSc, null, false);
+
+  var gsdp = _perfData.gsdp;
+  var gsdpSc = gsdp ? parseFloat(gsdp.gsdp_score) : null;
+  html += perfTile('📊','GSDP', gsdpSc!==null ? gsdpSc.toFixed(1) : null, gsdpSc, null, false);
+
+  var party = _perfData.party || [];
+  var partySc = party.length ? party.reduce(function(s,r){ return s+(parseFloat(r.feedback_score)||0); },0)/party.length : null;
+  html += perfTile('🎭','Party', partySc!==null ? partySc.toFixed(1) : null, partySc, null, false);
+
+  var media = _perfData.media || [];
+  var mediaSc = media.length ? media.reduce(function(s,r){ return s+(parseFloat(r.feedback_score)||0); },0)/media.length : null;
+  html += perfTile('📰','Media', mediaSc!==null ? mediaSc.toFixed(1) : null, mediaSc, null, false);
+
+  document.getElementById('perfGrid').innerHTML = html;
+}
+
+function perfTile(ico, label, val, sc, forceColor, isText) {
+  var color = forceColor || scoreHex(sc||0);
+  var cls   = forceColor ? '' : scoreClass(sc||0);
+  var bar   = (!isText && sc !== null) ? '<div class="perf-bar"><div class="perf-bar-fill" style="width:' + Math.min(sc,100) + '%;background:' + color + ';"></div></div>' : '';
+  return '<div class="perf-tile">' +
+    '<div class="perf-tile-ico">' + ico + '</div>' +
+    '<div class="perf-tile-label">' + label + '</div>' +
+    (val !== null
+      ? '<div class="perf-tile-score ' + cls + '" style="' + (forceColor?'color:'+forceColor+';font-size:18px;':'') + '">' + val + '</div>' + bar
+      : '<div class="perf-none">No data</div>') +
+  '</div>';
+}
+
+// ================================================================
+// EDUCATION MODAL
+// ================================================================
+function switchEduTab(n) {
+  _eduTab = n;
+  document.getElementById('eduPanel1').style.display = n===1 ? '' : 'none';
+  document.getElementById('eduPanel2').style.display = n===2 ? '' : 'none';
+  document.getElementById('eduTab1').classList.toggle('active', n===1);
+  document.getElementById('eduTab2').classList.toggle('active', n===2);
+}
+
+function renderQualRows() {
+  document.getElementById('qualRows').innerHTML = _extras.education.map(function(q,i){
+    return '<div class="entry-row">' +
+      '<button class="entry-row-del" onclick="removeQual('+i+')">✕</button>' +
+      '<div class="form-row-3">' +
+        fGrp('qDeg'+i,'Degree / Qualification',  'text', q.degree||'',     'e.g. M.Tech Computer Science') +
+        fGrp('qYr'+i, 'Year of Passing',         'number', q.year||'',     '2005') +
+        fGrp('qGr'+i, 'Grade / Class',           'text', q.grade||'',      'First Class') +
+      '</div>' +
+      '<div class="form-row">' +
+        fGrp('qInst'+i,'Institution / University','text', q.institution||'','e.g. IIT Madras') +
+        fGrp('qStr'+i, 'Stream / Specialisation', 'text', q.stream||'',    'Computer Science') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function addQualRow() {
+  _extras.education.push({degree:'',institution:'',year:'',grade:'',stream:''});
+  renderQualRows();
+}
+function removeQual(i) { _extras.education.splice(i,1); renderQualRows(); }
+function collectQuals() {
+  return _extras.education.map(function(_,i){
+    return { degree:gv('qDeg'+i), institution:gv('qInst'+i), year:parseInt(gv('qYr'+i))||'', grade:gv('qGr'+i), stream:gv('qStr'+i) };
+  }).filter(function(q){ return q.degree.trim()||q.institution.trim(); });
+}
+
+function renderCertRows() {
+  document.getElementById('certRows').innerHTML = _extras.certifications.map(function(c,i){
+    return '<div class="entry-row">' +
+      '<button class="entry-row-del" onclick="removeCert('+i+')">✕</button>' +
+      '<div class="form-row">' +
+        fGrp('cName'+i,'Certificate / Course Name','text', c.name||'',    'e.g. PMP Certification') +
+        fGrp('cOrg'+i, 'Issuing Organisation',     'text', c.org||'',     'e.g. PMI') +
+      '</div>' +
+      '<div class="form-row">' +
+        fGrp('cYr'+i,  'Year',                     'number', c.year||'',  '2018') +
+        fGrp('cDur'+i, 'Duration / Hours',          'text', c.duration||'','40 hours') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function addCertRow() {
+  _extras.certifications.push({name:'',org:'',year:'',duration:''});
+  renderCertRows();
+}
+function removeCert(i) { _extras.certifications.splice(i,1); renderCertRows(); }
+function collectCerts() {
+  return _extras.certifications.map(function(_,i){
+    return { name:gv('cName'+i), org:gv('cOrg'+i), year:parseInt(gv('cYr'+i))||'', duration:gv('cDur'+i) };
+  }).filter(function(c){ return c.name.trim(); });
+}
+
+// ================================================================
+// SKILLS MODAL
+// ================================================================
+function renderSkillChips() {
+  var html = _extras.skills.map(function(s,i){
+    return '<span class="chip-item chip-skill">' + esc(s.name) +
+      ' <span class="chip-level">(' + esc(s.level||'') + ')</span>' +
+      '<button class="chip-del" onclick="removeSkill('+i+')">✕</button></span>';
+  }).join('');
+  document.getElementById('skillChips').innerHTML = html ||
+    '<span style="font-size:12px;color:#94a3b8;font-style:italic;">No skills added yet — use the form below to add.</span>';
+}
+
+function addSkill() {
+  var name = (document.getElementById('skillName').value||'').trim();
+  if (!name) return;
+  _extras.skills.push({ name:name, category:document.getElementById('skillCat').value, level:document.getElementById('skillLevel').value });
+  document.getElementById('skillName').value = '';
+  renderSkillChips();
+}
+function removeSkill(i) { _extras.skills.splice(i,1); renderSkillChips(); }
+
+// ================================================================
+// HOBBIES MODAL
+// ================================================================
+function renderHobbyChips() {
+  var html = _extras.hobbies.map(function(h,i){
+    return '<span class="chip-item chip-hobby">' + esc(h.name) +
+      ' <span class="chip-level">(' + esc(h.category||'') + ')</span>' +
+      '<button class="chip-del" onclick="removeHobby('+i+')">✕</button></span>';
+  }).join('');
+  document.getElementById('hobbyChips').innerHTML = html ||
+    '<span style="font-size:12px;color:#94a3b8;font-style:italic;">No hobbies added yet — use the form below to add.</span>';
+}
+
+function addHobby() {
+  var name = (document.getElementById('hobbyName').value||'').trim();
+  if (!name) return;
+  _extras.hobbies.push({ name:name, category:document.getElementById('hobbyCat').value });
+  document.getElementById('hobbyName').value = '';
+  renderHobbyChips();
+}
+function removeHobby(i) { _extras.hobbies.splice(i,1); renderHobbyChips(); }
+
+// ================================================================
+// SAVE
+// ================================================================
+async function saveExtras(type) {
+  if (!_officer) return;
+  var btnId = { edu:'eduSaveBtn', skill:'skillSaveBtn', hobby:'hobbySaveBtn' }[type];
+  var btn   = document.getElementById(btnId);
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+
+  if (type === 'edu') {
+    _extras.education      = collectQuals();
+    _extras.certifications = collectCerts();
+  }
+
+  var { error } = await _supabase.from('officer_extras').upsert({
+    identity_no:    _officer.identity_no,
+    education:      _extras.education,
+    certifications: _extras.certifications,
+    skills:         _extras.skills,
+    hobbies:        _extras.hobbies,
+    updated_at:     new Date().toISOString()
+  }, { onConflict: 'identity_no' });
+
+  var labels = { edu:'Education Data', skill:'Skills', hobby:'Hobbies & Interests' };
+  btn.disabled = false; btn.textContent = '💾 Save ' + labels[type];
+
+  if (error) {
+    showToast('❌ Save failed: ' + error.message, 'err');
+  } else {
+    showToast('✅ ' + labels[type] + ' saved successfully!', 'ok');
+    closeModal({ edu:'eduModal', skill:'skillModal', hobby:'hobbyModal' }[type]);
+    renderTasks();
+    updateCompletionRing();
+  }
+}
+
+// ================================================================
+// MODAL UTILS
+// ================================================================
+function openModal(id) {
+  if (id === 'eduModal') { renderQualRows(); renderCertRows(); switchEduTab(1); }
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+['saModal','eduModal','skillModal','hobbyModal'].forEach(function(id){
+  document.getElementById(id).addEventListener('click', function(e){ if (e.target===this) closeModal(id); });
+});
+
+// ================================================================
+// HELPERS
+// ================================================================
+function fGrp(id, label, type, value, placeholder) {
+  return '<div class="form-grp"><label class="form-lbl">' + label + '</label>' +
+    '<input class="form-inp" id="' + id + '" type="' + type + '" value="' + esc(String(value)) + '" placeholder="' + esc(placeholder) + '"></div>';
+}
+function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
+function showToast(msg, type) {
+  var root  = document.getElementById('toastRoot');
+  var toast = document.createElement('div');
+  toast.className = 'toast' + (type ? ' '+type : '');
+  toast.innerHTML = '<span class="toast-msg">' + msg + '</span>';
+  function dismiss() { toast.classList.add('hiding'); setTimeout(function(){ if (toast.parentNode) toast.parentNode.removeChild(toast); }, 220); }
+  root.appendChild(toast);
+  setTimeout(dismiss, 4000);
+}
 function scoreClass(s) {
-  if (s >= 76) return 'score-green';
-  if (s >= 51) return 'score-blue';
-  if (s >= 26) return 'score-amber';
-  return s > 0 ? 'score-red' : 'score-grey';
+  if (s>=76) return 'score-green'; if (s>=51) return 'score-blue'; if (s>=26) return 'score-amber'; return s>0?'score-red':'score-grey';
 }
 function scoreHex(s) {
-  if (s >= 76) return '#059669';
-  if (s >= 51) return '#2563eb';
-  if (s >= 26) return '#d97706';
-  return '#dc2626';
+  if (s>=76) return '#059669'; if (s>=51) return '#2563eb'; if (s>=26) return '#d97706'; return '#dc2626';
 }
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
 }
-function fmtPeriod(f, t) {
-  if (!f) return '';
-  var from = new Date(f).toLocaleDateString('en-IN', { month:'short', year:'numeric' });
-  var to   = t ? new Date(t).toLocaleDateString('en-IN', { month:'short', year:'numeric' }) : 'present';
-  return from + ' – ' + to;
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ================================================================
+// SELF APPRAISAL MODAL
+// ================================================================
+var _saExisting = null;
+var _saSaving   = false;
+
+var SA_SECTION_CONFIG = [
+  { key:'innovations',       num:1, title:'Innovations Introduced',
+    hint:'List your top 3 innovative ideas, processes or initiatives introduced during the appraisal period.',
+    detailLabel:'Innovation Details', outcomeLabel:'Outcome / Impact',
+    detailPH:['e.g. AI-based grievance triage system','e.g. Smart scheme monitoring dashboard','e.g. Automated inspection scheduling'],
+    outcomePH:['e.g. Redressal time cut by 40%','e.g. Real-time visibility for 120 schemes','e.g. Saved 200+ man-hours/month'] },
+  { key:'digitalisations',   num:2, title:'Digitalisations in Processes',
+    hint:'List your top 3 digital transformation or process digitisation initiatives you led or contributed to.',
+    detailLabel:'Digitalisation Initiative', outcomeLabel:'Outcome / Impact',
+    detailPH:['e.g. Digitised land mutation workflow','e.g. Online building plan approvals','e.g. Mobile app for field inspections'],
+    outcomePH:['e.g. Steps reduced from 12 to 3','e.g. Approval time: 30 days → 7 days','e.g. Paperless, 90% officer adoption'] },
+  { key:'new_policies',      num:3, title:'New Policies Framed / Introduced',
+    hint:'List up to 3 policies, frameworks, GOs or schemes you formulated or brought into effect.',
+    detailLabel:'Policy / Scheme', outcomeLabel:'Outcome / Impact',
+    detailPH:['e.g. AP Green Energy Procurement Policy','e.g. Village Secretariat Grievance Framework','e.g. MSME Fast-Track Clearance Policy'],
+    outcomePH:['e.g. Enacted, ₹2,400 Cr investment facilitated','e.g. Grievances resolved within 7 days','e.g. 500+ MSMEs cleared in 3 months'] },
+  { key:'de_regularisation', num:4, title:'De-Regularisation Activities',
+    hint:'List up to 3 regulatory simplifications, compliance improvements or permit rationalisations you achieved.',
+    detailLabel:'Activity / Simplification', outcomeLabel:'Outcome / Impact',
+    detailPH:['e.g. Merged 5 overlapping clearances','e.g. Abolished 18 obsolete GO provisions','e.g. Self-certification for 12 permits'],
+    outcomePH:['e.g. Single NOC window, 60% faster','e.g. Compliance burden reduced by 30%','e.g. 8,000 businesses benefited'] },
+  { key:'leadership_skills', num:5, title:'Leadership Skills Demonstrated',
+    hint:'List up to 3 key leadership contributions — team building, mentoring, coordination or crisis handling.',
+    detailLabel:'Leadership Action', outcomeLabel:'Outcome / Impact',
+    detailPH:['e.g. Led cross-functional team of 45 officials','e.g. Mentored 12 probationer officers','e.g. Resolved inter-dept water dispute'],
+    outcomePH:['e.g. Smart Village Mission in 6 months','e.g. All cleared State exam, 3 promoted','e.g. Irrigation restored to 4 taluks'] }
+];
+
+function buildSASectionsHTML() {
+  return SA_SECTION_CONFIG.map(function(cfg) {
+    var rows = [0,1,2].map(function(i){
+      return '<div class="sa-entry-row">' +
+        '<div class="sa-row-badge">' + (i+1) + '</div>' +
+        '<input class="sa-entry-inp" id="sa_' + cfg.key + '_' + i + '_d" ' +
+          'placeholder="' + cfg.detailPH[i].replace(/"/g,'&quot;') + '">' +
+        '<input class="sa-entry-inp" id="sa_' + cfg.key + '_' + i + '_o" ' +
+          'placeholder="' + cfg.outcomePH[i].replace(/"/g,'&quot;') + '">' +
+      '</div>';
+    }).join('');
+    return '<div class="sa-section">' +
+      '<div class="sa-section-hdr">' +
+        '<div class="sa-section-num">' + cfg.num + '</div>' +
+        '<div><div class="sa-section-title">' + cfg.title + '</div>' +
+        '<div class="sa-section-hint">' + cfg.hint + '</div></div>' +
+      '</div>' +
+      '<div class="sa-row-headers">' +
+        '<div></div>' +
+        '<div class="sa-row-header-cell">' + cfg.detailLabel + '</div>' +
+        '<div class="sa-row-header-cell">' + cfg.outcomeLabel + '</div>' +
+      '</div>' +
+      rows +
+    '</div>';
+  }).join('');
 }
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function collectSARows(key) {
+  return [0,1,2].map(function(i){
+    return {
+      detail:  (document.getElementById('sa_'+key+'_'+i+'_d')||{value:''}).value.trim(),
+      outcome: (document.getElementById('sa_'+key+'_'+i+'_o')||{value:''}).value.trim()
+    };
+  });
+}
+
+function fillSARows(key, data) {
+  var arr = [];
+  if (Array.isArray(data)) {
+    arr = data;
+  } else if (typeof data === 'string' && data) {
+    try { arr = JSON.parse(data); } catch(e) {
+      // Legacy plain text → put in row 0 detail
+      arr = [{ detail: data, outcome: '' }];
+    }
+  }
+  [0,1,2].forEach(function(i){
+    var item = arr[i] || {};
+    var dEl = document.getElementById('sa_'+key+'_'+i+'_d');
+    var oEl = document.getElementById('sa_'+key+'_'+i+'_o');
+    if (dEl) dEl.value = item.detail  || '';
+    if (oEl) oEl.value = item.outcome || '';
+  });
+}
+
+function hasSAData() {
+  return SA_SECTION_CONFIG.some(function(cfg){
+    return [0,1,2].some(function(i){
+      var d = document.getElementById('sa_'+cfg.key+'_'+i+'_d');
+      var o = document.getElementById('sa_'+cfg.key+'_'+i+'_o');
+      return (d&&d.value.trim()) || (o&&o.value.trim());
+    });
+  });
+}
+
+async function openSAModal() {
+  openModal('saModal');
+  document.getElementById('saSectionsContainer').innerHTML = buildSASectionsHTML();
+  setSALocked(false);
+  setSABanner('new','📋 Loading your appraisal…');
+  document.getElementById('saActionRow').style.display = '';
+  document.getElementById('saSubmittedCard').style.display = 'none';
+  restoreSAActions();
+  await loadSADraft();
+}
+
+async function loadSADraft() {
+  if (!_officer) return;
+  var id = _officer.identity_no;
+
+  var { data: drafts } = await _supabase.from('self_appraisal')
+    .select('*').eq('identity_no',id).eq('status','draft')
+    .order('entered_at',{ascending:false}).limit(1);
+  if (drafts && drafts[0]) {
+    _saExisting = drafts[0];
+    fillSAForm(_saExisting);
+    setSALocked(false);
+    setSABanner('draft','✏️ Draft saved on ' + fmtDateTime(_saExisting.updated_at||_saExisting.entered_at) + ' — continue editing and submit when ready.');
+    return;
+  }
+
+  var { data: subs } = await _supabase.from('self_appraisal')
+    .select('*').eq('identity_no',id).eq('status','submitted')
+    .order('submitted_at',{ascending:false}).limit(1);
+  if (subs && subs[0]) {
+    _saExisting = subs[0];
+    fillSAForm(_saExisting);
+    setSALocked(true);
+    setSABanner('submitted','✅ Appraisal submitted on ' + fmtDateTime(_saExisting.submitted_at) + '. Locked for expert review.');
+    document.getElementById('saSubmittedMsg').textContent =
+      'Submitted on ' + fmtDateTime(_saExisting.submitted_at) + '. Your responses are with the expert panel.';
+    document.getElementById('saActionRow').style.display = 'none';
+    document.getElementById('saSubmittedCard').style.display = '';
+    return;
+  }
+
+  _saExisting = null;
+  setSABanner('new','📋 New appraisal — fill in the sections below and save your progress.');
+}
+
+function fillSAForm(data) {
+  SA_SECTION_CONFIG.forEach(function(cfg){ fillSARows(cfg.key, data[cfg.key]); });
+}
+
+function setSABanner(type, msg) {
+  var el = document.getElementById('saStatusBanner');
+  el.className = 'sa-status ' + type;
+  el.textContent = msg;
+}
+
+function setSALocked(locked) {
+  SA_SECTION_CONFIG.forEach(function(cfg){
+    [0,1,2].forEach(function(i){
+      ['d','o'].forEach(function(f){
+        var el = document.getElementById('sa_'+cfg.key+'_'+i+'_'+f);
+        if (el) el.disabled = locked;
+      });
+    });
+  });
+  var btnD = document.getElementById('saBtnDraft');
+  var btnS = document.getElementById('saBtnSubmit');
+  if (btnD) btnD.disabled = locked;
+  if (btnS) btnS.disabled = locked;
+}
+
+function setSASaving(on) {
+  _saSaving = on;
+  var btnD = document.getElementById('saBtnDraft');
+  var btnS = document.getElementById('saBtnSubmit');
+  if (btnD) { btnD.disabled = on; btnD.textContent = on ? '⏳ Saving…' : '💾 Save Draft'; }
+  if (btnS) btnS.disabled = on;
+}
+
+function buildSAPayload(status) {
+  var p = {
+    officer_id:   _officer.id || null,
+    identity_no:  _officer.identity_no,
+    officer_name: _officer.name_of_officer,
+    service_type: _officer.service_type || (_session.role||'').toUpperCase(),
+    status:       status
+  };
+  SA_SECTION_CONFIG.forEach(function(cfg){
+    var rows = collectSARows(cfg.key);
+    var hasAny = rows.some(function(r){ return r.detail||r.outcome; });
+    p[cfg.key] = hasAny ? JSON.stringify(rows) : null;
+  });
+  return p;
+}
+
+async function saveSADraft() {
+  if (!_officer || _saSaving) return;
+  setSASaving(true);
+  try {
+    var payload = buildSAPayload('draft');
+    var res;
+    if (_saExisting && _saExisting.id) {
+      res = await _supabase.from('self_appraisal')
+        .update(Object.assign(payload,{updated_at:new Date().toISOString()}))
+        .eq('id',_saExisting.id).select().single();
+    } else {
+      res = await _supabase.from('self_appraisal').insert([payload]).select().single();
+    }
+    if (res.error) throw res.error;
+    if (res.data) _saExisting = res.data;
+    setSABanner('draft','✏️ Draft saved at ' + fmtTimeOnly(new Date()) + ' — continue editing and submit when ready.');
+    showToast('✅ Draft saved successfully.', 'ok');
+    _perfData.sa = (_perfData.sa||[]).filter(function(r){ return r.id!==(_saExisting&&_saExisting.id); });
+    _perfData.sa.unshift(_saExisting);
+    renderTasks(); updateCompletionRing();
+  } catch(e) { showToast('❌ Save failed: ' + e.message, 'err'); }
+  setSASaving(false);
+}
+
+function confirmSASubmit() {
+  if (!hasSAData()) { showToast('⚠️ Please fill in at least one entry before submitting.', 'err'); return; }
+  document.getElementById('saActionRow').innerHTML =
+    '<div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:12px;padding:16px 18px;">' +
+      '<div style="font-size:13px;font-weight:800;color:#78350f;margin-bottom:6px;">⚠️ Confirm Submission</div>' +
+      '<div style="font-size:12px;color:#78350f;line-height:1.65;margin-bottom:14px;">' +
+        'Once submitted, your appraisal will be <strong>locked</strong> and forwarded to the Expert Review Committee. It cannot be edited after submission.' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button onclick="restoreSAActions()" style="flex:1;padding:11px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">✕ Cancel</button>' +
+        '<button onclick="submitSA()" style="flex:2;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4c1d95);color:#fff;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.4);">✅ Yes, Submit to Committee →</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function restoreSAActions() {
+  document.getElementById('saActionRow').innerHTML =
+    '<div style="font-size:11px;color:#94a3b8;background:#f8fafc;border-radius:9px;padding:10px 14px;margin-bottom:12px;line-height:1.65;">' +
+      '💾 <strong>Save Draft</strong> — saves progress; you can return and edit anytime. &nbsp;|&nbsp;' +
+      '✅ <strong>Submit Appraisal</strong> — finalises and forwards to the Expert Committee. <strong>Cannot be edited after submission.</strong>' +
+    '</div>' +
+    '<div class="sa-actions">' +
+      '<button class="sa-btn-draft"  id="saBtnDraft"  onclick="saveSADraft()">💾 Save Draft</button>' +
+      '<button class="sa-btn-submit" id="saBtnSubmit" onclick="confirmSASubmit()">✅ Submit to Committee →</button>' +
+    '</div>';
+}
+
+async function submitSA() {
+  if (!_officer || _saSaving) return;
+  _saSaving = true;
+  var now = new Date().toISOString();
+  try {
+    var payload = buildSAPayload('submitted');
+    payload.submitted_at = now;
+    var res;
+    if (_saExisting && _saExisting.id) {
+      res = await _supabase.from('self_appraisal')
+        .update(Object.assign(payload,{updated_at:now}))
+        .eq('id',_saExisting.id).select().single();
+    } else {
+      res = await _supabase.from('self_appraisal').insert([payload]).select().single();
+    }
+    if (res.error) throw res.error;
+    if (res.data) _saExisting = res.data;
+    setSALocked(true);
+    setSABanner('submitted','✅ Submitted on ' + fmtDateTime(now) + '. Forwarded to the Expert Review Committee.');
+    document.getElementById('saSubmittedMsg').textContent =
+      'Submitted on ' + fmtDateTime(now) + '. Your responses have been forwarded to the Expert Review Committee for evaluation.';
+    document.getElementById('saActionRow').style.display = 'none';
+    document.getElementById('saSubmittedCard').style.display = '';
+    showToast('🎉 Appraisal submitted to the Expert Committee!', 'ok');
+    _perfData.sa = (_perfData.sa||[]).filter(function(r){ return r.id!==(_saExisting&&_saExisting.id); });
+    _perfData.sa.unshift(_saExisting);
+    renderTasks(); updateCompletionRing();
+  } catch(e) {
+    showToast('❌ Submit failed: ' + e.message, 'err');
+    restoreSAActions();
+  }
+  _saSaving = false;
+}
+
+function startNewSA() {
+  _saExisting = null;
+  document.getElementById('saSectionsContainer').innerHTML = buildSASectionsHTML();
+  setSALocked(false);
+  setSABanner('new','📋 New appraisal — fill in the sections below and save your progress.');
+  document.getElementById('saSubmittedCard').style.display = 'none';
+  document.getElementById('saActionRow').style.display = '';
+  restoreSAActions();
+}
+
+function fmtDateTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+         new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtTimeOnly(d) {
+  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 }
 </script>
 </body>

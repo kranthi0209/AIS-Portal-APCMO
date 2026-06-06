@@ -250,6 +250,98 @@
       .summary-row { grid-template-columns:1fr 1fr; gap:12px; }
       .summary-num { font-size:32px; }
     }
+
+    /* ── 360° Info Modal — Landscape ── */
+    #modal360 { align-items:center; }
+    #modal360 .modal-box {
+      width:min(92vw, 920px); max-width:920px; padding:0;
+      overflow:hidden; max-height:88vh; overflow-y:auto;
+      border-radius:22px;
+    }
+    /* Header — horizontal landscape bar */
+    .m360-hdr {
+      display:flex; align-items:center; gap:20px;
+      padding:20px 28px; position:relative;
+      background:linear-gradient(135deg,#0f0c29 0%,#1e1b4b 40%,#3730a3 75%,#4338ca 100%);
+      border-radius:22px 22px 0 0;
+    }
+    .m360-hdr-icon { font-size:38px; flex-shrink:0; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }
+    .m360-hdr-text { flex:1; }
+    .m360-hdr-title { font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.3px; }
+    .m360-hdr-sub { font-size:12px; color:#a5b4fc; margin-top:4px; line-height:1.5; max-width:560px; }
+    .m360-close {
+      position:absolute; top:14px; right:16px; width:30px; height:30px;
+      border-radius:8px; background:rgba(255,255,255,0.15); border:none;
+      cursor:pointer; font-size:15px; color:#fff;
+      display:flex; align-items:center; justify-content:center; transition:background 0.15s;
+    }
+    .m360-close:hover { background:rgba(255,255,255,0.28); }
+    .m360-body { padding:22px 28px 24px; }
+
+    /* Option cards — landscape: equal height, side by side */
+    .m360-opts { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .m360-opt {
+      border-radius:16px; padding:24px 22px; cursor:pointer; transition:all 0.22s;
+      border:2px solid #e2e8f0; background:#f8fafc;
+      display:flex; flex-direction:column; align-items:center; text-align:center;
+    }
+    .m360-opt:hover { transform:translateY(-4px); box-shadow:0 14px 36px rgba(0,0,0,0.13); }
+    .m360-opt.demo      { border-color:#a5b4fc; background:linear-gradient(160deg,#eef2ff,#e0e7ff); }
+    .m360-opt.demo:hover { border-color:#4338ca; box-shadow:0 14px 36px rgba(67,56,202,0.2); }
+    .m360-opt.live-data      { border-color:#fde68a; background:linear-gradient(160deg,#fffbeb,#fef3c7); }
+    .m360-opt.live-data:hover { border-color:#d97706; box-shadow:0 14px 36px rgba(217,119,6,0.2); }
+    .m360-opt-ico   { font-size:44px; margin-bottom:12px; }
+    .m360-opt-title { font-size:16px; font-weight:800; color:#1e1b4b; margin-bottom:8px; }
+    .m360-opt-sub   { font-size:12px; color:#64748b; line-height:1.6; flex:1; }
+    .m360-opt-btn   { margin-top:16px; padding:10px 24px; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; width:100%; }
+    .m360-opt.demo .m360-opt-btn      { background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff; box-shadow:0 4px 14px rgba(67,56,202,0.35); }
+    .m360-opt.live-data .m360-opt-btn { background:linear-gradient(135deg,#d97706,#b45309); color:#fff; box-shadow:0 4px 14px rgba(217,119,6,0.35); }
+    .m360-opt.demo .m360-opt-btn:hover      { box-shadow:0 6px 20px rgba(67,56,202,0.5); }
+    .m360-opt.live-data .m360-opt-btn:hover { box-shadow:0 6px 20px rgba(217,119,6,0.5); }
+
+    /* Live panel — landscape 2-column body */
+    .m360-lp-banner {
+      display:flex; align-items:center; gap:18px;
+      background:linear-gradient(135deg,#0f0c29 0%,#1e1b4b 50%,#3730a3 100%);
+      border-radius:14px; padding:18px 24px; color:#fff; margin-bottom:16px;
+    }
+    .m360-lp-banner-ico   { font-size:40px; flex-shrink:0; }
+    .m360-lp-banner-title { font-size:16px; font-weight:800; margin-bottom:4px; }
+    .m360-lp-banner-sub   { font-size:12px; color:#c7d2fe; line-height:1.55; }
+    /* 2-column landscape grid */
+    .m360-lp-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    /* Left col — available */
+    .m360-lp-avail { background:#f0fdf4; border:2px solid #86efac; border-radius:14px; padding:16px 18px; height:100%; }
+    .m360-lp-avail-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#059669; margin-bottom:10px; }
+    .m360-lp-row { display:flex; align-items:center; gap:10px; padding:8px 10px; background:#fff; border-radius:9px; margin-bottom:7px; border:1.5px solid #bbf7d0; }
+    .m360-lp-row:last-child { margin-bottom:0; }
+    .m360-lp-row-ico  { font-size:20px; flex-shrink:0; }
+    .m360-lp-row-name { font-size:12px; font-weight:700; color:#065f46; }
+    .m360-lp-row-desc { font-size:10px; color:#6b7280; margin-top:1px; }
+    .m360-lp-tick { margin-left:auto; background:#059669; color:#fff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+    /* Right col — pending + demo nudge */
+    .m360-lp-right { display:flex; flex-direction:column; gap:12px; }
+    .m360-lp-task { background:linear-gradient(135deg,#fef3c7,#fffbeb); border:2px solid #fcd34d; border-radius:14px; padding:16px 18px; flex:1; }
+    .m360-lp-task-title { font-size:12px; font-weight:800; color:#92400e; margin-bottom:8px; display:flex; align-items:center; gap:7px; }
+    .m360-lp-task-body  { font-size:11px; color:#78350f; line-height:1.65; }
+    .m360-lp-task-highlight { background:#fff; border-radius:8px; padding:9px 12px; margin-top:8px; border-left:4px solid #f59e0b; font-size:11px; color:#374151; line-height:1.6; }
+    .m360-lp-demo-nudge { background:linear-gradient(135deg,#eef2ff,#e0e7ff); border:2px solid #a5b4fc; border-radius:14px; padding:14px 18px; display:flex; align-items:center; gap:12px; }
+    .m360-lp-demo-nudge-ico { font-size:28px; flex-shrink:0; }
+    .m360-lp-demo-nudge-txt { flex:1; font-size:11px; color:#3730a3; line-height:1.55; }
+    .m360-lp-demo-nudge-txt strong { color:#1e1b4b; font-size:12px; display:block; margin-bottom:2px; }
+    .m360-lp-demo-btn { padding:8px 16px; background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff; border:none; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap; flex-shrink:0; box-shadow:0 3px 10px rgba(67,56,202,0.3); }
+    .m360-lp-demo-btn:hover { opacity:0.88; }
+    /* back btn */
+    .m360-back { padding:8px 18px; background:#f1f5f9; border:2px solid #e2e8f0; border-radius:9px; color:#475569; font-size:12px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+    .m360-back:hover { border-color:#94a3b8; color:#1e1b4b; }
+
+    @media (max-width:700px) {
+      .m360-opts     { grid-template-columns:1fr; }
+      .m360-lp-cols  { grid-template-columns:1fr; }
+      #modal360 .modal-box { width:96vw; }
+      .m360-hdr { padding:16px 18px; }
+      .m360-body { padding:16px 18px 20px; }
+    }
   </style>
 </head>
 <body>
@@ -433,6 +525,116 @@
     <button class="btn-proceed" id="proceedBtn" disabled onclick="proceedToView()">
       Proceed to Dashboard &rarr;
     </button>
+  </div>
+</div>
+
+<!-- ══════ 360° VIEW INFO MODAL ══════ -->
+<div id="modal360" class="modal-overlay">
+  <div class="modal-box">
+
+    <div class="m360-hdr">
+      <div class="m360-hdr-icon">♾️</div>
+      <div class="m360-hdr-text">
+        <div class="m360-hdr-title">360° Officer View</div>
+        <div class="m360-hdr-sub">A comprehensive profile combining personal background, service record and performance scores from multiple data sources — giving a holistic, data-driven view of each officer's professional journey.</div>
+      </div>
+      <button class="m360-close" onclick="close360Modal()">✕</button>
+    </div>
+
+    <div class="m360-body">
+
+      <!-- Main options panel -->
+      <div id="m360MainPanel">
+        <div class="m360-opts">
+          <div class="m360-opt demo" onclick="launch360Demo()">
+            <div class="m360-opt-ico">🎭</div>
+            <div class="m360-opt-title">Open Demo</div>
+            <div class="m360-opt-sub">Explore the full 360° view with realistic but fictional random data. Best way to understand all features and functionality of the portal.</div>
+            <button class="m360-opt-btn">🚀 Open Demo →</button>
+          </div>
+          <div class="m360-opt live-data" onclick="launch360Live()">
+            <div class="m360-opt-ico">📊</div>
+            <div class="m360-opt-title">View Live Dashboard</div>
+            <div class="m360-opt-sub">Open the live 360° dashboard with real data — e-Office, Public Perception &amp; Swarnandhra KPI scores loaded into the system.</div>
+            <button class="m360-opt-btn">📡 Open Live →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live data info panel -->
+      <div id="m360LivePanel" style="display:none;">
+
+        <!-- Horizontal status banner -->
+        <div class="m360-lp-banner">
+          <div class="m360-lp-banner-ico">📡</div>
+          <div>
+            <div class="m360-lp-banner-title">Live Data Status — 360° View</div>
+            <div class="m360-lp-banner-sub">As of now, out of all the parameters of the 360° View, data has been received and loaded for only <strong style="color:#a5f3fc;">3 parameters</strong>.</div>
+          </div>
+        </div>
+
+        <!-- 2-column landscape body -->
+        <div class="m360-lp-cols">
+
+          <!-- Left: available parameters -->
+          <div class="m360-lp-avail">
+            <div class="m360-lp-avail-title">✅ Parameters with Live Data</div>
+            <div class="m360-lp-row">
+              <div class="m360-lp-row-ico">🖥️</div>
+              <div>
+                <div class="m360-lp-row-name">e-Office Score</div>
+                <div class="m360-lp-row-desc">File processing efficiency — disposal rate, avg clearance time &amp; speed buckets.</div>
+              </div>
+              <div class="m360-lp-tick">✓</div>
+            </div>
+            <div class="m360-lp-row">
+              <div class="m360-lp-row-ico">🌐</div>
+              <div>
+                <div class="m360-lp-row-name">Public Perception Score</div>
+                <div class="m360-lp-row-desc">Citizen surveys &amp; public feedback on governance quality.</div>
+              </div>
+              <div class="m360-lp-tick">✓</div>
+            </div>
+            <div class="m360-lp-row">
+              <div class="m360-lp-row-ico">💰</div>
+              <div>
+                <div class="m360-lp-row-name">GoI (CSS) Funds Score</div>
+                <div class="m360-lp-row-desc">Utilization of Central Government Centrally Sponsored Scheme funds.</div>
+              </div>
+              <div class="m360-lp-tick">✓</div>
+            </div>
+          </div>
+
+          <!-- Right: pending notice + demo nudge -->
+          <div class="m360-lp-right">
+            <div class="m360-lp-task">
+              <div class="m360-lp-task-title">⚠️ Pending — Action Required</div>
+              <div class="m360-lp-task-body">
+                The remaining parameters of the 360° View are yet to be entered in the system.
+                In particular, <strong>data entry of IAS Officers' Self Appraisals has not yet started.</strong>
+              </div>
+              <div class="m360-lp-task-highlight">
+                📋 <strong>What to do next:</strong> Please complete all pending data entry tasks — Self Appraisal, GSDP, Integrity, Media &amp; Party scores — and revisit this page once the complete dataset is loaded to view the full Live 360° Dashboard.
+              </div>
+            </div>
+            <div class="m360-lp-demo-nudge">
+              <div class="m360-lp-demo-nudge-ico">🎭</div>
+              <div class="m360-lp-demo-nudge-txt">
+                <strong>Meanwhile, use the Demo Version</strong>
+                Explore all features with realistic sample data while the live data is being collected.
+              </div>
+              <button class="m360-lp-demo-btn" onclick="hide360LiveInfo(); launch360Demo();">🚀 Open Demo</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;justify-content:flex-start;">
+          <button class="m360-back" onclick="hide360LiveInfo()">← Back to Options</button>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -761,8 +963,60 @@
     document.getElementById('proceedBtn').disabled = !(selOfficer && selView);
   };
 
+  // ── 360° modal helpers ────────────────────────────────────────────
+  window.close360Modal = function() {
+    document.getElementById('modal360').classList.remove('open');
+    document.getElementById('m360MainPanel').style.display = 'block';
+    document.getElementById('m360LivePanel').style.display = 'none';
+  };
+  window.show360LiveInfo = function() {
+    document.getElementById('m360MainPanel').style.display = 'none';
+    document.getElementById('m360LivePanel').style.display = 'block';
+  };
+  window.hide360LiveInfo = function() {
+    document.getElementById('m360LivePanel').style.display = 'none';
+    document.getElementById('m360MainPanel').style.display = 'block';
+  };
+  window.launch360Demo = function() {
+    close360Modal();
+    closeViewModal();
+    var url = '360.html?service=' + (selOfficer || 'IAS') + '&demo=1';
+    try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+    function go() { location.href = url; }
+    if (!document.fullscreenElement &&
+        (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) {
+      var req = document.documentElement.requestFullscreen
+              ? document.documentElement.requestFullscreen()
+              : document.documentElement.webkitRequestFullscreen();
+      Promise.resolve(req).then(go).catch(go);
+    } else { go(); }
+  };
+  window.launch360Live = function() {
+    close360Modal();
+    closeViewModal();
+    var url = '360_live.html?service=' + (selOfficer || 'IAS');
+    try { sessionStorage.setItem('ais_fs_mode', '1'); } catch(e) {}
+    function go() { location.href = url; }
+    if (!document.fullscreenElement &&
+        (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) {
+      var req = document.documentElement.requestFullscreen
+              ? document.documentElement.requestFullscreen()
+              : document.documentElement.webkitRequestFullscreen();
+      Promise.resolve(req).then(go).catch(go);
+    } else { go(); }
+  };
+  document.getElementById('modal360').addEventListener('click', function(e){
+    if (e.target === this) close360Modal();
+  });
+
   window.proceedToView = function() {
     if (!selOfficer || !selView) return;
+    // Intercept 360° — show info modal first
+    if (selView === '360') {
+      closeViewModal();
+      document.getElementById('modal360').classList.add('open');
+      return;
+    }
     var pages = { table:'table.html', graph:'graph.html', photo:'photo.html', '360':'360.html' };
     var url = (pages[selView] || 'table.html') + '?service=' + selOfficer;
 
