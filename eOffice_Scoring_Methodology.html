@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e-Office Performance — Scoring Methodology</title>
+<link rel="stylesheet" href="responsive_fit.css">
+<style>
+  :root{ --ac:#4338ca; --ac-d:#312e81; --ink:#0f172a; --mut:#475569; --line:#cbd5e1;
+         --soft:#eef2ff; --soft-b:#c7d2fe; --warn:#fffbeb; --warn-b:#fde68a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Segoe UI',Inter,Arial,sans-serif; color:var(--ink); background:#eef2f7; line-height:1.65; }
+  .wrap{ max-width:980px; margin:0 auto; padding:0 22px 80px; }
+  header.hero{ background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#0ea5e9 100%); color:#fff; padding:38px 22px 30px; }
+  header.hero .inner{ max-width:980px; margin:0 auto; }
+  header.hero h1{ margin:0 0 6px; font-size:27px; }
+  header.hero p{ margin:0; font-size:14px; opacity:0.95; }
+  h2{ margin:38px 0 10px; font-size:20px; color:var(--ac-d); border-bottom:2px solid var(--soft-b); padding-bottom:6px; }
+  h3{ margin:24px 0 6px; font-size:16px; color:var(--ac); }
+  p,li{ font-size:14.3px; color:#1e293b; }
+  code,.var{ background:#0f172a; color:#a5b4fc; padding:1px 7px; border-radius:5px; font-size:13px; font-family:'Consolas',monospace; }
+  .formula{ background:#0b1220; color:#e2e8f0; border-radius:12px; padding:16px 20px; margin:14px 0; font-family:'Consolas','Courier New',monospace; font-size:14.5px; overflow-x:auto; line-height:1.9; }
+  .formula b{ color:#a5b4fc; } .formula .hi{ color:#fde047; }
+  .note{ background:var(--soft); border:1px solid var(--soft-b); border-left:5px solid var(--ac); border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:var(--ac-d); }
+  .warn{ background:var(--warn); border:1px solid var(--warn-b); border-left:5px solid #d97706; border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:#78350f; }
+  table{ border-collapse:collapse; width:100%; margin:14px 0; font-size:13.3px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 8px rgba(15,23,42,0.08); }
+  th,td{ border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top; }
+  th{ background:var(--ac-d); color:#fff; font-weight:700; }
+  tbody tr:nth-child(even){ background:#f8fafc; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 22px; margin:24px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .toc a{ color:var(--ac); text-decoration:none; } .toc a:hover{ text-decoration:underline; }
+  .toc ol{ margin:6px 0 0; padding-left:22px; } .toc li{ margin:3px 0; }
+  .ex{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:6px 20px 16px; margin:14px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .ex h4{ color:var(--ac-d); margin:16px 0 6px; font-size:14.5px; }
+  .good{ color:#15803d; font-weight:700; } .bad{ color:#b91c1c; font-weight:700; }
+  dt{ font-weight:700; color:var(--ac-d); margin-top:12px; } dd{ margin:2px 0 0; color:#334155; font-size:13.8px; }
+  .foot{ margin-top:46px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--mut); }
+  @media print{ body{ background:#fff; } header.hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header class="hero"><div class="inner">
+  <h1>🖥️ e-Office Performance — Scoring Methodology</h1>
+  <p>How each AIS officer's file-handling performance is converted into a fair, <b>absolute 0–100 score</b> — four indicators, each scored on its own fixed scale, blended by weight, then scaled by a workload (difficulty) factor.</p>
+</div></header>
+
+<div class="wrap">
+  <div class="toc"><b>Contents</b>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; design principles</a></li>
+      <li><a href="#data">The raw data &amp; the four indicators</a></li>
+      <li><a href="#posts">How posts are handled (Secretariat / HoD / District) &amp; tenure</a></li>
+      <li><a href="#method">The scoring method, step by step</a></li>
+      <li><a href="#volume">The workload (difficulty) factor</a></li>
+      <li><a href="#glossary">Glossary of statistical terms</a></li>
+    </ol>
+  </div>
+
+  <h2 id="purpose">1 · Purpose &amp; design principles</h2>
+  <p>The e-Office system records how officers move government <b>files</b> — how many they receive, clear, and how
+  fast. This score measures <b>file-handling efficiency</b> on one <b>0–100 scale</b> that is <b>absolute</b>: an
+  officer's number reflects their own performance against fixed benchmarks, and does not change because of who else
+  is on screen.</p>
+  <table>
+    <thead><tr><th>Principle</th><th>How we achieve it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Absolute, not relative</b></td><td>Each indicator is scored on a <b>fixed 0–100 scale</b> (the same yardstick for everyone, every period). Filtering the list changes <b>who is shown</b> and the <b>rank order</b> — never an officer's score.</td></tr>
+      <tr><td><b>Transparent &amp; auditable</b></td><td>Every sub-score has an explicit formula and benchmark; an officer can recompute their own score by hand.</td></tr>
+      <tr><td><b>Weights mean what they say</b></td><td>A weighted average of 0–100 sub-scores → a 45% indicator really is 45% of the result.</td></tr>
+      <tr><td><b>Robust to outliers</b></td><td>Speed is <b>median-led</b> with small-sample shrinkage; consistency uses the average–median gap; volume is <b>log-scaled</b>. No single odd file or mega-inbox distorts the scale.</td></tr>
+      <tr><td><b>Bigger workloads get credit</b></td><td>A log-scaled <b>workload (difficulty) factor</b> (0.50–1.00) rewards officers handling more files — clearing 8,000 well beats clearing 50 well.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="data">2 · The raw data &amp; the four indicators</h2>
+  <p>For each officer the e-Office system supplies: <span class="var">Opening Balance</span>, <span class="var">Files Received</span>,
+  <span class="var">Files Processed</span>, <span class="var">Files Pending</span>, <span class="var">Average</span> and
+  <span class="var">Median</span> processing time (minutes), and <span class="var">Days Active</span>. From these we derive
+  four indicators (each mapped to 0–100) plus the workload factor:</p>
+  <table>
+    <thead><tr><th>#</th><th>Indicator</th><th>0–100 score formula</th><th>Weight</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Clearance Rate</b></td><td>Files Processed ÷ (Opening + Received) × 100</td><td><b>25%</b></td></tr>
+      <tr><td>2</td><td><b>Low Pendency</b></td><td>(1 − Files Pending ÷ (Opening + Received)) × 100</td><td><b>10%</b></td></tr>
+      <tr><td>3</td><td><b>Disposal Speed</b></td><td>100 × 1200 ÷ (1200 + T), &nbsp;T = robust, shrunk time/file</td><td><b>45%</b></td></tr>
+      <tr><td>4</td><td><b>Consistency</b></td><td>exp(−(Avg − Median) ÷ (Median + 1)) × 100</td><td><b>20%</b></td></tr>
+      <tr><td>—</td><td><b>Workload</b></td><td>ln(1 + Opening + Received) + 0.5·ln(1 + files/day) → factor (§5)</td><td><i>difficulty factor</i></td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><b>What changed &amp; why.</b> The earlier model used <b>six</b> indicators scored as <b>percentiles
+  against the on-screen cohort</b> (so scores shifted when you filtered), with <b>separate</b> median- and average-speed
+  metrics and a standalone "Days Active" metric. The current model: (a) merges median + average into <b>one robust
+  Disposal Speed</b> with small-sample shrinkage; (b) folds <b>Days Active</b> into the workload factor; and (c) scores
+  every indicator on a <b>fixed absolute scale</b> instead of a peer percentile — so an officer's score is stable and
+  comparable across periods.</div>
+
+  <h2 id="posts">3 · How posts are handled, and tenure</h2>
+  <p>Unlike the Perception, KPI and GoI-Funds scores, the e-Office score is <b>inherently officer-level</b>. The
+  e-Office system logs file movement against the officer regardless of whether the post is
+  <b>Secretariat, HoD or District</b> — a file is a file — so there is no per-post split for this score.</p>
+  <p>Tenure across multiple or overlapping postings is captured by <b>Days Active</b>: the <b>unique calendar days</b>
+  the officer was engaged, <b>merging overlapping post periods</b> so a day on which two posts overlap is never
+  double-counted. Days Active now feeds the <b>workload factor</b> (§5) rather than being a standalone indicator.</p>
+  <div class="note">Officers with <b>no file movement</b> in the window are shown separately with a score of 0 and
+  ranked last.</div>
+
+  <h2 id="method">4 · The scoring method, step by step</h2>
+
+  <h3>Step 1 — Disposal Speed: a robust, shrunk time per file</h3>
+  <p>We only have each officer's <b>average</b>, <b>median</b> and <b>count</b> of processing times. The median is
+  robust (a few monster files can't distort it); the average is sensitive to a <b>slow tail</b>. We blend them
+  median-first, then <b>shrink toward a fixed benchmark</b> so an estimate from very few files isn't taken at face
+  value (empirical-Bayes / James–Stein):</p>
+  <div class="formula"><b>T_eff</b> = 0.65 · Median + 0.35 · Average<br><b>T*</b> = ( n · T_eff + <span class="hi">k</span> · <span class="hi">REF</span> ) ÷ ( n + <span class="hi">k</span> )&nbsp;&nbsp;&nbsp;n = Files Processed, &nbsp;k = 30, &nbsp;REF = 1200 min</div>
+  <p>With many files, <code>T* ≈ T_eff</code>; with few files, <code>T*</code> is pulled toward the 1,200-minute
+  benchmark, so a lucky handful of fast files cannot fake "fast."</p>
+
+  <h3>Step 2 — Score each indicator 0–100 (absolute)</h3>
+  <div class="formula"><b>Clearance</b>   = min(100, Processed ÷ (Opening + Received) × 100)<br><b>LowPendency</b> = (1 − Pending ÷ (Opening + Received)) × 100<br><b>Speed</b>       = 100 × <span class="hi">REF</span> ÷ (<span class="hi">REF</span> + T*)&nbsp;&nbsp;(a file at REF = 1200 min scores <b>50</b>)<br><b>Consistency</b> = exp( −(Average − Median) ÷ (Median + 1) ) × 100</div>
+  <p>No comparison to other officers is involved — these are fixed transforms of the officer's own numbers.</p>
+
+  <h3>Step 3 — Efficiency = weighted average of the four sub-scores</h3>
+  <div class="formula"><b>Efficiency</b> = 0.25·Clearance + 0.10·LowPendency + 0.45·Speed + 0.20·Consistency</div>
+  <p>Because the weights sum to 1 and every sub-score is 0–100, Efficiency is automatically 0–100 and each indicator
+  contributes <b>exactly</b> its stated weight.</p>
+
+  <h3>Step 4 — Apply the workload (difficulty) factor → final score</h3>
+  <div class="formula"><b>e-Office Score</b> = Efficiency × Workload factor&nbsp;&nbsp;(capped 0–100)</div>
+
+  <h3>Step 5 — Rank</h3>
+  <p>Officers are ordered by the final score, highest first. (The rank is the only relative part — it just sorts the
+  absolute scores.) The four sub-scores and the workload factor are shown in the score-cell tooltip.</p>
+
+  <h2 id="volume">5 · The workload (difficulty) factor</h2>
+  <p>Clearing a <b>tiny</b> inbox well is easier than clearing a <b>huge</b> one well. So Efficiency is scaled by a
+  factor built from the officer's workload — total files faced and daily intensity (files per active day) — on a <b>log scale against fixed
+  targets</b> (no cohort min–max, so it too is absolute):</p>
+  <div class="formula"><b>P</b> = (Opening + Received) ÷ max(Days Active, 1)&nbsp;&nbsp;(files per active day)<br><b>L</b> = ln(1 + Opening + Received) + 0.5 · ln(1 + P)<br><b>L_full</b> = ln(1 + <span class="hi">5000</span>) + 0.5 · ln(1 + <span class="hi">60</span>)&nbsp;&nbsp;(full-credit target)<br><b>Workload factor</b> = <span class="hi">0.50</span> + ( 1 − 0.50 ) × min(1, L ÷ L_full)&nbsp;&nbsp;∈ [0.50, 1.00]</div>
+  <ul>
+    <li>An officer at or above the target (≈ 5,000 files at ~60/day) gets the full <b>×1.00</b>.</li>
+    <li>The lightest workload keeps <b>×0.50</b> — a 50% discount reflecting the lower difficulty.</li>
+    <li>The <b>logarithm</b> compresses the huge spread of file counts so one mega-inbox doesn't dominate; the
+    <b>0.50 floor</b> ensures a genuinely excellent low-volume officer still scores respectably.</li>
+  </ul>
+
+  <h2 id="glossary">6 · Glossary of statistical terms</h2>
+  <dl>
+    <dt>Absolute (fixed-scale) score</dt><dd>A 0–100 number computed from the officer's own data against fixed benchmarks — independent of the peer set, so filtering never changes it.</dd>
+    <dt>Robust effective time (T_eff)</dt><dd>0.65·Median + 0.35·Average — median-led (resistant to a few very slow files) with a touch of the average to catch a slow tail.</dd>
+    <dt>Empirical-Bayes / shrinkage (T*)</dt><dd>Pulling a small-sample estimate toward a benchmark in proportion to how few observations it rests on, so a handful of files can't produce an extreme, unreliable speed.</dd>
+    <dt>Benchmark / reference time (REF)</dt><dd>The fixed time per file (1,200 min) that scores 50/100 on Speed; faster scores higher, slower lower.</dd>
+    <dt>Weighted arithmetic mean</dt><dd>An average in which each indicator counts in proportion to its weight; the weights sum to 1.</dd>
+    <dt>Workload (difficulty) factor</dt><dd>A 0.50–1.00 multiplier from the log of (Opening + Received) and daily intensity (files per active day) against fixed targets; rewards a larger, more intense workload.</dd>
+    <dt>Logarithm (ln)</dt><dd>Compresses very large counts so a few mega-volume officers don't dominate the workload factor.</dd>
+    <dt>Relative skew (consistency)</dt><dd>(Average − Median) ÷ (Median + 1): how far the average sits above the median — a proxy for a long tail of slow files. Smaller = steadier.</dd>
+    <dt>Unique days worked</dt><dd>Distinct calendar days of engagement, with overlapping post periods merged so no day is double-counted.</dd>
+  </dl>
+
+</div>
+</body>
+</html>

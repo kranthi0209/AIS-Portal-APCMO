@@ -25,6 +25,7 @@
   var micActive = false;
   var wakeRec   = null;
   var wakeActive = false;
+  var speakMode  = (function(){ try { return sessionStorage.getItem('alkra_speak_mode') === '1'; } catch(e){ return false; } })();
   var isProcessing    = false; // true while a voice command is being handled
   var listeningPaused = false; // true while user is actively typing
   var isHidden        = false; // FAB + panel hidden but voice still active
@@ -1438,6 +1439,13 @@
     if (SR) micBtn.dataset.sr = '1'; // enables the CSS (removes 0.35 opacity)
     micBtn.addEventListener('click', startMicInput);
 
+    // Speak-mode switch — microphone permission is requested ONLY when this is turned on
+    var speakBtn = document.createElement('button');
+    speakBtn.id = 'alkraSpeakBtn';
+    speakBtn.type = 'button';
+    speakBtn.style.cssText = 'flex-shrink:0;display:flex;align-items:center;gap:5px;height:34px;padding:0 11px;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background 0.15s,color 0.15s;';
+    speakBtn.addEventListener('click', function () { window.alkraToggleSpeak(); });
+
     // Send button
     var sendBtn = document.createElement('button');
     sendBtn.id = 'alkraSendBtn';
@@ -1446,6 +1454,7 @@
     sendBtn.addEventListener('click', function () { handleInput(input.value); });
 
     inputRow.appendChild(input);
+    inputRow.appendChild(speakBtn);
     inputRow.appendChild(micBtn);
     inputRow.appendChild(sendBtn);
 
@@ -1654,14 +1663,49 @@
     if (inp) handleInput(inp.value);
   };
 
+  function updateSpeakUI() {
+    var sb = document.getElementById('alkraSpeakBtn');
+    if (sb) {
+      if (!SR) { sb.style.background = 'rgba(148,163,184,0.18)'; sb.style.color = '#94a3b8'; sb.style.cursor = 'not-allowed'; sb.title = 'Voice needs Chrome / Edge'; sb.innerHTML = '&#127897; Speak'; }
+      else {
+        sb.style.background = speakMode ? '#16a34a' : 'rgba(148,163,184,0.28)';
+        sb.style.color      = speakMode ? '#ffffff' : '#cbd5e1';
+        sb.title = speakMode ? 'Speak mode is ON — tap to turn off the microphone' : 'Speak mode is OFF (typing only) — tap to enable the microphone';
+        sb.innerHTML = '&#127897; Speak ' + (speakMode ? 'On' : 'Off');
+      }
+    }
+    var mb = document.getElementById('alkraMicBtn');
+    if (mb) mb.style.display = (SR && speakMode) ? '' : 'none';
+    var inp = document.getElementById('alkraInput');
+    if (inp) inp.placeholder = speakMode ? 'Speak or type a command…' : 'Type a command…';
+  }
+
+  // Toggle Speak mode. Mic permission is requested only on first enable; the browser
+  // then remembers it, so it is never re-asked until Speak mode is turned off / logout.
+  window.alkraToggleSpeak = function () {
+    if (!SR) { alert('Voice input needs Chrome or Edge.'); return; }
+    speakMode = !speakMode;
+    try { sessionStorage.setItem('alkra_speak_mode', speakMode ? '1' : '0'); } catch(e){}
+    if (speakMode) {
+      startWakeListener();          // first time → mic permission prompt; remembered afterwards
+    } else {
+      stopWakeListener();
+      if (micActive && micRec) { try { micRec.abort(); } catch(e){} micRec = null; micActive = false; }
+      if (SS) SS.cancel();
+      setSt('Filter Assistant');
+    }
+    updateSpeakUI();
+  };
+
   // ================================================================
   // INIT
   // ================================================================
 
   function _init() {
     buildUI();
-    // Start always-on listener immediately — prompts mic permission on first load
-    setTimeout(startWakeListener, 600);
+    updateSpeakUI();
+    // Microphone is OFF by default (typing only). It starts only when Speak mode is enabled.
+    if (speakMode) setTimeout(startWakeListener, 600);
     // Health check every 5 s: if wakeRec should be running but isn't, revive it.
     // Chrome can silently kill the continuous recogniser (tab hidden, network blip, etc.)
     // and the onend handler may have been blocked from restarting by a stale state.

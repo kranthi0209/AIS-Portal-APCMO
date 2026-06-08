@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Perception — Scoring Methodology</title>
+<link rel="stylesheet" href="responsive_fit.css">
+<style>
+  :root{ --ac:#c2410c; --ac-d:#7c2d12; --ink:#0f172a; --mut:#475569; --line:#cbd5e1;
+         --soft:#fff7ed; --soft-b:#fed7aa; --warn:#fffbeb; --warn-b:#fde68a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Segoe UI',Inter,Arial,sans-serif; color:var(--ink); background:#eef2f7; line-height:1.65; }
+  .wrap{ max-width:980px; margin:0 auto; padding:0 22px 80px; }
+  header.hero{ background:linear-gradient(135deg,#f97316 0%,#ec4899 100%); color:#fff; padding:38px 22px 30px; }
+  header.hero .inner{ max-width:980px; margin:0 auto; }
+  header.hero h1{ margin:0 0 6px; font-size:27px; }
+  header.hero p{ margin:0; font-size:14px; opacity:0.95; }
+  h2{ margin:38px 0 10px; font-size:20px; color:var(--ac-d); border-bottom:2px solid var(--soft-b); padding-bottom:6px; }
+  h3{ margin:24px 0 6px; font-size:16px; color:var(--ac); }
+  p,li{ font-size:14.3px; color:#1e293b; }
+  code,.var{ background:#0f172a; color:#fdba74; padding:1px 7px; border-radius:5px; font-size:13px; font-family:'Consolas',monospace; }
+  .formula{ background:#0b1220; color:#e2e8f0; border-radius:12px; padding:16px 20px; margin:14px 0; font-family:'Consolas','Courier New',monospace; font-size:14.5px; overflow-x:auto; line-height:1.9; }
+  .formula b{ color:#fdba74; } .formula .hi{ color:#fde047; }
+  .note{ background:var(--soft); border:1px solid var(--soft-b); border-left:5px solid var(--ac); border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:var(--ac-d); }
+  .warn{ background:var(--warn); border:1px solid var(--warn-b); border-left:5px solid #d97706; border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:#78350f; }
+  table{ border-collapse:collapse; width:100%; margin:14px 0; font-size:13.3px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 8px rgba(15,23,42,0.08); }
+  th,td{ border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top; }
+  th{ background:var(--ac-d); color:#fff; font-weight:700; }
+  tbody tr:nth-child(even){ background:#f8fafc; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 22px; margin:24px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .toc a{ color:var(--ac); text-decoration:none; } .toc a:hover{ text-decoration:underline; }
+  .toc ol{ margin:6px 0 0; padding-left:22px; } .toc li{ margin:3px 0; }
+  .ex{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:6px 20px 16px; margin:14px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .ex h4{ color:var(--ac-d); margin:16px 0 6px; font-size:14.5px; }
+  .good{ color:#15803d; font-weight:700; } .bad{ color:#b91c1c; font-weight:700; }
+  dt{ font-weight:700; color:var(--ac-d); margin-top:12px; } dd{ margin:2px 0 0; color:#334155; font-size:13.8px; }
+  .foot{ margin-top:46px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--mut); }
+  @media print{ body{ background:#fff; } header.hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header class="hero"><div class="inner">
+  <h1>💬 Public Perception — Scoring Methodology</h1>
+  <p>How citizen-perception survey scores (I&amp;PR) are attributed to each AIS officer, weighted by tenure, into a fair 0–100 score.</p>
+</div></header>
+
+<div class="wrap">
+  <div class="toc"><b>Contents</b>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; design principles</a></li>
+      <li><a href="#data">The raw data — campaign × district × period scores</a></li>
+      <li><a href="#posts">How posts map to surveys (Secretariat / HoD / District)</a></li>
+      <li><a href="#within">Within a post — overlap-days weighting</a></li>
+      <li><a href="#officer">Across posts — tenure-proportionate score</a></li>
+      <li><a href="#example">A worked example</a></li>
+      <li><a href="#glossary">Glossary of statistical terms</a></li>
+    </ol>
+  </div>
+
+  <h2 id="purpose">1 · Purpose &amp; design principles</h2>
+  <p>The Information &amp; Public Relations (I&amp;PR) department runs periodic <b>citizen-perception surveys</b> on
+  government <b>campaigns</b> across districts. Each survey gives a satisfaction <b>score (0–100)</b> for a
+  campaign, in a district, for a period. This methodology attributes those citizen scores to the <b>officer responsible</b>
+  for that work at that time.</p>
+  <table>
+    <thead><tr><th>Principle</th><th>How we achieve it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Right scores to the right officer</b></td><td>The post's <b>Office Status</b> decides which campaigns/districts apply (rules below).</td></tr>
+      <tr><td><b>Credit only for time served</b></td><td>A survey counts only for the <b>overlap</b> between its period and the officer's tenure in the post.</td></tr>
+      <tr><td><b>Longer postings count more</b></td><td>Posts are combined by a <b>tenure-days weighted average</b>.</td></tr>
+      <tr><td><b>Already on a 0–100 scale</b></td><td>Citizen scores are 0–100, so no rescaling is needed — averages stay 0–100.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="data">2 · The raw data</h2>
+  <p>Two tables drive the score:</p>
+  <ul>
+    <li><b>Perception scores</b> — one row per <span class="var">campaign × district × period</span> with a citizen
+    <span class="var">score</span> (0–100). The period is a date range (e.g. "Apr-25").</li>
+    <li><b>Campaign → Department/HoD map</b> — tells us which <b>department</b> and <b>HoD</b> own each campaign, so a
+    post can be linked to the campaigns it is responsible for.</li>
+  </ul>
+
+  <h2 id="posts">3 · How posts map to surveys — the attribution rules</h2>
+  <p>An officer holds a sequence of <b>posts</b>. Each post's <b>Office Status</b> (and, for districts, its department)
+  decides exactly which perception rows apply:</p>
+  <table>
+    <thead><tr><th>Rule</th><th>Office Status</th><th>Perception rows attributed</th></tr></thead>
+    <tbody>
+      <tr><td>2</td><td><b>Secretariat</b></td><td>All campaigns of that <b>Department</b>, across <b>every district</b>.</td></tr>
+      <tr><td>3</td><td><b>HoD</b></td><td>All campaigns owned by that <b>HoD</b>, across every district.</td></tr>
+      <tr><td>6</td><td><b>HoD — Chief Secretary</b></td><td>Whole-of-government: <b>every</b> campaign in <b>every</b> district.</td></tr>
+      <tr><td>4</td><td><b>District — Revenue</b> dept</td><td>The Collector view: <b>all</b> campaigns happening in that <b>district</b>, any department.</td></tr>
+      <tr><td>5</td><td><b>District — other</b> dept</td><td>Only that <b>department's</b> campaigns, and only in <b>that district</b>.</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Rules 2, 3 and 6 are <b>state-wide</b> (all districts) because Secretariat/HoD roles steer a programme
+  everywhere. Rules 4 and 5 are <b>district-confined</b> because a field officer owns outcomes only in their own district.
+  A Revenue district post (the Collector) owns the <b>whole</b> district; a line-department district post owns only its
+  own department's work there.</div>
+
+  <h2 id="within">4 · Within a post — overlap-days weighting</h2>
+  <p>A post may map to many survey rows spanning different periods. An officer should be credited for a survey only to the
+  extent their tenure <b>overlapped</b> that survey's period. So within a post we take an <b>overlap-days weighted average</b>:</p>
+  <div class="formula"><b>Post Score</b> = Σ ( <span class="hi">score<sub>r</sub> × overlapDays<sub>r</sub></span> ) ÷ Σ ( <span class="hi">overlapDays<sub>r</sub></span> )</div>
+  <p>where <span class="var">overlapDays<sub>r</sub></span> is the number of days the survey period of row <i>r</i> overlaps
+  the officer's <i>from-date → to-date</i> in that post. A survey that ran mostly outside the officer's tenure contributes little;
+  one fully inside it contributes fully. Rows with zero overlap are ignored.</p>
+
+  <h2 id="officer">5 · Across posts — the tenure-proportionate officer score</h2>
+  <p>Each post yields its own score. To combine an officer's posts into one number we use a <b>tenure-days weighted
+  average</b>, so a post held for years counts far more than one held for weeks:</p>
+  <div class="formula"><b>Officer Score</b> = Σ ( <span class="hi">PostScore<sub>p</sub> × tenureDays<sub>p</sub></span> ) ÷ Σ ( <span class="hi">tenureDays<sub>p</sub></span> )</div>
+  <p>The sum runs only over posts that actually have a perception score (posts in campaigns); posts with no linked survey
+  are skipped and neither help nor hurt. <span class="var">tenureDays<sub>p</sub></span> is the officer's days in post
+  <i>p</i> (from-date to to-date, or to today if still serving).</p>
+  <div class="note"><b>Two levels of proportionality.</b> First, <i>within</i> a post, surveys are weighted by overlap days;
+  then, <i>across</i> posts, post-scores are weighted by tenure days. Both ensure the score reflects <b>where the officer
+  actually spent their time</b>.</div>
+
+  <h2 id="example">6 · A worked example</h2>
+  <div class="ex">
+    <h4>An officer with two relevant posts</h4>
+    <p><b>Post 1 — Secretariat, Health Dept</b>, held 600 days. Applies to all Health campaigns statewide. Overlap-days
+    weighted average of those surveys = <b>78.0</b>.</p>
+    <p><b>Post 2 — District Collector (Revenue), Guntur</b>, held 200 days. Applies to all campaigns in Guntur. Overlap-days
+    weighted average = <b>66.0</b>.</p>
+    <div class="formula">Officer Score = (78.0 × 600 + 66.0 × 200) ÷ (600 + 200)<br>&nbsp;&nbsp;= (46,800 + 13,200) ÷ 800 = <b class="hi">75.0 / 100</b></div>
+    <p class="good">The longer Secretariat tenure rightly dominates, but the district stint still moves the final number.</p>
+  </div>
+  <div class="ex">
+    <h4>Why overlap matters (within a post)</h4>
+    <p>In Post 2, two Guntur surveys apply: one ran for 120 days inside the officer's tenure (score 60), another for 40
+    days (score 84).</p>
+    <div class="formula">Post 2 Score = (60 × 120 + 84 × 40) ÷ (120 + 40) = (7,200 + 3,360) ÷ 160 = <b class="hi">66.0</b></div>
+    <p>The longer-overlapping survey dominates — the officer is credited in proportion to the time they were actually in charge.</p>
+  </div>
+
+  <h2 id="glossary">7 · Glossary of statistical terms</h2>
+  <dl>
+    <dt>Perception score</dt><dd>A citizen-satisfaction rating (0–100) from an I&amp;PR survey for one campaign, in one district, in one period.</dd>
+    <dt>Campaign</dt><dd>A government programme/initiative that surveys are run against; each is owned by a department and HoD.</dd>
+    <dt>Office Status</dt><dd>The nature of a post — Secretariat, HoD, or District — which determines the attribution rule.</dd>
+    <dt>Attribution rule</dt><dd>The mapping (rules 2–6) from a post to the set of perception rows the officer is credited with.</dd>
+    <dt>Overlap days</dt><dd>The number of days a survey's period intersects the officer's tenure in a post — the weight used <i>within</i> a post.</dd>
+    <dt>Tenure days</dt><dd>The number of days an officer held a post — the weight used <i>across</i> posts.</dd>
+    <dt>Weighted arithmetic mean</dt><dd>An average in which some values count more than others; used twice — overlap-weighted within a post, tenure-weighted across posts.</dd>
+    <dt>Proportionate score</dt><dd>The principle that an officer's score reflects exactly how much of each survey/post fell within the time they served.</dd>
+  </dl>
+
+  <div class="foot">AIS Officers 360° Dashboard — Andhra Pradesh CMO · Public Perception module.<br>
+  Officer Score = tenure-days weighted average across posts of each post's overlap-days weighted average of the attributed I&amp;PR citizen-perception scores (0–100).</div>
+</div>
+</body>
+</html>

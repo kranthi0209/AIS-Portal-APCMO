@@ -54,6 +54,7 @@ async function requireAuth() {
 function signOut() {
   localStorage.removeItem(_SESSION_KEY);
   try { sessionStorage.removeItem('ais_fs_mode'); } catch(e) {}
+  try { sessionStorage.removeItem('alkra_speak_mode'); } catch(e) {}
   window.location.href = 'index.html';
 }
 
@@ -162,7 +163,11 @@ async function loadOfficerData(serviceType) {
 // serviceType: 'IAS' | 'IPS' | 'IFS'
 // ----------------------------------------------------------------
 
+// Supabase Storage bucket for officer photos
+const PHOTO_BUCKET = SUPABASE_URL + '/storage/v1/object/public/officer-photos';
+
 async function loadPhotos(serviceType) {
+  // photo_url column now holds the correct Supabase Storage URL (with exact extension)
   const { data, error } = await _supabase
     .from('officers')
     .select('identity_no, photo_url')
@@ -181,6 +186,9 @@ async function loadPhotos(serviceType) {
   return map;
 }
 
+
+// Inline SVG silhouette used when a photo is missing / fails to load
+const NO_PHOTO_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Crect width='100' height='120' fill='%23e8eaf6'/%3E%3Ccircle cx='50' cy='42' r='22' fill='%23c5cae9'/%3E%3Cellipse cx='50' cy='105' rx='35' ry='28' fill='%23c5cae9'/%3E%3C/svg%3E";
 
 // ----------------------------------------------------------------
 // Check if current user is admin

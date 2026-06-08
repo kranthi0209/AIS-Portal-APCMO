@@ -1,4 +1,4 @@
-// ================================================================
+﻿// ================================================================
 // script_graph.js — Unified graph/chart script for AIS Dashboard
 // Service type read from URL ?service=IAS|IPS|IFS
 // Falls back to window.AIS_CONFIG for backward compatibility.
@@ -91,7 +91,7 @@
       currentGroupedData = structuredClone(groupedData);
       populateHCMCheckboxes(Array.from(hcmSet).sort());
       renderLegend();
-      renderCharts(currentGroupedData);
+      if (window.graphApplyFilter) window.graphApplyFilter(); else renderCharts(currentGroupedData);
     }).catch(error => {
       console.error('Error loading data:', error);
       document.getElementById('chartGrid').innerHTML =
@@ -101,6 +101,25 @@
          </div>`;
     });
   });
+
+  // External filter hook — driven by the 360 Live right-panel filters
+  window.graphApplyFilter = function () {
+    if (!groupedData || !Object.keys(groupedData).length) return;
+    function fv(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+    var cadre=fv('fCadre'), src=fv('fSource'), dom=fv('fDomicile'), pt=fv('fPostType'), nm=fv('searchName360').toLowerCase();
+    var out={};
+    Object.keys(groupedData).forEach(function(k){
+      var v=groupedData[k], m=v.meta||{};
+      if (cadre && (m.Cadre||'')!==cadre) return;
+      if (src && (m.SourceOfRecruitment||'')!==src) return;
+      if (dom && (m.Domicile||'')!==dom) return;
+      if (pt && !((v.services||[]).some(function(s){ return (s.PostType||'')===pt; }))) return;
+      if (nm && (m.NameoftheOfficer||'').toLowerCase().indexOf(nm)===-1) return;
+      out[k]=v;
+    });
+    currentGroupedData=out;
+    renderCharts(currentGroupedData);
+  };
 
   // ----------------------------------------------------------------
   // Get computed colours from CSS classes
@@ -155,7 +174,7 @@
 
       const title = document.createElement('div');
       title.className = 'chart-title';
-      title.innerHTML = `<a href="#" class="officer-link" data-officer="${escapeHtml(name)}" style="color:#ede9fe;text-decoration:none;">${idx + 1}. ${escapeHtml(name)}</a>`;
+      title.innerHTML = `<a href="#" class="officer-link" data-officer="${escapeHtml(name)}" style="color:#fde9c8;text-decoration:none;">${idx + 1}. ${escapeHtml(name)}</a>`;
 
       const canvas = document.createElement('canvas');
       chartContainer.appendChild(title);
@@ -174,6 +193,16 @@
         },
         options: {
           responsive: true,
+          onHover: function (e, els) { if (e && e.native && e.native.target) e.native.target.style.cursor = (els && els.length) ? 'pointer' : 'default'; },
+          onClick: function (evt, els) {
+            if (!els || !els.length) return;
+            var cat = allCategories[els[0].index];
+            var posts = services.filter(function(s){ return s.Category === cat; }).sort(function(a,b){ return new Date(b.From) - new Date(a.From); });
+            if (!posts.length) return;
+            var rows = posts.map(function(s){ return '<tr><td>' + escapeHtml(s.Department||'') + '</td><td>' + escapeHtml(s.PostName||'') + '</td><td class="nw">' + (s.From||'') + '</td><td class="nw">' + (s.To||'') + '</td><td class="nw">' + calcDecimalYears(s.From, s.To).toFixed(2) + ' yrs</td></tr>'; }).join('');
+            document.getElementById('service-details').innerHTML = '<div class="pop-hd">&#128202; ' + escapeHtml(cat) + ' Postings &mdash; ' + escapeHtml(name) + '</div><table class="popupb-table" style="width:100%;"><thead><tr><th>Department</th><th>Post</th><th>From</th><th>To</th><th>Duration</th></tr></thead><tbody>' + rows + '</tbody></table>';
+            $('#service-popupb').fadeIn();
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -182,7 +211,7 @@
               }
             },
             datalabels: {
-              color: '#1e1b4b',
+              color: '#7c2d12',
               anchor: 'end',
               align: 'top',
               font: { weight: 'bold', size: 11 },
@@ -222,7 +251,7 @@
         <input type="checkbox" id="${id}" value="${escapeHtml(hcm)}" style="display:none">
         <div class="hcm-card-tick">&#10003;</div>
         <img src="${img}" alt="${escapeHtml(name)}"
-             onerror="this.src='https://placehold.co/130x140?text=No+Photo'">
+             onerror="this.src=NO_PHOTO_SVG;this.onerror=null">
         <div class="hcm-card-name">${escapeHtml(name)}</div>
         ${term ? `<div class="hcm-card-term">${term}</div>` : '<div class="hcm-card-term">&nbsp;</div>'}
       </div>`;
@@ -301,13 +330,13 @@
     const name      = data.NameoftheOfficer?.trim();
     const services  = groupedData[name]?.services || [];
     const identityNo  = data['IdentityNo.']?.toString()?.trim();
-    const imageUrl    = photoMap[identityNo] || 'https://placehold.co/120x150?text=No+Image';
+    const imageUrl    = photoMap[identityNo] || NO_PHOTO_SVG;
 
     // Row definitions: [key1, label1, key2, label2, gradient, valueBg]
     const fieldRows = [
-      ['IdentityNo.',             'Identity No',        'AllotmentYear',            'Allotment Year',   'linear-gradient(135deg,#1e1b4b,#4338ca)', '#eef2ff'],
-      ['Cadre',                   'Cadre',              'SourceOfRecruitment',      'Source of Recruit.','linear-gradient(135deg,#4a1d96,#7c3aed)', '#f5f3ff'],
-      ['DateofAppointment',       'Date of Appointment','DateOfBirth',              'Date of Birth',    'linear-gradient(135deg,#1e3a5f,#2563eb)', '#eff6ff'],
+      ['IdentityNo.',             'Identity No',        'AllotmentYear',            'Allotment Year',   'linear-gradient(135deg,#7c2d12,#c2410c)', '#fff6e3'],
+      ['Cadre',                   'Cadre',              'SourceOfRecruitment',      'Source of Recruit.','linear-gradient(135deg,#92400e,#d97706)', '#fff3d6'],
+      ['DateofAppointment',       'Date of Appointment','DateOfBirth',              'Date of Birth',    'linear-gradient(135deg,#7c2d12,#b45309)', '#fff6e3'],
       ['SourceOfRecruitment',     'Source of Recruit.', 'EducationalQualification', 'Education',        'linear-gradient(135deg,#134e4a,#0d9488)', '#f0fdfa'],
       ['Domicile',                'Domicile',           'EmailId',                  'Email',            'linear-gradient(135deg,#14532d,#16a34a)', '#f0fdf4'],
       ['PhoneNo',                 'Phone',              '',                         '',                 'linear-gradient(135deg,#7c2d12,#ea580c)', '#fff7ed'],
@@ -326,24 +355,25 @@
     });
 
     let html = `
-    <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);padding:18px 20px 14px;text-align:center;border-radius:0;">
+    <div class="pop-hd">&#128100; Officer Profile</div>
+    <div style="background:linear-gradient(135deg,#7c2d12 0%,#9a3412 60%,#c2410c 100%);padding:18px 20px 14px;text-align:center;border-radius:0;">
       <img src="${imageUrl}" alt="Officer Image"
            style="width:130px;height:165px;object-fit:cover;border-radius:14px;border:4px solid #a5b4fc;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
       <h2 style="margin:10px 0 4px;color:#ffffff;font-size:16px;font-weight:800;letter-spacing:0.2px;">${escapeHtml(data.NameoftheOfficer)}</h2>
-      <div style="font-size:12px;color:#c7d2fe;font-weight:600;font-style:italic;">${escapeHtml(data.currentposting || '—')}</div>
+      <div style="font-size:12px;color:#fcd9a8;font-weight:600;font-style:italic;">${escapeHtml(data.currentposting || '—')}</div>
     </div>
     <div style="padding:12px 14px 8px;">
-      <div style="background:linear-gradient(135deg,#312e81,#4338ca);padding:5px 12px;border-radius:6px;margin-bottom:8px;">
-        <span style="color:#e0e7ff;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128203; OFFICER DETAILS</span>
+      <div style="background:linear-gradient(135deg,#9a3412,#c2410c);padding:5px 12px;border-radius:6px;margin-bottom:8px;">
+        <span style="color:#fde9c8;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128203; OFFICER DETAILS</span>
       </div>
-      <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(67,56,202,0.12);">
+      <table class="officer-detail-table" style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(67,56,202,0.12);">
         ${detailRows.join('')}
       </table>
     </div>`;
 
     const sortedServices = services.slice().sort((a, b) => parseServiceDate(b.From) - parseServiceDate(a.From));
     html += `<div style="padding:0 14px 4px;">
-      <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:5px 12px;border-radius:6px;">
+      <div style="background:linear-gradient(135deg,#5c2102,#7c2d12);padding:5px 12px;border-radius:6px;">
         <span style="color:#bae6fd;font-size:12px;font-weight:700;letter-spacing:0.5px;">&#128196; SERVICE HISTORY</span>
       </div>
     </div>
@@ -351,7 +381,7 @@
     <table class="popupc-table" style="width:100%;">
       <thead><tr><th>Post Name</th><th>Department</th><th>Category</th><th>From</th><th>To</th><th>Duration</th><th>HCM</th></tr></thead>
       <tbody>${sortedServices.map(s =>
-        `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td>${s.From}</td><td>${s.To || '<em>Present</em>'}</td><td>${fmtDuration(s.From, s.To)}</td><td>${escapeHtml(s.HCM || '')}</td></tr>`
+        `<tr><td>${escapeHtml(s.PostName)}</td><td>${escapeHtml(s.Department)}</td><td>${escapeHtml(s.Category)}</td><td class="nw">${s.From}</td><td class="nw">${s.To || '<em>Present</em>'}</td><td class="nw">${fmtDuration(s.From, s.To)}</td><td>${escapeHtml(s.HCM || '')}</td></tr>`
       ).join('')}</tbody>
     </table></div>`;
 

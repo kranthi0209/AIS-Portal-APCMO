@@ -7,7 +7,7 @@
 
 (function () {
 
-  const svc = (new URLSearchParams(window.location.search).get('service') || 'IAS').toUpperCase();
+  let svc = (new URLSearchParams(window.location.search).get('service') || 'IAS').toUpperCase();
 
   // ── 4 live evaluation categories (from the capsule scores) ──────
   const WHEEL_CATS = [
@@ -232,12 +232,9 @@
   // ================================================================
   // BOOTSTRAP
   // ================================================================
-  requireAuth().then(session => {
-    if (!session) return;
-
+  function _load360() {
     fetchHcmPhotos();
-
-    Promise.all([
+    return Promise.all([
       loadOfficerData(svc),
       loadPhotos(svc),
       (typeof window.getLive4ScoreMap === 'function' ? window.getLive4ScoreMap() : Promise.resolve({})),
@@ -262,13 +259,29 @@
         );
       }
 
-      // Build the 4 live capsule scores for each officer
-      for (const grp of Object.values(grouped)) {
-        const idNo = String(grp.meta['IdentityNo.'] || '').trim();
-        grp.scores = buildScores(idNo, scoreMap);
+      // Build the 4 live capsule scores for each officer — guarded so a
+      // scoring failure can never take down the filters or the grid.
+      try {
+        for (const grp of Object.values(grouped)) {
+          const idNo = String(grp.meta['IdentityNo.'] || '').trim();
+          grp.scores = buildScores(idNo, scoreMap);
+        }
+        computeOfficerRanks(Object.values(grouped));
+      } catch (e) {
+        console.error('[live4] scoring failed — loading grid without scores:', e);
+        for (const grp of Object.values(grouped)) {
+          if (!grp.scores)   grp.scores   = new Array(NCATS).fill(null);
+          if (!grp.catRanks) grp.catRanks = new Array(NCATS).fill('—');
+          if (grp.composite   === undefined) grp.composite   = null;
+          if (grp.scoreCount  === undefined) grp.scoreCount  = 0;
+          if (grp.availSig    === undefined) grp.availSig    = '0000';
+          if (grp.peerLabel   === undefined) grp.peerLabel   = 'No live scores';
+          if (grp.overallRank === undefined) grp.overallRank = '—';
+          if (grp.overallTotal=== undefined) grp.overallTotal= 0;
+          if (grp.peerRank    === undefined) grp.peerRank    = '—';
+          if (grp.peerTotal   === undefined) grp.peerTotal   = 0;
+        }
       }
-
-      computeOfficerRanks(Object.values(grouped));
 
       allOfficers = Object.entries(grouped)
         .sort(([, a], [, b]) => (a.meta.OfficerId || 0) - (b.meta.OfficerId || 0));
@@ -284,7 +297,15 @@
          </div>`;
       document.getElementById('count360').textContent = 'Error';
     });
-  });
+  }
+  // Re-load all per-service grid data in-place (no page reload — keeps fullscreen).
+  window.reloadGrid360 = function (newSvc) {
+    if (newSvc) svc = String(newSvc).toUpperCase();
+    var g = document.getElementById('grid360');
+    if (g) g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 0;color:#64748b;">&#8987; Loading ' + svc + ' officers&hellip;</div>';
+    return _load360();
+  };
+  requireAuth().then(function (session) { if (session) _load360(); });
 
   // ================================================================
   // FILTERS & SORT  (identical to script_360.js)
@@ -416,6 +437,9 @@
 
   window.applySort360 = function () {
     sortKey = document.getElementById('sortSelect360')?.value || 'seniority';
+    sortDir = 'desc';
+    const btn = document.getElementById('sortDirBtn');
+    if (btn) btn.textContent = '↓ Desc';
     applyFilters360();
   };
 
@@ -575,6 +599,13 @@
     document.getElementById('detailBtnWheel').onclick = () => openWheel(name);
   }
 
+  // Open the same grid detail popup from any capsule table (looked up by Identity No.)
+  window.openOfficerDetailById = function (identityNo) {
+    const id = String(identityNo).trim();
+    const entry = allOfficers.find(([, g]) => String(((g && g.meta) || {})['IdentityNo.'] || '').trim() === id);
+    if (entry) openOfficerDetail(entry[0]);
+  };
+
   window.switchDetailTab = function (tab) {
     document.querySelectorAll('.detail-tab').forEach((btn, i) => {
       const panels = ['dept','cat','hcm','svc'];
@@ -640,12 +671,11 @@
     const svg = document.getElementById('wheelSvg');
     if (!svg) return;
     const SVGNS = 'http://www.w3.org/2000/svg';
-    const N = NCATS;
     const cx = 320, cy = 320;
-    const innerR = 84, outerR = 262;
+    const innerR = 96, outerR = 250;
     const maxScore = 100;
-    const angleStep = (2 * Math.PI) / N;
-    const gap = 0.05;
+    const angleStep = (2 * Math.PI) / NCATS;
+    const gap = 0.045;
     const startOffset = -Math.PI / 2 - angleStep / 2;  // first segment centred at top
 
     svg.innerHTML = '';
@@ -658,27 +688,39 @@
       const laf = (a2 - a1) > Math.PI ? 1 : 0;
       return `M ${x1} ${y1} L ${x2} ${y2} A ${r2} ${r2} 0 ${laf} 1 ${x3} ${y3} L ${x4} ${y4} A ${r1} ${r1} 0 ${laf} 0 ${x1} ${y1} Z`;
     };
+    // pivot any element around the wheel centre (for CSS scale/rotate animations)
+    const pivot = (e) => { e.style.transformBox = 'view-box'; e.style.transformOrigin = cx + 'px ' + cy + 'px'; };
 
-    // ── defs: per-segment gradients, glow, centre gradient ──
+    // ── defs: per-segment gradients + glow ──
     const defs = el('defs', {});
     WHEEL_CATS.forEach((cat, i) => {
-      const g = el('radialGradient', { id:'wseg'+i, cx:'50%', cy:'50%', r:'78%' });
+      const g = el('linearGradient', { id:'wseg'+i, x1:'0%', y1:'0%', x2:'0%', y2:'100%' });
       g.appendChild(el('stop', { offset:'0%',  'stop-color':cat.light }));
       g.appendChild(el('stop', { offset:'100%','stop-color':cat.color }));
       defs.appendChild(g);
     });
-    const glow = el('filter', { id:'wglow', x:'-40%', y:'-40%', width:'180%', height:'180%' });
-    glow.appendChild(el('feDropShadow', { dx:'0', dy:'0', stdDeviation:'5', 'flood-color':'rgba(0,0,0,0.28)' }));
+    const glow = el('filter', { id:'wglow', x:'-50%', y:'-50%', width:'200%', height:'200%' });
+    glow.appendChild(el('feDropShadow', { dx:'0', dy:'2', stdDeviation:'4', 'flood-color':'rgba(15,23,42,0.22)' }));
     defs.appendChild(glow);
-    const cg = el('radialGradient', { id:'wcentre', cx:'50%', cy:'40%', r:'70%' });
-    cg.appendChild(el('stop', { offset:'0%','stop-color':'#fffdf7' }));
-    cg.appendChild(el('stop', { offset:'100%','stop-color':'#fcd34d' }));
-    defs.appendChild(cg);
-    // circular clip for the centre photo
     const clip = el('clipPath', { id:'wphotoClip' });
-    clip.appendChild(el('circle', { cx, cy, r: innerR - 4 }));
+    clip.appendChild(el('circle', { cx, cy, r: innerR - 5 }));
     defs.appendChild(clip);
     svg.appendChild(defs);
+
+    // ── decorative back layer: concentric guide rings + slow rotating dashed ring ──
+    [0.25, 0.5, 0.75, 1].forEach(f => {
+      svg.appendChild(el('circle', {
+        cx, cy, r: innerR + (outerR - innerR) * f, fill:'none',
+        stroke:'#e2e8f0', 'stroke-width':'1', 'stroke-dasharray': f === 1 ? 'none' : '3 6'
+      }));
+    });
+    const spinRing = el('circle', {
+      cx, cy, r: outerR + 16, fill:'none', stroke:'#cbd5e1',
+      'stroke-width':'1.5', 'stroke-dasharray':'2 11', 'stroke-linecap':'round', opacity:'0.7'
+    });
+    pivot(spinRing);
+    spinRing.style.animation = 'wheelSpin 44s linear infinite';
+    svg.appendChild(spinRing);
 
     WHEEL_CATS.forEach((cat, i) => {
       const a1 = startOffset + i * angleStep + gap / 2;
@@ -686,100 +728,130 @@
       const midA = (a1 + a2) / 2;
       const sc = scores[i];
       const isNull = sc === null;
-      const frac = isNull ? 0 : Math.max(0.05, sc / maxScore);
+      const frac = isNull ? 0 : Math.max(0.06, sc / maxScore);
       const segR = innerR + (outerR - innerR) * frac;
+      const delay = 0.14 + i * 0.12;
 
-      // 1) faint full-range "gauge track"
+      // 1) full-range track
       const track = el('path', {
         d: sector(innerR, outerR, a1, a2),
-        fill: isNull ? '#f1f5f9' : cat.light + '22',
-        stroke: isNull ? '#cbd5e1' : cat.light + '99',
-        'stroke-width': '1.5', cursor: 'pointer'
+        fill: isNull ? '#f1f5f9' : '#f8fafc',
+        stroke: isNull ? '#cbd5e1' : '#e2e8f0',
+        'stroke-width': '1.5', 'stroke-linejoin':'round', cursor: 'pointer'
       });
-      if (isNull) track.setAttribute('stroke-dasharray', '6 6');
+      if (isNull) track.setAttribute('stroke-dasharray', '5 5');
       track.addEventListener('click', () => onSegClick(i, officerName));
+      track.addEventListener('mouseenter', () => track.setAttribute('fill', isNull ? '#e2e8f0' : '#eef2ff'));
+      track.addEventListener('mouseleave', () => track.setAttribute('fill', isNull ? '#f1f5f9' : '#f8fafc'));
       svg.appendChild(track);
 
-      // 2) coloured value arc with glow + bloom-in animation
+      // 2) coloured value arc — grows out from centre + fades in (staggered)
       if (!isNull) {
         const seg = el('path', {
           d: sector(innerR, segR, a1, a2), fill: 'url(#wseg'+i+')',
-          stroke: cat.color, 'stroke-width': '3', 'stroke-linejoin': 'round',
+          stroke: cat.color, 'stroke-width': '2', 'stroke-linejoin': 'round',
           filter: 'url(#wglow)', cursor: 'pointer'
         });
+        pivot(seg);
+        seg.style.transform = 'scale(0.55)';
         seg.style.opacity = '0';
-        seg.style.transition = 'opacity 0.55s ease ' + (i * 0.13) + 's';
-        seg.addEventListener('mouseenter', () => seg.style.opacity = '0.85');
-        seg.addEventListener('mouseleave', () => seg.style.opacity = '1');
+        seg.style.transition = 'transform 0.7s cubic-bezier(0.34,1.45,0.5,1) ' + delay + 's, opacity 0.55s ease ' + delay + 's';
+        seg.addEventListener('mouseenter', () => seg.style.filter = 'url(#wglow) brightness(1.07)');
+        seg.addEventListener('mouseleave', () => seg.style.filter = 'url(#wglow)');
         seg.addEventListener('click', () => onSegClick(i, officerName));
         svg.appendChild(seg);
-        requestAnimationFrame(() => requestAnimationFrame(() => { seg.style.opacity = '1'; }));
+        requestAnimationFrame(() => requestAnimationFrame(() => { seg.style.transform = 'scale(1)'; seg.style.opacity = '1'; }));
       }
 
-      // 3) icon + label outside the ring
-      const [lx, ly] = polar(outerR + 38, midA);
+      // 3) icon + label outside the ring (label wraps to 2 lines if long)
+      const [lx, ly] = polar(outerR + 34, midA);
       svg.appendChild(Object.assign(el('text', {
-        x: lx, y: ly - 10, 'text-anchor': 'middle', 'font-size': '24'
+        x: lx, y: ly - 12, 'text-anchor': 'middle', 'font-size': '23'
       }), { textContent: (CAT_DETAILS[i] && CAT_DETAILS[i].icon) || '' }));
-      svg.appendChild(Object.assign(el('text', {
-        x: lx, y: ly + 11, 'text-anchor': 'middle', 'font-size': '12.5', 'font-weight': '800',
-        fill: isNull ? '#94a3b8' : cat.color, 'font-family': 'Inter,Arial,sans-serif'
-      }), { textContent: cat.label }));
+      const labelColor = isNull ? '#94a3b8' : cat.color;
+      const words = cat.label.split(' ');
+      if (cat.label.length > 9 && words.length > 1) {
+        const mid = Math.ceil(words.length / 2);
+        const lab = el('text', { x: lx, y: ly + 7, 'text-anchor': 'middle', 'font-size': '12',
+          'font-weight': '800', fill: labelColor, 'font-family': 'Inter,Arial,sans-serif' });
+        const s1 = el('tspan', { x: lx, dy: '0' }); s1.textContent = words.slice(0, mid).join(' ');
+        const s2 = el('tspan', { x: lx, dy: '13' }); s2.textContent = words.slice(mid).join(' ');
+        lab.appendChild(s1); lab.appendChild(s2); svg.appendChild(lab);
+      } else {
+        svg.appendChild(Object.assign(el('text', {
+          x: lx, y: ly + 10, 'text-anchor': 'middle', 'font-size': '12.5', 'font-weight': '800',
+          fill: labelColor, 'font-family': 'Inter,Arial,sans-serif'
+        }), { textContent: cat.label }));
+      }
 
-      // 4) score value (filled) or "Not Available" (null)
+      // 4) score value (fades in after its arc) or N/A chip
       if (!isNull) {
-        const [vx, vy] = polar(innerR + (segR - innerR) * 0.62, midA);
+        const [vx, vy] = polar(innerR + (segR - innerR) * 0.6, midA);
         const vt = el('text', {
           x: vx, y: vy, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          'font-size': '24', 'font-weight': '900', fill: '#ffffff',
-          stroke: cat.color, 'stroke-width': '0.6', 'paint-order': 'stroke',
+          'font-size': '23', 'font-weight': '900', fill: '#ffffff',
+          stroke: cat.color, 'stroke-width': '0.5', 'paint-order': 'stroke',
           'font-family': 'Inter,Arial,sans-serif'
         });
         vt.textContent = sc.toFixed(2);
+        vt.style.opacity = '0';
+        vt.style.transition = 'opacity 0.45s ease ' + (delay + 0.32) + 's';
         svg.appendChild(vt);
+        requestAnimationFrame(() => requestAnimationFrame(() => { vt.style.opacity = '1'; }));
       } else {
-        const [vx, vy] = polar((innerR + outerR) / 2, midA);
+        const [vx, vy] = polar(innerR + (outerR - innerR) * 0.45, midA);
         svg.appendChild(Object.assign(el('text', {
-          x: vx, y: vy - 7, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          'font-size': '14', 'font-weight': '800', fill: '#94a3b8', 'font-family': 'Inter,Arial,sans-serif'
-        }), { textContent: 'Score' }));
+          x: vx, y: vy - 7, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': '20'
+        }), { textContent: '🚫' }));
         svg.appendChild(Object.assign(el('text', {
-          x: vx, y: vy + 11, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          'font-size': '12.5', 'font-weight': '800', fill: '#cbd5e1', 'font-family': 'Inter,Arial,sans-serif'
-        }), { textContent: 'Not Available' }));
+          x: vx, y: vy + 13, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': '11.5', 'font-weight': '800', fill: '#94a3b8', 'font-family': 'Inter,Arial,sans-serif'
+        }), { textContent: 'No Score' }));
       }
     });
 
-    // ── centre: officer photo + composite badge ──
+    // ── centre: ripple rings → photo → rim → composite badge ──
     const liveCount = scores.filter(s => s !== null).length;
     const avg = liveCount ? (scores.reduce((s, v) => s + (v || 0), 0) / liveCount) : null;
 
-    svg.appendChild(el('circle', { cx, cy, r: innerR + 6, fill: 'none', stroke: '#f59e0b', 'stroke-width': '1', opacity: '0.4' }));
-    // photo backing (in case of transparent PNG)
-    svg.appendChild(el('circle', { cx, cy, r: innerR - 4, fill: '#fef3c7' }));
-    // the photo, clipped to a circle
+    for (let k = 0; k < 2; k++) {
+      const rip = el('circle', { cx, cy, r: innerR, fill:'none', stroke:'#818cf8', 'stroke-width':'2', opacity:'0' });
+      pivot(rip);
+      rip.style.animation = 'wheelRipple 2.8s ease-out ' + (k * 1.4) + 's infinite';
+      svg.appendChild(rip);
+    }
+    // photo backing + photo
+    svg.appendChild(el('circle', { cx, cy, r: innerR - 1, fill: '#ffffff', filter: 'url(#wglow)' }));
     const img = el('image', {
-      x: cx - (innerR - 4), y: cy - (innerR - 4),
-      width: 2 * (innerR - 4), height: 2 * (innerR - 4),
+      x: cx - (innerR - 5), y: cy - (innerR - 5),
+      width: 2 * (innerR - 5), height: 2 * (innerR - 5),
       preserveAspectRatio: 'xMidYMid slice', 'clip-path': 'url(#wphotoClip)'
     });
     img.setAttribute('href', photoUrl || '');
     img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', photoUrl || '');
-    img.setAttribute('filter', 'url(#wglow)');
     svg.appendChild(img);
-    // gold rim over the photo
-    svg.appendChild(el('circle', { cx, cy, r: innerR, fill: 'none', stroke: '#d97706', 'stroke-width': '3' }));
+    // clean double rim (white + slate)
+    svg.appendChild(el('circle', { cx, cy, r: innerR - 3, fill: 'none', stroke: '#ffffff', 'stroke-width': '4' }));
+    svg.appendChild(el('circle', { cx, cy, r: innerR, fill: 'none', stroke: '#cbd5e1', 'stroke-width': '1.5' }));
 
-    // composite badge at the bottom of the photo
+    // composite badge at the bottom of the photo (fades in last)
     if (avg != null) {
-      svg.appendChild(el('rect', {
-        x: cx - 46, y: cy + innerR - 22, width: 92, height: 30, rx: 15,
-        fill: '#7c2d12', stroke: '#fbbf24', 'stroke-width': '1.5', filter: 'url(#wglow)'
-      }));
-      svg.appendChild(Object.assign(el('text', {
-        x: cx, y: cy + innerR - 1, 'text-anchor': 'middle', 'font-size': '16', 'font-weight': '900',
-        fill: '#fde68a', 'font-family': 'Inter,Arial,sans-serif'
+      const bw = 90, bh = 32, by = cy + innerR - 16;
+      const grp = el('g', {});
+      grp.style.opacity = '0';
+      grp.style.transition = 'opacity 0.5s ease 0.75s';
+      grp.appendChild(el('rect', { x: cx - bw/2, y: by, width: bw, height: bh, rx: 16,
+        fill: '#0f172a', stroke: '#6366f1', 'stroke-width': '1.5', filter: 'url(#wglow)' }));
+      grp.appendChild(Object.assign(el('text', {
+        x: cx, y: by + 11, 'text-anchor': 'middle', 'font-size': '8.5', 'font-weight': '700',
+        fill: '#94a3b8', letterSpacing: '0.8', 'font-family': 'Inter,Arial,sans-serif'
+      }), { textContent: 'COMPOSITE' }));
+      grp.appendChild(Object.assign(el('text', {
+        x: cx, y: by + 25, 'text-anchor': 'middle', 'font-size': '15', 'font-weight': '900',
+        fill: '#ffffff', 'font-family': 'Inter,Arial,sans-serif'
       }), { textContent: avg.toFixed(2) }));
+      svg.appendChild(grp);
+      requestAnimationFrame(() => requestAnimationFrame(() => { grp.style.opacity = '1'; }));
     }
   }
 

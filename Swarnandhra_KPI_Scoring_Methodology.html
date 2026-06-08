@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarnandhra KPI — Scoring Methodology</title>
+<link rel="stylesheet" href="responsive_fit.css">
+<style>
+  :root{ --ac:#15803d; --ac-d:#14532d; --ink:#0f172a; --mut:#475569; --line:#cbd5e1;
+         --soft:#f0fdf4; --soft-b:#bbf7d0; --warn:#fffbeb; --warn-b:#fde68a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Segoe UI',Inter,Arial,sans-serif; color:var(--ink); background:#eef2f7; line-height:1.65; }
+  .wrap{ max-width:980px; margin:0 auto; padding:0 22px 80px; }
+  header.hero{ background:linear-gradient(135deg,#16a34a 0%,#65a30d 55%,#facc15 100%); color:#fff; padding:38px 22px 30px; }
+  header.hero .inner{ max-width:980px; margin:0 auto; }
+  header.hero h1{ margin:0 0 6px; font-size:27px; }
+  header.hero p{ margin:0; font-size:14px; opacity:0.95; }
+  h2{ margin:38px 0 10px; font-size:20px; color:var(--ac-d); border-bottom:2px solid var(--soft-b); padding-bottom:6px; }
+  h3{ margin:24px 0 6px; font-size:16px; color:var(--ac); }
+  p,li{ font-size:14.3px; color:#1e293b; }
+  code,.var{ background:#0f172a; color:#86efac; padding:1px 7px; border-radius:5px; font-size:13px; font-family:'Consolas',monospace; }
+  .formula{ background:#0b1220; color:#e2e8f0; border-radius:12px; padding:16px 20px; margin:14px 0; font-family:'Consolas','Courier New',monospace; font-size:14.5px; overflow-x:auto; line-height:1.9; }
+  .formula b{ color:#86efac; } .formula .hi{ color:#fde047; }
+  .note{ background:var(--soft); border:1px solid var(--soft-b); border-left:5px solid var(--ac); border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:var(--ac-d); }
+  .warn{ background:var(--warn); border:1px solid var(--warn-b); border-left:5px solid #d97706; border-radius:10px; padding:13px 18px; margin:14px 0; font-size:13.6px; color:#78350f; }
+  table{ border-collapse:collapse; width:100%; margin:14px 0; font-size:13.3px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 8px rgba(15,23,42,0.08); }
+  th,td{ border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top; }
+  th{ background:var(--ac-d); color:#fff; font-weight:700; }
+  tbody tr:nth-child(even){ background:#f8fafc; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 22px; margin:24px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .toc a{ color:var(--ac); text-decoration:none; } .toc a:hover{ text-decoration:underline; }
+  .toc ol{ margin:6px 0 0; padding-left:22px; } .toc li{ margin:3px 0; }
+  .ex{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:6px 20px 16px; margin:14px 0; box-shadow:0 1px 8px rgba(15,23,42,0.06); }
+  .ex h4{ color:var(--ac-d); margin:16px 0 6px; font-size:14.5px; }
+  .good{ color:#15803d; font-weight:700; } .bad{ color:#b91c1c; font-weight:700; }
+  dt{ font-weight:700; color:var(--ac-d); margin-top:12px; } dd{ margin:2px 0 0; color:#334155; font-size:13.8px; }
+  .foot{ margin-top:46px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--mut); }
+  @media print{ body{ background:#fff; } header.hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header class="hero"><div class="inner">
+  <h1>⭐ Swarnandhra KPI — Scoring Methodology</h1>
+  <p>How Swarna Andhra Pradesh KPI scores (district / department / HoD) are attributed to each AIS officer, weighted by tenure, into a fair 0–100 score.</p>
+</div></header>
+
+<div class="wrap">
+  <div class="toc"><b>Contents</b>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; design principles</a></li>
+      <li><a href="#data">The raw data — district &amp; department/HoD KPIs</a></li>
+      <li><a href="#agg">Aggregating the KPI source into lookups</a></li>
+      <li><a href="#posts">How posts map to KPIs (Secretariat / HoD / District)</a></li>
+      <li><a href="#officer">Across posts — tenure-proportionate score</a></li>
+      <li><a href="#example">A worked example</a></li>
+      <li><a href="#glossary">Glossary of statistical terms</a></li>
+    </ol>
+  </div>
+
+  <h2 id="purpose">1 · Purpose &amp; design principles</h2>
+  <p>The <b>Swarna Andhra Pradesh</b> programme tracks government performance through <b>Key Performance Indicators
+  (KPIs)</b>, scored 0–100, at two levels: by <b>district</b> and by <b>department / HoD</b>. This methodology attributes
+  those KPI scores to the <b>officer in charge</b> of that district or department during the period.</p>
+  <table>
+    <thead><tr><th>Principle</th><th>How we achieve it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Right KPIs to the right officer</b></td><td>The post's <b>Office Status</b> picks the district vs department vs HoD KPI set.</td></tr>
+      <tr><td><b>Fair within a unit</b></td><td>Where a unit has several KPI rows, the post takes their <b>average</b>.</td></tr>
+      <tr><td><b>Longer postings count more</b></td><td>Posts are combined by a <b>tenure-days weighted average</b>.</td></tr>
+      <tr><td><b>Already on a 0–100 scale</b></td><td>KPI scores are 0–100, so averaging keeps the result 0–100.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="data">2 · The raw data</h2>
+  <ul>
+    <li><b>District KPI table</b> — one or more KPI <span class="var">score</span> rows per <span class="var">district</span>.</li>
+    <li><b>Department / HoD KPI table</b> — KPI <span class="var">score</span> rows tagged with both a
+    <span class="var">department</span> and an <span class="var">HoD</span>.</li>
+  </ul>
+
+  <h2 id="agg">3 · Aggregating the KPI source into lookups</h2>
+  <p>Before scoring officers, the source rows are aggregated into three averaged lookups (mean of all KPI rows for each key):</p>
+  <div class="formula">
+    byDistrict[d] = mean( scores where district = d )<br>
+    byDept[dep]   = mean( scores where department = dep )<br>
+    byHoD[h]      = mean( scores where HoD = h )
+  </div>
+  <p>So if a district has 5 KPI rows, <span class="var">byDistrict</span> holds their simple average — one representative
+  KPI number for that district. The same is done by department and by HoD.</p>
+
+  <h2 id="posts">4 · How posts map to KPIs</h2>
+  <p>Each post's <b>Office Status</b> selects which averaged lookup applies:</p>
+  <table>
+    <thead><tr><th>Office Status</th><th>KPI attributed to the post</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td><b>District</b></td><td>The <b>district's</b> average KPI for the post's location.</td><td>byDistrict</td></tr>
+      <tr><td><b>HoD</b></td><td>The average KPI of all rows under that <b>HoD</b>.</td><td>byHoD</td></tr>
+      <tr><td><b>Secretariat</b></td><td>The average KPI of all rows for that <b>Department</b>.</td><td>byDept</td></tr>
+    </tbody>
+  </table>
+  <div class="formula"><b>Post Score</b> = mean of the applicable KPI rows = ( Σ scores ) ÷ ( count of scores )</div>
+  <div class="note">A <b>District</b> post is judged on the place it administers; a <b>Secretariat</b> post on the department
+  it runs from the head office; an <b>HoD</b> post on the wing it heads. A post whose unit has no KPI rows simply carries
+  no score and is skipped (it does not count as zero).</div>
+
+  <h2 id="officer">5 · Across posts — the tenure-proportionate officer score</h2>
+  <p>An officer's posts are combined into one number with a <b>tenure-days weighted average</b>, so longer service in a
+  post carries proportionally more weight:</p>
+  <div class="formula"><b>Officer Score</b> = Σ ( <span class="hi">PostScore<sub>p</sub> × tenureDays<sub>p</sub></span> ) ÷ Σ ( <span class="hi">tenureDays<sub>p</sub></span> )</div>
+  <p>The sum runs only over posts that have a KPI score (posts in KPI). <span class="var">tenureDays<sub>p</sub></span> is
+  the officer's days in post <i>p</i> (from-date to to-date, or to today if still serving). This is the same
+  proportionate-across-posts principle used by the Public Perception and GoI-Funds scores, so the three are directly comparable.</p>
+
+  <h2 id="example">6 · A worked example</h2>
+  <div class="ex">
+    <h4>An officer with two posts</h4>
+    <p><b>Post 1 — District Collector, Kurnool</b>, held 450 days. Kurnool has KPI rows averaging <b>72.0</b> → Post Score 72.0.</p>
+    <p><b>Post 2 — Secretariat, Agriculture Dept</b>, held 300 days. Agriculture KPI rows average <b>84.0</b> → Post Score 84.0.</p>
+    <div class="formula">Officer Score = (72.0 × 450 + 84.0 × 300) ÷ (450 + 300)<br>&nbsp;&nbsp;= (32,400 + 25,200) ÷ 750 = <b class="hi">76.8 / 100</b></div>
+    <p class="good">Both posts contribute, but the longer Kurnool tenure pulls the blended score toward its 72.</p>
+  </div>
+  <div class="ex">
+    <h4>Averaging within a unit</h4>
+    <p>If Agriculture has three KPI rows — 80, 86, 86 — the department's representative KPI is their mean:</p>
+    <div class="formula">byDept[Agriculture] = (80 + 86 + 86) ÷ 3 = <b class="hi">84.0</b></div>
+    <p>That single 84.0 is what the Secretariat post in the example above used.</p>
+  </div>
+
+  <h2 id="glossary">7 · Glossary of statistical terms</h2>
+  <dl>
+    <dt>KPI (Key Performance Indicator)</dt><dd>A 0–100 measure of government performance under the Swarna Andhra Pradesh framework, recorded by district and by department/HoD.</dd>
+    <dt>Aggregated lookup</dt><dd>A pre-computed average of all KPI rows for a key (a district, a department, or an HoD) — one representative number per unit.</dd>
+    <dt>Office Status</dt><dd>The nature of a post — District, HoD, or Secretariat — which selects the district / HoD / department KPI lookup.</dd>
+    <dt>Post Score</dt><dd>The average KPI of the unit a post administers.</dd>
+    <dt>Tenure days</dt><dd>The number of days an officer held a post — the weight used to combine posts.</dd>
+    <dt>Weighted arithmetic mean</dt><dd>An average where some values count more than others; here posts are weighted by tenure days.</dd>
+    <dt>Proportionate score</dt><dd>The principle that an officer's score reflects how long they served in each post, so brief postings cannot dominate long ones.</dd>
+  </dl>
+
+  <div class="foot">AIS Officers 360° Dashboard — Andhra Pradesh CMO · Swarnandhra KPI module.<br>
+  Officer Score = tenure-days weighted average across posts of each post's average Swarna KPI (district / department / HoD, 0–100).</div>
+</div>
+</body>
+</html>

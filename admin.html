@@ -283,6 +283,42 @@
     .confirm-modal-btns  { display: flex; gap: 10px; justify-content: center; }
   </style>
   <link rel="stylesheet" href="responsive_fit.css">
+<script>(function(){ try { if (new URLSearchParams(location.search).get('embed')==='1') document.documentElement.classList.add('ais-embed'); } catch(e){} })();</script>
+<style>
+  html.ais-embed .top-nav { display:none !important; }
+  body { background:#f3ddbb !important; }
+  .top-nav { background:linear-gradient(135deg,#6d2410,#9a3412) !important; box-shadow:0 2px 10px rgba(40,15,2,0.4) !important; }
+  .top-nav .brand span { color:#fde68a !important; }
+  .nav-user { color:#fde68a !important; }
+  .btn-nav { background:rgba(255,255,255,0.14) !important; border-color:rgba(253,230,138,0.45) !important; }
+  .btn-nav:hover { background:rgba(255,255,255,0.26) !important; }
+  .tab-bar { background:#fffdf7 !important; border-bottom-color:#e7c690 !important; }
+  .tab-btn:hover { color:#c2410c !important; }
+  .tab-btn.active { color:#c2410c !important; border-bottom-color:#c2410c !important; }
+  .stat-card { border-color:#f0d6a0 !important; box-shadow:0 1px 6px rgba(120,53,15,0.12) !important; }
+  .stat-card .value { color:#7c2d12 !important; }
+  .section-card { border-color:#f0d6a0 !important; box-shadow:0 1px 6px rgba(120,53,15,0.12) !important; }
+  .section-header { background:linear-gradient(135deg,#fff3d6,#fde7bd) !important; border-bottom-color:#f0d6a0 !important; }
+  .section-header h3 { color:#7c2d12 !important; }
+  .btn-primary { background:linear-gradient(135deg,#c2410c,#9a3412) !important; }
+  .map-sel-opt:hover { background:#fff3d6 !important; color:#c2410c !important; }
+  .map-sel-opt.selected { background:#fde7bd !important; color:#9a3412 !important; }
+  /* tab content */
+  .data-table th { background:linear-gradient(135deg,#7c2d12,#9a3412) !important; color:#fde9c8 !important; }
+  .data-table td { border-bottom-color:#f0d6a0 !important; color:#4a2810 !important; }
+  .data-table tr:hover td { background:#fff3d6 !important; }
+  .data-table tr.selected td { background:#fde7bd !important; }
+  .toolbar select, .toolbar input, .map-sel-input, .pagination button { border-color:#e7c690 !important; color:#5c2102 !important; }
+  .toolbar select:focus, .toolbar input:focus, .map-sel-input:focus { border-color:#c2410c !important; box-shadow:0 0 0 3px rgba(194,65,12,0.12) !important; }
+  .pagination button { color:#c2410c !important; }
+  .pagination { border-top-color:#f0d6a0 !important; }
+  .photo-thumb { border-color:#e7c690 !important; }
+  .map-sel-drop { border-color:#c2410c !important; }
+  .map-sel-opt { color:#5c2102 !important; }
+  .stat-card .label { color:#9a6b3a !important; }
+  input:focus, select:focus, textarea:focus { border-color:#c2410c !important; }
+  a { color:#c2410c; }
+</style>
 </head>
 <body>
 
@@ -297,11 +333,11 @@
 </div>
 
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="showTab('dashboard',this)">&#128202; Dashboard</button>
-  <button class="tab-btn" onclick="showTab('data',this)">&#128196; Data Management</button>
+  <button class="tab-btn active" onclick="showTab('data',this)">&#128196; Data Management</button>
   <button class="tab-btn" onclick="showTab('users',this)">&#128101; Users</button>
   <button class="tab-btn" onclick="showTab('control',this)">&#9881; Module Control</button>
   <button class="tab-btn" onclick="showTab('mapping',this)">&#128506; Officer Posts &mdash; Dept Mapping</button>
+  <button class="tab-btn" onclick="showTab('weights',this)">&#9878; Score Weights</button>
 </div>
 
 <div class="content">
@@ -309,7 +345,7 @@
   <!-- ============================================================
        TAB 1: Dashboard
        ============================================================ -->
-  <div class="tab-panel active" id="tab-dashboard">
+  <div class="tab-panel" id="tab-dashboard">
     <div class="stat-grid">
       <div class="stat-card"><div class="label">Active IAS Officers</div><div class="value" id="stat-ias">…</div></div>
       <div class="stat-card"><div class="label">Active IPS Officers</div><div class="value" id="stat-ips">…</div></div>
@@ -324,7 +360,7 @@
   <!-- ============================================================
        TAB 2: Data Management — Officers + Postings
        ============================================================ -->
-  <div class="tab-panel" id="tab-data">
+  <div class="tab-panel active" id="tab-data">
 
     <!-- Officers Section -->
     <div class="section-card">
@@ -671,6 +707,24 @@
     </div>
 
   </div><!-- #tab-control -->
+
+  <!-- ============================================================
+       TAB: Score Weights & Key Values
+       ============================================================ -->
+  <div class="tab-panel" id="tab-weights">
+    <div class="section-card">
+      <div class="section-header"><h3>&#9878; Score Weights &amp; Key Values</h3></div>
+      <div style="padding:16px;">
+        <p style="color:#6b4423;font-size:13px;margin:0 0 14px;line-height:1.55;">Tune the weights and key values used to compute the scores. <b>Public Perception</b> and <b>Swarnandhra</b> have no tunable weights &mdash; each is a tenure-weighted average of source data (I&amp;PR sentiment / KPI). Click <b>Save All</b>, then <b>reload the dashboard</b> for the changes to take effect.</p>
+        <div id="weights-groups"></div>
+        <div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="saveScoreWeights()">&#128190; Save All</button>
+          <button class="btn-nav" onclick="loadScoreWeights()">&#8634; Reload values</button>
+          <span id="weights-msg" style="font-size:12.5px;font-weight:700;"></span>
+        </div>
+      </div>
+    </div>
+  </div><!-- #tab-weights -->
 
   <!-- ============================================================
        TAB 5: Officer Posts — Dept & HoD Mapping
@@ -1103,6 +1157,53 @@ function showTab(name, btn) {
   if (name === 'users')   { loadResetRequests(); loadUsers(); }
   if (name === 'control') loadModuleControl();
   if (name === 'mapping') loadDeptMapping();
+  if (name === 'weights') loadScoreWeights();
+}
+
+// ================================================================
+// Score Weights & Key Values  (Supabase: score_config)
+// ================================================================
+async function loadScoreWeights(){
+  const wrap = document.getElementById('weights-groups');
+  const msg = document.getElementById('weights-msg'); if (msg) msg.textContent = '';
+  wrap.innerHTML = '<div style="color:#9a6b3a;padding:8px;">Loading&hellip;</div>';
+  const { data, error } = await _supabase.from('score_config').select('*').order('score_key').order('sort_order');
+  if (error) { wrap.innerHTML = '<div style="color:#b91c1c;padding:8px;">Could not load <b>score_config</b>: ' + esc(error.message) + '<br>Run <b>score_config.sql</b> in the Supabase SQL editor first.</div>'; return; }
+  if (!data || !data.length) { wrap.innerHTML = '<div style="color:#b45309;padding:8px;line-height:1.6;">No rows returned. If you have <b>already run score_config.sql</b> and seeded the table, this is almost certainly <b>Row-Level Security</b> hiding the rows from the dashboard key.<br>Run the <b>ACCESS block</b> at the bottom of <b>score_config.sql</b> (it disables RLS + grants access), then reload this tab.</div>'; return; }
+  const titles = { eoffice:'&#128202; e-Office', goi:'&#128176; GoI Funds', composite:'&#127919; Composite' };
+  const byScore = {};
+  data.forEach(r => { (byScore[r.score_key] = byScore[r.score_key] || []).push(r); });
+  let html = '';
+  Object.keys(byScore).forEach(sk => {
+    const rows = byScore[sk];
+    let wsum = 0, hasW = false;
+    rows.forEach(r => { if ((r.unit||'') === 'weight' && (r.grp||'').toLowerCase().indexOf('indicator') >= 0) { wsum += Number(r.param_value); hasW = true; } });
+    html += '<div style="margin-bottom:20px;border:1px solid #f0d6a0;border-radius:10px;overflow:hidden;">';
+    html += '<div style="background:linear-gradient(135deg,#fff3d6,#fde7bd);padding:9px 14px;font-weight:800;color:#7c2d12;">' + (titles[sk] || sk) + '</div>';
+    html += '<table class="data-table" style="margin:0;"><thead><tr><th style="width:55%;">Parameter</th><th style="width:25%;">Value</th><th>Unit</th></tr></thead><tbody>';
+    rows.forEach(r => {
+      html += '<tr><td>' + esc(r.param_label) + '<span style="color:#b08968;font-size:11px;"> &nbsp;(' + esc(r.param_key) + ')</span></td>' +
+        '<td><input type="number" step="any" id="wcfg-' + r.id + '" data-id="' + r.id + '" value="' + r.param_value + '" style="width:120px;padding:5px 8px;border:1.5px solid #e0b878;border-radius:7px;font-size:13px;font-weight:700;text-align:right;"></td>' +
+        '<td style="color:#9a6b3a;">' + esc(r.unit || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (hasW) html += '<div style="padding:7px 14px;font-size:12px;font-weight:700;color:' + (Math.abs(wsum-1) < 0.001 ? '#15803d' : '#b45309') + ';">Indicator weights sum = ' + wsum.toFixed(2) + (Math.abs(wsum-1) < 0.001 ? ' &#10003;' : ' &mdash; should be 1.00') + '</div>';
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+async function saveScoreWeights(){
+  const inputs = document.querySelectorAll('[id^="wcfg-"]');
+  const msg = document.getElementById('weights-msg');
+  let okCount = 0, errCount = 0;
+  for (const inp of inputs) {
+    const val = parseFloat(inp.value);
+    if (isNaN(val)) { errCount++; continue; }
+    const { error } = await _supabase.from('score_config').update({ param_value: val, updated_at: new Date().toISOString() }).eq('id', inp.dataset.id);
+    if (error) errCount++; else okCount++;
+  }
+  if (msg) { msg.textContent = '✓ Saved ' + okCount + ' value' + (okCount!==1?'s':'') + (errCount ? (' · ' + errCount + ' failed') : '') + '. Reload the dashboard to apply.'; msg.style.color = errCount ? '#b91c1c' : '#15803d'; }
+  showToast(errCount ? (errCount + ' value(s) failed to save') : ('Saved ' + okCount + ' values. Reload the dashboard to apply.'), errCount > 0);
 }
 
 // ================================================================
