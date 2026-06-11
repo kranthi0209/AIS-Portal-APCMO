@@ -818,6 +818,87 @@
   .trend-max-close:hover { background:rgba(220,38,38,0.55); transform:rotate(90deg); }
   .trend-max-body { flex:1; display:flex; flex-direction:column; padding:16px 24px 22px; min-height:0; }
   .trend-max-canvas { flex:1; min-height:0; position:relative; }
+  /* ── MLA 360 view ── */
+  #mla360wrap { position:fixed; top:var(--bar360-h,80px); left:var(--side-w,248px); right:var(--side-w-r,248px); bottom:0; overflow:auto; background:#f3ddbb; padding:14px 18px 26px; display:none; flex-direction:column; }
+  html.ais-mla #mla360wrap { display:flex; }
+  html.ais-mla #grid360wrap, html.ais-mla #eofficeTableWrap, html.ais-mla #perceptionTableWrap, html.ais-mla #swarnaTableWrap, html.ais-mla #goiTableWrap, html.ais-mla #combinedTableWrap, html.ais-mla #tableViewWrap, html.ais-mla #graphViewWrap, html.ais-mla #homeScreen { display:none !important; }
+  html.ais-mla #sortBySection, html.ais-mla #officerFilterFields, html.ais-mla #scoreComboFilter, html.ais-mla #perfSection { display:none !important; }
+  html.ais-mla #mlaFilters, html.ais-mla #mlaPerfSection, html.ais-mla #mlaSortSection { display:block !important; }
+  html.ais-mp #mla360wrap { display:flex; }
+  html.ais-mp #grid360wrap, html.ais-mp #eofficeTableWrap, html.ais-mp #perceptionTableWrap, html.ais-mp #swarnaTableWrap, html.ais-mp #goiTableWrap, html.ais-mp #combinedTableWrap, html.ais-mp #tableViewWrap, html.ais-mp #graphViewWrap, html.ais-mp #homeScreen { display:none !important; }
+  html.ais-mp #sortBySection, html.ais-mp #officerFilterFields, html.ais-mp #scoreComboFilter, html.ais-mp #perfSection, html.ais-mp #mlaFilters, html.ais-mp #mlaSortSection { display:none !important; }
+  html.ais-mp #mpFilters, html.ais-mp #mlaPerfSection, html.ais-mp #mpSortSection { display:block !important; }
+  html.ais-mlc #mla360wrap { display:flex; }
+  html.ais-mlc #grid360wrap, html.ais-mlc #eofficeTableWrap, html.ais-mlc #perceptionTableWrap, html.ais-mlc #swarnaTableWrap, html.ais-mlc #goiTableWrap, html.ais-mlc #combinedTableWrap, html.ais-mlc #tableViewWrap, html.ais-mlc #graphViewWrap, html.ais-mlc #homeScreen { display:none !important; }
+  html.ais-mlc #sortBySection, html.ais-mlc #officerFilterFields, html.ais-mlc #scoreComboFilter, html.ais-mlc #perfSection, html.ais-mlc #mlaFilters, html.ais-mlc #mlaSortSection { display:none !important; }
+  html.ais-mlc #mlcFilters, html.ais-mlc #mlaPerfSection, html.ais-mlc #mlcSortSection { display:block !important; }
+  html.ais-rs #mla360wrap { display:flex; }
+  html.ais-rs #grid360wrap, html.ais-rs #eofficeTableWrap, html.ais-rs #perceptionTableWrap, html.ais-rs #swarnaTableWrap, html.ais-rs #goiTableWrap, html.ais-rs #combinedTableWrap, html.ais-rs #tableViewWrap, html.ais-rs #graphViewWrap, html.ais-rs #homeScreen { display:none !important; }
+  html.ais-rs #sortBySection, html.ais-rs #officerFilterFields, html.ais-rs #scoreComboFilter, html.ais-rs #perfSection, html.ais-rs #mlaFilters, html.ais-rs #mlaSortSection { display:none !important; }
+  html.ais-rs #rsFilters, html.ais-rs #mlaPerfSection, html.ais-rs #rsSortSection { display:block !important; }
+  #mlaFilters .b360-fl, #mpFilters .b360-fl, #mlcFilters .b360-fl, #rsFilters .b360-fl { margin-top:8px; }
+  .mla-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+  .mla-head h2 { font-size:18px; font-weight:900; color:#7c2d12; margin:0; }
+  .mla-count { font-size:12px; font-weight:800; color:#9a3412; background:#fde7bd; border:1px solid #f0d6a0; border-radius:14px; padding:3px 13px; }
+  .mla-search { margin-left:auto; padding:8px 14px; border:1.5px solid #e0b878; border-radius:10px; font-size:13px; min-width:250px; background:#fffdf7; color:#5c2102; }
+  #mlaGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(116px,1fr)); gap:8px; }
+  .c360 .mla-const2 { font-size:9px; font-weight:700; color:#b45309; line-height:1.3; word-break:break-word; margin-top:1px; }
+  .mla-loading { grid-column:1/-1; text-align:center; padding:50px; color:#9a6b3a; font-weight:700; }
+  .mla-card { background:#fffdf7; border:1px solid #f0d6a0; border-top:4px solid #c2410c; border-radius:14px; padding:14px 12px; text-align:center; cursor:pointer; box-shadow:0 3px 12px rgba(120,53,15,0.13); transition:transform 0.15s, box-shadow 0.15s; }
+  .mla-card:hover { transform:translateY(-3px); box-shadow:0 9px 24px rgba(120,53,15,0.27); }
+  .mla-photo-wrap { width:92px; height:112px; margin:0 auto 10px; border-radius:10px; overflow:hidden; border:2px solid #f0d6a0; background:#fff3d6; }
+  .mla-photo { width:100%; height:100%; object-fit:cover; display:block; }
+  .mla-photo-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px; color:#d4a373; }
+  .mla-name { font-size:13px; font-weight:900; color:#1e1b4b; line-height:1.3; min-height:34px; }
+  .mla-const { font-size:11.5px; font-weight:800; color:#9a3412; margin-top:4px; }
+  .mla-dist { font-size:10.5px; color:#9a6b3a; }
+  .mla-badges { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:8px; }
+  .mla-party { font-size:9.5px; font-weight:800; color:#3a2a10; background:var(--pc,#facc15); border-radius:10px; padding:2px 8px; }
+  .mla-pos { font-size:9.5px; font-weight:800; color:#fff7ed; background:#7c2d12; border-radius:10px; padding:2px 8px; }
+  .mla-scores { display:flex; justify-content:center; gap:6px; margin-top:11px; }
+  .mla-score-slot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; color:#cbb48f; background:#fff3d6; border:1.5px dashed #e0b878; }
+  .mla-scores-lbl { font-size:8.5px; color:#b08968; margin-top:5px; font-weight:700; }
+  .mlad-overlay { position:fixed; inset:0; background:rgba(40,15,2,0.7); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); z-index:960; display:none; align-items:center; justify-content:center; padding:20px; }
+  .mlad-overlay.open { display:flex; }
+  .mlad-box { background:#fffdf7; border-radius:18px; width:min(96vw,720px); max-height:90vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 32px 80px rgba(40,15,2,0.5); border:1.5px solid #f0d6a0; animation:eoPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .mlad-bar { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; background:linear-gradient(135deg,#7c2d12,#9a3412); color:#fff7ed; flex-shrink:0; }
+  .mlad-bar-title { font-size:14.5px; font-weight:800; }
+  .mlad-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.18); border:1px solid rgba(253,230,138,0.4); color:#fff7ed; font-size:13px; cursor:pointer; }
+  .mlad-close:hover { background:rgba(220,38,38,0.5); }
+  #mlaDetailBody { padding:18px 22px 22px; overflow-y:auto; }
+  .mlad-head { display:flex; gap:16px; align-items:flex-start; padding-bottom:14px; border-bottom:2px solid #f0d6a0; margin-bottom:14px; }
+  .mlad-photo-wrap { width:96px; height:118px; border-radius:10px; overflow:hidden; border:2px solid #f0d6a0; flex-shrink:0; background:#fff3d6; }
+  .mlad-photo { width:100%; height:100%; object-fit:cover; }
+  .mlad-photo-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:44px; color:#d4a373; }
+  .mlad-name { font-size:18px; font-weight:900; color:#7c2d12; line-height:1.25; }
+  .mlad-sub { margin:6px 0; display:flex; gap:6px; flex-wrap:wrap; }
+  .mlad-const { font-size:12px; color:#9a6b3a; font-weight:700; }
+  .mlad-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px 16px; margin-bottom:4px; }
+  .mlad-field { display:flex; flex-direction:column; }
+  .mlad-flabel { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#9a3412; }
+  .mlad-fval { font-size:12.5px; color:#3a2a18; font-weight:600; }
+  .mlad-block { margin-top:11px; }
+  .mlad-blabel { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#9a3412; margin-bottom:3px; }
+  .mlad-btext { font-size:12px; color:#3a2a18; line-height:1.5; white-space:pre-wrap; background:#fff8e8; border:1px solid #f0d6a0; border-radius:8px; padding:8px 11px; }
+  .mlad-sechead { font-size:11.5px; font-weight:900; text-transform:uppercase; letter-spacing:0.6px; color:#fff7ed; background:linear-gradient(135deg,#9a3412,#c2410c); border-radius:7px; padding:5px 12px; margin:17px 0 10px; }
+  .mlad-assets { width:100%; border-collapse:collapse; font-size:11.5px; }
+  .mlad-assets th, .mlad-assets td { border:1px solid #f0d6a0; padding:5px 9px; text-align:right; font-variant-numeric:tabular-nums; }
+  .mlad-assets th { background:#fde7bd; color:#7c2d12; font-weight:800; text-align:center; }
+  .mlad-assets td:first-child, .mlad-assets th:first-child { text-align:left; font-weight:700; color:#7c2d12; }
+  .mlad-assets .mlad-assets-total td { background:#fff3d6; font-weight:900; color:#9a3412; text-align:right; }
+  .mlad-assets .mlad-assets-total td:first-child { text-align:left; }
+  .mlad-assets .mlad-assets-sub td { background:#fff3d6; font-weight:900; color:#9a3412; }
+  .mlad-assets .mlad-assets-liab td { border-top:2px solid #e0b878; color:#b91c1c; font-weight:700; }
+  .mlad-assets .mlad-assets-net td { background:#dcfce7; font-weight:900; color:#15803d; border-top:2px solid #86efac; }
+  .mlad-assets .mlad-assets-sub td:first-child, .mlad-assets .mlad-assets-liab td:first-child, .mlad-assets .mlad-assets-net td:first-child { text-align:left; }
+  .mlad-assets-note { font-size:10.5px; color:#9a6b3a; font-style:italic; margin-top:5px; }
+  .mlad-tabs { display:flex; flex-wrap:wrap; gap:4px; margin:15px 0 13px; border-bottom:2px solid #f0d6a0; }
+  .mlad-tab { border:none; background:transparent; color:#7c2d12; font-size:11.5px; font-weight:800; padding:7px 13px; cursor:pointer; border-radius:8px 8px 0 0; border-bottom:2px solid transparent; margin-bottom:-2px; transition:background .15s,color .15s; white-space:nowrap; }
+  .mlad-tab:hover { background:#fde7bd; }
+  .mlad-tab.active { background:linear-gradient(135deg,#9a3412,#c2410c); color:#fff7ed; border-bottom-color:#9a3412; }
+  .mlad-panel { display:none; }
+  .mlad-panel.active { display:block; animation:mladFade .2s ease; }
+  @keyframes mladFade { from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:none;} }
   .trend-card { background:#fffdf7; border:1px solid #f0d6a0; border-top:4px solid #f59e0b; border-radius:14px; padding:14px 16px; box-shadow:0 4px 14px rgba(120,53,15,0.13); }
   .trend-card.trend-composite { border-top-color:#c2410c; background:#fff6e3; box-shadow:0 7px 20px rgba(154,52,18,0.18); }
   .trend-title { font-size:13.5px; font-weight:900; color:#7c2d12; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
@@ -1170,11 +1251,15 @@
   var raw = new URLSearchParams(location.search).get('service');
   var svc = (raw||'').toUpperCase();
   var SOON = {MINISTERS:1, CENTRAL:1, HODS:1};
-  var mode = !raw ? 'home' : (SOON[svc] ? 'soon' : 'data');
+  var mode = !raw ? 'home' : (svc==='MLA' ? 'mla' : (svc==='MP' ? 'mp' : (svc==='MLC' ? 'mlc' : (svc==='RS' ? 'rs' : (SOON[svc] ? 'soon' : 'data')))));
   window.AIS_MODE = mode; window.AIS_SVC = svc;
   var r = document.documentElement;
   if (mode==='home') r.classList.add('ais-home');
   else if (mode==='soon') r.classList.add('ais-soon');
+  else if (mode==='mla') r.classList.add('ais-mla');
+  else if (mode==='mp') r.classList.add('ais-mp');
+  else if (mode==='mlc') r.classList.add('ais-mlc');
+  else if (mode==='rs') r.classList.add('ais-rs');
   var T = {
     IAS:"Andhra Pradesh IAS Officer's Performance Tracking System",
     IPS:"Andhra Pradesh IPS Officer's Performance Tracking System",
@@ -1316,20 +1401,26 @@
     <span id="count360" style="display:none;"></span>
   </div>
 
-  <div class="sp-section">
-    <div class="sp-label">Core Team Details</div>
+  <div class="sp-section core-team-sec" id="coreTeamPolitical">
+    <div class="sp-label">Core Team &ndash; Political</div>
     <div class="b360-view-group">
-      <button class="b360-view-btn nav-soon" onclick="comingSoon('Ministers')">&#127963; Ministers</button>
-      <button class="b360-view-btn nav-soon nav-sub" onclick="comingSoon('MP (Lok Sabha)')">&#128100; MP (Lok Sabha)</button>
-      <button class="b360-view-btn nav-soon nav-sub" onclick="comingSoon('MP (Rajya Sabha)')">&#128100; MP (Rajya Sabha)</button>
-      <button class="b360-view-btn nav-soon nav-sub" onclick="comingSoon('MLAs')">&#128100; MLAs</button>
-      <button class="b360-view-btn nav-soon nav-sub" onclick="comingSoon('MLCs')">&#128100; MLCs</button>
+      <button id="navMinisters" class="b360-view-btn" onclick="goMinisters()">&#127963; Ministers</button>
+      <button id="navMP" class="b360-view-btn nav-sub" onclick="goMPs()">&#128100; MP (Lok Sabha)</button>
+      <button id="navRS" class="b360-view-btn nav-sub" onclick="goRS()">&#128100; MP (Rajya Sabha)</button>
+      <button id="navMLA" class="b360-view-btn nav-sub" onclick="goMLA()">&#128100; MLAs</button>
+      <button id="navMLC" class="b360-view-btn nav-sub" onclick="goMLCs()">&#128100; MLCs</button>
+    </div>
+  </div>
+
+  <div class="sp-section core-team-sec" id="coreTeamOfficial">
+    <div class="sp-label">Core Team &ndash; Official</div>
+    <div class="b360-view-group">
       <button id="svcIAS" class="b360-view-btn" onclick="switchSvc('IAS')">&#128100; IAS Officers</button>
       <button id="svcIPS" class="b360-view-btn" onclick="switchSvc('IPS')">&#128110; IPS Officers</button>
       <button id="svcIFS" class="b360-view-btn" onclick="switchSvc('IFS')">&#127794; IFS Officers</button>
-      <button class="b360-view-btn nav-soon" onclick="comingSoon('Central Services')">&#127970; Central Services</button>
-      <button class="b360-view-btn nav-soon" onclick="comingSoon('Non-cadre HoDs')">&#128081; Non-cadre HoDs</button>
-      <button class="b360-view-btn nav-soon" onclick="comingSoon('Group 1 &amp; Above')">&#127941; Group 1 &amp; Above</button>
+      <button class="b360-view-btn nav-soon" onclick="coreTeamSelect(this,'Central Services')">&#127970; Central Services</button>
+      <button class="b360-view-btn nav-soon" onclick="coreTeamSelect(this,'Non-cadre HoDs')">&#128081; Non-cadre HoDs</button>
+      <button class="b360-view-btn nav-soon" onclick="coreTeamSelect(this,'Group 1 &amp; Above')">&#127941; Group 1 &amp; Above</button>
     </div>
   </div>
 
@@ -1370,6 +1461,30 @@
     </div>
   </div>
 
+  <div class="sp-section" id="mlaPerfSection" style="display:none;">
+    <div class="sp-label">Performance Scores</div>
+    <div class="b360-view-group">
+      <button class="b360-view-btn b360-perf-index" onclick="mlaNavSelect(this,'Professional Performance Index')">&#127919; Professional Performance Index</button>
+      <div class="sp-sublabel">Data Driven Scores</div>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'P4 Participation Score')">&#128202; P4 Participation Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'PGRS Score')">&#128227; PGRS Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Legislative Assembly Participation Score')">&#127963; Legislative Assembly Participation</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Public Perception Score')">&#128172; Public Perception Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Swarnandhra Score')">&#127942; Swarnandhra Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'GoI Funds Score')">&#128176; GoI Funds Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'GSDP Score')">&#128200; GSDP Score</button>
+      <div class="sp-sublabel">Feedback Scores</div>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'District Officers Feedback')">&#127970; District Officers Feedback</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Public Feedback')">&#128101; Public Feedback</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Incharge Minister Feedback')">&#128081; Incharge Minister Feedback</button>
+      <div class="sp-sublabel">Self Appraisal Score</div>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Field Visits Score')">&#128663; Field Visits Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'New Developments Score')">&#127959; New Developments Score</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Interaction with Public')">&#129309; Interaction with Public</button>
+      <button class="b360-view-btn nav-soon" onclick="mlaNavSelect(this,'Cross Departmental Meetings')">&#128197; Cross Departmental Meetings</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── Right Control Side-Panel (Filters &amp; Sort) ── -->
@@ -1389,6 +1504,7 @@
       <span class="b360-fl">Score Combination</span>
       <select class="b360-select" id="fScoreCombo" onchange="switchCmpTab(this.value)"></select>
     </div>
+    <div id="officerFilterFields">
     <span class="b360-fl">Search</span>
     <input type="text" class="b360-search" id="searchName360" placeholder="&#128269; Search name..." oninput="applyAllFilters()">
     <span class="b360-fl">Cadre</span>
@@ -1399,6 +1515,41 @@
     <select class="b360-select" id="fDomicile" onchange="applyAllFilters()"><option value="">All Domiciles</option></select>
     <span class="b360-fl">Post Type</span>
     <select class="b360-select" id="fPostType" onchange="applyAllFilters()"><option value="">All Post Types</option></select>
+    </div>
+    <div id="mlaFilters" style="display:none;">
+      <span class="b360-fl">Search</span>
+      <input type="text" class="b360-search" id="mlaFilterSearch" placeholder="&#128269; Search name / constituency…" oninput="renderMlaGrid()">
+      <span class="b360-fl">District</span>
+      <select class="b360-select" id="mlaFilterDistrict" onchange="renderMlaGrid()"><option value="">All Districts</option></select>
+      <span class="b360-fl">Party</span>
+      <select class="b360-select" id="mlaFilterParty" onchange="renderMlaGrid()"><option value="">All Parties</option></select>
+      <span class="b360-fl">Position</span>
+      <select class="b360-select" id="mlaFilterPosition" onchange="renderMlaGrid()"><option value="">All Positions</option></select>
+    </div>
+    <div id="mpFilters" style="display:none;">
+      <span class="b360-fl">Search</span>
+      <input type="text" class="b360-search" id="mpFilterSearch" placeholder="&#128269; Search name / constituency…" oninput="renderMpGrid()">
+      <span class="b360-fl">Party</span>
+      <select class="b360-select" id="mpFilterParty" onchange="renderMpGrid()"><option value="">All Parties</option></select>
+      <span class="b360-fl">Category</span>
+      <select class="b360-select" id="mpFilterCategory" onchange="renderMpGrid()"><option value="">All Categories</option></select>
+    </div>
+    <div id="mlcFilters" style="display:none;">
+      <span class="b360-fl">Search</span>
+      <input type="text" class="b360-search" id="mlcFilterSearch" placeholder="&#128269; Search name / constituency…" oninput="renderMlcGrid()">
+      <span class="b360-fl">Category</span>
+      <select class="b360-select" id="mlcFilterCategory" onchange="renderMlcGrid()"><option value="">All Categories</option></select>
+      <span class="b360-fl">Party</span>
+      <select class="b360-select" id="mlcFilterParty" onchange="renderMlcGrid()"><option value="">All Parties</option></select>
+    </div>
+    <div id="rsFilters" style="display:none;">
+      <span class="b360-fl">Search</span>
+      <input type="text" class="b360-search" id="rsFilterSearch" placeholder="&#128269; Search name…" oninput="renderRsGrid()">
+      <span class="b360-fl">Party</span>
+      <select class="b360-select" id="rsFilterParty" onchange="renderRsGrid()"><option value="">All Parties</option></select>
+      <span class="b360-fl">Status</span>
+      <select class="b360-select" id="rsFilterStatus" onchange="renderRsGrid()"><option value="">All Statuses</option></select>
+    </div>
   </div>
   <div class="sp-section" id="sortBySection">
     <div class="sp-label">Sort By</div>
@@ -1410,6 +1561,42 @@
       <option value="score_3">Public Perception Score</option>
     </select>
     <button class="b360-sortdir" id="sortDirBtn" onclick="toggleSortDir()">&#8593; Asc</button>
+  </div>
+  <div class="sp-section" id="mlaSortSection" style="display:none;">
+    <div class="sp-label">Sort By</div>
+    <select class="b360-select" id="mlaSort" onchange="renderMlaGrid()">
+      <option value="standard">Standard Order</option>
+      <option value="constituency">Constituency (A&ndash;Z)</option>
+      <option value="district">District (A&ndash;Z)</option>
+      <option value="party">Party</option>
+      <option value="position">Position</option>
+      <option value="name">Name (A&ndash;Z)</option>
+    </select>
+  </div>
+  <div class="sp-section" id="mpSortSection" style="display:none;">
+    <div class="sp-label">Sort By</div>
+    <select class="b360-select" id="mpSort" onchange="renderMpGrid()">
+      <option value="constituency">Constituency (A&ndash;Z)</option>
+      <option value="name">Name (A&ndash;Z)</option>
+      <option value="party">Party</option>
+    </select>
+  </div>
+  <div class="sp-section" id="rsSortSection" style="display:none;">
+    <div class="sp-label">Sort By</div>
+    <select class="b360-select" id="rsSort" onchange="renderRsGrid()">
+      <option value="name">Name (A&ndash;Z)</option>
+      <option value="party">Party</option>
+      <option value="expiration">Term Expiry</option>
+    </select>
+  </div>
+  <div class="sp-section" id="mlcSortSection" style="display:none;">
+    <div class="sp-label">Sort By</div>
+    <select class="b360-select" id="mlcSort" onchange="renderMlcGrid()">
+      <option value="constituency">Constituency (A&ndash;Z)</option>
+      <option value="name">Name (A&ndash;Z)</option>
+      <option value="category">Category</option>
+      <option value="party">Party</option>
+    </select>
   </div>
 </div>
 
@@ -1478,6 +1665,21 @@
 <button id="showRightPanel" onclick="toggleRightPanel()" title="Show filters panel">&#9666; Filters</button>
 
 <!-- ── Admin Console (embeds the full Admin Panel) ── -->
+<!-- ── MLA 360 view ── -->
+<div id="mla360wrap">
+  <div class="mla-head">
+    <h2 id="mlaHeading">&#127963; Members of Legislative Assembly</h2>
+    <span class="mla-count" id="mlaCount"></span>
+  </div>
+  <div id="mlaGrid"></div>
+</div>
+<div id="mlaDetailPopup" class="mlad-overlay" onclick="if(event.target===this)closeMlaDetail()">
+  <div class="mlad-box">
+    <div class="mlad-bar"><span class="mlad-bar-title">&#128100; MLA Profile &mdash; <span id="mlaDetailName"></span></span><button class="mlad-close" onclick="closeMlaDetail()">&#10006;</button></div>
+    <div id="mlaDetailBody"></div>
+  </div>
+</div>
+
 <div id="adminConsoleOverlay" class="ac-overlay">
   <div class="ac-shell">
     <div class="ac-bar">
@@ -2347,7 +2549,7 @@ window.navTo = function (url) {
 // Go to the Home screen WITHOUT reloading the page — keeps fullscreen intact.
 window.goHome = function () {
   var r = document.documentElement;
-  r.classList.remove('ais-soon'); r.classList.add('ais-home');
+  r.classList.remove('ais-soon', 'ais-mla', 'ais-mp', 'ais-mlc', 'ais-rs'); r.classList.add('ais-home');
   window.AIS_MODE = 'home';
   try { history.replaceState(null, '', location.pathname); } catch(e) {}
   var _hhs = document.getElementById('hdrSys'); if (_hhs) _hhs.innerHTML = 'Andhra Pradesh Core Team Performance Tracking System <span class="hdr-acr">(AP&#8209;CTPTS)</span>';
@@ -2359,13 +2561,20 @@ window.goHome = function () {
   window.scrollTo(0, 0);
 };
 
+// Highlight only the clicked Core Team button (single selection)
+window.coreTeamSelect = function (btn, label) {
+  document.querySelectorAll('.core-team-sec .b360-view-btn.active, .core-team-sec .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  if (label && typeof comingSoon === 'function') comingSoon(label);
+};
+
 window.switchSvc = function (s) {
   s = (s || '').toUpperCase();
   // Already on this service → nothing to do (and never reload → keeps fullscreen)
   if (window.AIS_MODE === 'data' && (window.AIS_SVC || '').toUpperCase() === s) return;
 
   var r = document.documentElement;
-  r.classList.remove('ais-home', 'ais-soon');
+  r.classList.remove('ais-home', 'ais-soon', 'ais-mla', 'ais-mp', 'ais-mlc', 'ais-rs');
   window.AIS_MODE = 'data'; window.AIS_SVC = s;
   try { history.replaceState(null, '', '360_live.html?service=' + s); } catch(e) {}
 
@@ -2377,7 +2586,7 @@ window.switchSvc = function (s) {
   document.title = 'AIS 360° Live — ' + s;
 
   // Active service button
-  ['svcIAS','svcIPS','svcIFS'].forEach(function(id){ var b=document.getElementById(id); if (b) b.classList.remove('active'); });
+  document.querySelectorAll('.core-team-sec .b360-view-btn.active, .core-team-sec .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
   var _ab = document.getElementById('svc' + s); if (_ab) _ab.classList.add('active');
 
   // Re-enable + clear the shared filters for the new service
@@ -2392,6 +2601,42 @@ window.switchSvc = function (s) {
 };
 
 window.reset360 = function () {
+  // MLA / Ministers mode: reset MLA filters + sort instead of officer filters
+  if (window.AIS_MODE === 'mla') {
+    ['mlaFilterSearch','mlaFilterDistrict','mlaFilterParty','mlaFilterPosition'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var ms = document.getElementById('mlaSort'); if (ms) ms.value = 'standard';
+    if (typeof renderMlaGrid === 'function') renderMlaGrid();
+    return;
+  }
+  // MP (Lok Sabha) mode: reset MP filters + sort
+  if (window.AIS_MODE === 'mp') {
+    ['mpFilterSearch','mpFilterParty','mpFilterCategory'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var mps = document.getElementById('mpSort'); if (mps) mps.value = 'constituency';
+    if (typeof renderMpGrid === 'function') renderMpGrid();
+    return;
+  }
+  // MLC mode: reset MLC filters + sort
+  if (window.AIS_MODE === 'mlc') {
+    ['mlcFilterSearch','mlcFilterCategory','mlcFilterParty'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var mlcs = document.getElementById('mlcSort'); if (mlcs) mlcs.value = 'constituency';
+    if (typeof renderMlcGrid === 'function') renderMlcGrid();
+    return;
+  }
+  // MP (Rajya Sabha) mode: reset RS filters + sort
+  if (window.AIS_MODE === 'rs') {
+    ['rsFilterSearch','rsFilterParty','rsFilterStatus'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var rss = document.getElementById('rsSort'); if (rss) rss.value = 'name';
+    if (typeof renderRsGrid === 'function') renderRsGrid();
+    return;
+  }
   ['fCadre','fSource','fDomicile','fPostType'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
   });
@@ -2533,6 +2778,14 @@ window.closeAdminConsole = function () {
 var _currentView = 'grid';
 
 window.switchView = function (view) {
+  // In MLA mode, the grid IS the 360 View; other officer views aren't available yet
+  if (window.AIS_MODE === 'mla') {
+    document.querySelectorAll('#viewSection .b360-view-btn, #mlaPerfSection .b360-view-btn').forEach(function(b){ b.classList.remove('active'); });
+    var _vb = ({ grid:'viewGridBtn', table:'viewTableBtn', graph:'viewGraphBtn' })[view];
+    var _b = _vb && document.getElementById(_vb); if (_b) _b.classList.add('active');
+    if (view !== 'grid' && typeof comingSoon === 'function') comingSoon('This view is being prepared for MLAs');
+    return;
+  }
   _currentView = view;
   var grid    = document.getElementById('grid360wrap');
   var eoWrap  = document.getElementById('eofficeTableWrap');
@@ -5666,6 +5919,598 @@ document.getElementById('eoPostPopup').addEventListener('click', function(e) {
 
 </script>
 
+<script>
+// ── MLA 360 view (fully in-page) ──
+(function(){
+  var _mlaData = [], _mlaLoaded = false;
+  window.MLA_NO_PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="86"><rect width="100" height="86" fill="#fef3c7"/><circle cx="50" cy="34" r="17" fill="#e0b878"/><rect x="26" y="56" width="48" height="34" rx="13" fill="#e0b878"/></svg>');
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function partyColor(p){ p=(p||'').toLowerCase();
+    if (p.indexOf('telugu desam')>-1) return '#fde047';
+    if (p.indexOf('jana sena')>-1)    return '#f87171';
+    if (p.indexOf('bharatiya')>-1)    return '#fdba74';
+    if (p.indexOf('ysr')>-1)          return '#93c5fd';
+    return '#cbd5e1'; }
+
+  window.loadMLAs = async function(force){
+    if (_mlaLoaded && !force){ renderMlaGrid(); return; }
+    var grid = document.getElementById('mlaGrid');
+    if (grid) grid.innerHTML = '<div class="mla-loading">&#8987; Loading MLAs&hellip;</div>';
+    try {
+      var res = await _supabase.from('mlas').select('*').order('constituency');
+      if (res.error) throw res.error;
+      _mlaData = res.data || []; _mlaLoaded = true;
+      console.log('[MLA] rows fetched from `mlas`:', _mlaData.length);
+      fillMlaSel('mlaFilterDistrict', 'All Districts', _mlaData.map(function(m){ return m.district; }));
+      fillMlaSel('mlaFilterParty',    'All Parties',   _mlaData.map(function(m){ return m.party; }));
+      fillMlaSel('mlaFilterPosition', 'All Positions', _mlaData.map(function(m){ return m.position; }));
+      renderMlaGrid();
+    } catch(e){ if (grid) grid.innerHTML = '<div class="mla-loading" style="color:#b91c1c;">Could not load MLAs: '+esc(e.message)+'<br>Have you run mlas_table.sql + mlas_seed.sql in Supabase?</div>'; }
+  };
+
+  function _v(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+  // Standard Order rank by official position
+  function mlaRank(pos){
+    pos = (pos||'').toLowerCase().trim();
+    if (pos === 'chief minister')          return 1;
+    if (pos === 'deputy chief minister')   return 2;
+    if (pos === 'speaker')                 return 3;
+    if (pos === 'minister')                return 4;
+    if (pos === 'deputy speaker')          return 5;
+    if (pos === 'chief whip')              return 6;
+    if (pos === 'whip')                    return 7;
+    return 8; // Member of Legislative Assembly / others
+  }
+  function _cmp(a,b){ return String(a==null?'':a).localeCompare(String(b==null?'':b), undefined, {sensitivity:'base'}); }
+  // Constituency order for the ranked sorts: MANGALAGIRI is pinned first, then A→Z
+  function _cmpConst(a,b){
+    var ma = String(a||'').toUpperCase().trim() === 'MANGALAGIRI';
+    var mb = String(b||'').toUpperCase().trim() === 'MANGALAGIRI';
+    if (ma && !mb) return -1;
+    if (mb && !ma) return 1;
+    return _cmp(a,b);
+  }
+  function fillMlaSel(id, allLbl, vals){
+    var el = document.getElementById(id); if (!el) return;
+    var seen={}, uniq=[]; vals.forEach(function(v){ v=(v==null?'':String(v)).trim(); if (v && !seen[v]){ seen[v]=1; uniq.push(v); } }); uniq.sort();
+    var cur = el.value;
+    el.innerHTML = '<option value="">'+allLbl+'</option>' + uniq.map(function(v){ return '<option value="'+esc(v)+'">'+esc(v)+'</option>'; }).join('');
+    el.value = cur;
+  }
+  function renderMlaGrid(){
+    var grid = document.getElementById('mlaGrid'); if (!grid) return;
+    var q = _v('mlaFilterSearch').toLowerCase(), fd = _v('mlaFilterDistrict'), fp = _v('mlaFilterParty'), fpos = _v('mlaFilterPosition');
+    var list = _mlaData.filter(function(m){
+      if (window._mlaGroup === 'ministers' && [1,2,4].indexOf(mlaRank(m.position)) === -1) return false; // CM, Dy CM, Ministers only
+      if (fd   && (m.district||'') !== fd)   return false;
+      if (fp   && (m.party||'')    !== fp)   return false;
+      if (fpos && (m.position||'') !== fpos) return false;
+      if (q && (((m.name||'')+' '+(m.constituency||'')+' '+(m.district||'')+' '+(m.party||'')+' '+(m.position||'')).toLowerCase().indexOf(q) === -1)) return false;
+      return true;
+    });
+    var sortBy = _v('mlaSort') || 'standard';
+    list.sort(function(a,b){
+      switch (sortBy){
+        case 'constituency': return _cmp(a.constituency, b.constituency);
+        case 'district':     return _cmp(a.district, b.district) || _cmp(a.constituency, b.constituency);
+        case 'party':        return _cmp(a.party, b.party) || _cmp(a.constituency, b.constituency);
+        case 'name':         return _cmp(a.name, b.name);
+        case 'position':     return (mlaRank(a.position) - mlaRank(b.position)) || _cmpConst(a.constituency, b.constituency);
+        default: /* standard */ return (mlaRank(a.position) - mlaRank(b.position)) || _cmpConst(a.constituency, b.constituency);
+      }
+    });
+    var noun = (window._mlaGroup === 'ministers') ? 'Minister' : 'MLA';
+    var cnt = document.getElementById('mlaCount'); if (cnt) cnt.textContent = list.length + ' ' + noun + (list.length!==1?'s':'');
+    if (!list.length){
+      if (!_mlaData.length){
+        grid.innerHTML = '<div class="mla-loading" style="color:#b45309;line-height:1.7;">No rows found in the <b>mlas</b> table.<br>1) Run <b>mlas_seed.sql</b> in Supabase (after mlas_table.sql).<br>2) If you already did, it\'s almost certainly <b>Row-Level Security</b> hiding the rows &mdash; run this once:<br><code style="background:#fff3d6;padding:2px 6px;border-radius:5px;">alter table mlas disable row level security; grant select on mlas to anon, authenticated;</code></div>';
+      } else {
+        grid.innerHTML = '<div class="mla-loading">No MLAs match your search.</div>';
+      }
+      return;
+    }
+    grid.innerHTML = list.map(function(m){
+      var idEsc = esc(m.candidate_id).replace(/'/g,"\\'");
+      return '<div class="c360" title="View profile" onclick="openMlaDetail(\''+idEsc+'\')">'
+        + '<img src="'+esc(m.photo_url||window.MLA_NO_PHOTO)+'" alt="'+esc(m.name)+'" onerror="this.src=window.MLA_NO_PHOTO;this.onerror=null" loading="lazy">'
+        + '<div class="c360-body">'
+        +   '<div class="c360-name">'+esc(m.name)+'</div>'
+        +   '<div class="mla-const2">&#127963; '+esc(m.constituency||'')+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.renderMlaGrid = renderMlaGrid;
+
+  window.openMlaDetail = function(cid){
+    var m = _mlaData.find(function(x){ return String(x.candidate_id) === String(cid); });
+    if (!m) return;
+    var pop = document.getElementById('mlaDetailPopup'), body = document.getElementById('mlaDetailBody'); if (!pop||!body) return;
+    var ph = m.photo_url
+      ? '<img src="'+esc(m.photo_url)+'" class="mlad-photo" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="mlad-photo-ph" style="display:none;">&#128100;</span>'
+      : '<span class="mlad-photo-ph">&#128100;</span>';
+    function _has(v){ v = (v==null?'':String(v)).trim(); return !(v===''||v==='-'||v==='--'||v.toLowerCase()==='nil'); }
+    function fN(lbl,val){ return '<div class="mlad-field"><span class="mlad-flabel">'+lbl+'</span><span class="mlad-fval">'+(_has(val)?esc(String(val).trim()):'Nil')+'</span></div>'; }
+    function blkN(lbl,val){ return '<div class="mlad-block"><div class="mlad-blabel">'+lbl+'</div><div class="mlad-btext">'+(_has(val)?esc(String(val).trim()):'Nil')+'</div></div>'; }
+    function money(v){ return _has(v) ? ('₹ '+esc(String(v).trim())) : 'Nil'; }
+    function _num(v){ v=(v==null?'':String(v)).replace(/[^0-9.\-]/g,''); var n=parseFloat(v); return isNaN(n)?null:n; }
+    function _sum(){ var any=false,t=0; for(var i=0;i<arguments.length;i++){ if(arguments[i]!=null){any=true;t+=arguments[i];} } return any?t:null; }
+    function money2(n){ return n!=null ? ('₹ '+n.toLocaleString('en-IN',{maximumFractionDigits:2})) : 'Nil'; }
+
+    var mvS=_num(m.movable_self), mvSp=_num(m.movable_spouse), mvT=_num(m.movable_total);
+    var imS=_num(m.immovable_self), imSp=_num(m.immovable_spouse), imT=_num(m.immovable_total);
+    var asS=_sum(mvS,imS), asSp=_sum(mvSp,imSp), asT=_sum(mvT,imT);          // Assets = Movable + Immovable
+    var liS=_num(m.liabilities_self), liSp=_num(m.liabilities_spouse), liT=_num(m.total_liabilities); if(liT==null) liT=_sum(liS,liSp);
+    var netS=(asS!=null)?asS-(liS||0):null, netSp=(asSp!=null)?asSp-(liSp||0):null, netT=(asT!=null)?asT-(liT||0):null; // Net = Assets - Liabilities
+
+    var assetsTbl = '<table class="mlad-assets"><tr><th>Assets</th><th>Self</th><th>Spouse</th><th>Total</th></tr>'
+      +   '<tr><td>Movable</td><td>'+money(m.movable_self)+'</td><td>'+money(m.movable_spouse)+'</td><td>'+money(m.movable_total)+'</td></tr>'
+      +   '<tr><td>Immovable</td><td>'+money(m.immovable_self)+'</td><td>'+money(m.immovable_spouse)+'</td><td>'+money(m.immovable_total)+'</td></tr>'
+      +   '<tr class="mlad-assets-sub"><td>Total Assets</td><td>'+money2(asS)+'</td><td>'+money2(asSp)+'</td><td>'+money2(asT)+'</td></tr>'
+      +   '<tr class="mlad-assets-liab"><td>Liabilities</td><td>'+money(m.liabilities_self)+'</td><td>'+money(m.liabilities_spouse)+'</td><td>'+money(m.total_liabilities)+'</td></tr>'
+      +   '<tr class="mlad-assets-net"><td>Net Assets</td><td>'+money2(netS)+'</td><td>'+money2(netSp)+'</td><td>'+money2(netT)+'</td></tr>'
+      + '</table><div class="mlad-assets-note">Net Assets = Total Assets &minus; Liabilities</div>';
+
+    var tabs = [
+      { id:'personal', label:'Personal', html:
+          '<div class="mlad-grid">'+fN('Name',m.name)+fN('Age',m.age)+fN('Position',m.position)+fN("Father's Name",m.father_name)+fN('Father (Affidavit)',m.aff_father_name)+fN('Spouse',m.spouse_name)
+          +fN('Self Profession',m.self_profession)+fN('Profession',m.profession)+fN('Spouse Profession',m.spouse_profession)+fN('Self Occupation',m.self_occupation)+fN('Phone',m.phone_no)+'</div>' },
+      { id:'education', label:'Education', html:
+          '<div class="mlad-grid">'+fN('Education Category',m.education_category)+fN('Qualifications',m.qualifications)+'</div>'+blkN('Education Details', m.education_details) },
+      { id:'assets', label:'Income & Assets', html:
+          '<div class="mlad-grid">'+fN('Self Source of Income',m.self_income_source)+fN('Spouse Source of Income',m.spouse_income_source)+'</div>'+assetsTbl },
+      { id:'criminal', label:'Criminal Record', html:
+          '<div class="mlad-grid">'+fN('No. of Criminal Cases', m.criminal_cases_count)+'</div>'+blkN('Criminal Case Details', m.criminal_case_details) },
+      { id:'career', label:'Career', html:
+          blkN('Positions Held', m.positions_held)+blkN('Special Interests', m.special_interests) },
+      { id:'contact', label:'Contact', html:
+          '<div class="mlad-grid">'+fN('Constituency',m.constituency)+fN('Constituency (Official)',m.constituency_alt)+fN('Constituency No.',m.constituency_no)+fN('District',m.district)+fN('Party',m.party)+'</div>'
+          +blkN('Permanent Address', m.permanent_address)+blkN('Communication Address', m.communication_address) },
+      { id:'record', label:'Record', html:
+          '<div class="mlad-grid">'+fN('Row ID',m.id)+fN('Candidate ID',m.candidate_id)+fN('Created At',m.created_at)+'</div>'
+          +blkN('Photo URL', m.photo_url)+blkN('Source Photo URL', m.source_photo_url) }
+    ];
+    var tabBar = '<div class="mlad-tabs">'+tabs.map(function(t,i){ return '<button class="mlad-tab'+(i===0?' active':'')+'" onclick="mlaTab(this,\''+t.id+'\')">'+t.label+'</button>'; }).join('')+'</div>';
+    var panels = tabs.map(function(t,i){ return '<div class="mlad-panel'+(i===0?' active':'')+'" id="mlad-panel-'+t.id+'">'+t.html+'</div>'; }).join('');
+
+    body.innerHTML = '<div class="mlad-head"><div class="mlad-photo-wrap">'+ph+'</div>'
+      + '<div><div class="mlad-name">'+esc(m.name)+'</div>'
+      +   '<div class="mlad-sub"><span class="mla-party" style="--pc:'+partyColor(m.party)+'">'+esc(m.party||'')+'</span><span class="mla-pos">'+esc(m.position||'')+'</span></div>'
+      +   '<div class="mlad-const">&#127963; '+esc(m.constituency||'')+' &middot; '+esc(m.district||'')+(m.constituency_no?(' &middot; Constituency No. '+esc(m.constituency_no)):'')+'</div></div></div>'
+      + tabBar + panels;
+    var bar = pop.querySelector('.mlad-bar-title'); if (bar) bar.innerHTML = '&#128100; MLA Profile &mdash; <span id="mlaDetailName">'+esc(m.name||'')+'</span>';
+    pop.classList.add('open');
+  };
+  window.mlaTab = function(btn, id){
+    var body = document.getElementById('mlaDetailBody'); if (!body) return;
+    body.querySelectorAll('.mlad-tab').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    body.querySelectorAll('.mlad-panel').forEach(function(p){ p.classList.toggle('active', p.id === 'mlad-panel-'+id); });
+  };
+  window.closeMlaDetail = function(){ var p=document.getElementById('mlaDetailPopup'); if (p) p.classList.remove('open'); };
+
+  // Highlight only the clicked View/Score button (and tell the user it's coming)
+  window.mlaNavSelect = function(btn, label){
+    document.querySelectorAll('#viewSection .b360-view-btn, #mlaPerfSection .b360-view-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    if (label && typeof comingSoon === 'function') comingSoon(label);
+  };
+
+  // In-page switch to the MLA view (no reload → keeps fullscreen)
+  function enterMLAView(group, activeId, title, heading){
+    window._mlaGroup = group || null;
+    var r = document.documentElement;
+    r.classList.remove('ais-home','ais-soon','ais-mp','ais-mlc','ais-rs'); r.classList.add('ais-mla');
+    window.AIS_MODE = 'mla'; window.AIS_SVC = 'MLA';
+    try { history.replaceState(null, '', '360_live.html?service=MLA'); } catch(e){}
+    var hs = document.getElementById('hdrSys'); if (hs) hs.innerHTML = title;
+    try { document.title = title; } catch(e){}
+    var h2 = document.getElementById('mlaHeading'); if (h2) h2.innerHTML = heading;
+    document.querySelectorAll('#bar360 .b360-view-btn.active, #bar360 .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
+    var mb = document.getElementById(activeId); if (mb) mb.classList.add('active');
+    var vg = document.getElementById('viewGridBtn'); if (vg) vg.classList.add('active');
+    window.loadMLAs();
+    try { window.closeMobilePanels && window.closeMobilePanels(); } catch(e){}
+    window.scrollTo(0,0);
+  }
+  window.goMLA = function(){ enterMLAView(null, 'navMLA', "Andhra Pradesh MLA's Performance Tracking System", '&#127963; Members of Legislative Assembly'); };
+  window.goMinisters = function(){ enterMLAView('ministers', 'navMinisters', "Andhra Pradesh Minister's Performance Tracking System", '&#127963; Council of Ministers'); };
+
+  document.addEventListener('DOMContentLoaded', function(){ if (window.AIS_MODE === 'mla') window.goMLA(); });
+})();
+</script>
+
+<script>
+// ── MP (Lok Sabha) 360 view (fully in-page, mirrors the MLA view) ──
+(function(){
+  var _mpData = [], _mpLoaded = false;
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function partyColor(p){ p=(p||'').toLowerCase();
+    if (p.indexOf('telugu desam')>-1) return '#fde047';
+    if (p.indexOf('jana sena')>-1)    return '#f87171';
+    if (p.indexOf('bharatiya')>-1)    return '#fdba74';
+    if (p.indexOf('ysr')>-1)          return '#93c5fd';
+    return '#cbd5e1'; }
+  function _v(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+  function _cmp(a,b){ return String(a==null?'':a).localeCompare(String(b==null?'':b), undefined, {sensitivity:'base'}); }
+  function fillSel(id, allLabel, vals){
+    var sel=document.getElementById(id); if(!sel) return; var cur=sel.value;
+    var uniq=Array.from(new Set(vals.filter(Boolean).map(function(v){return String(v).trim();}))).sort(_cmp);
+    sel.innerHTML='<option value="">'+allLabel+'</option>'+uniq.map(function(v){return '<option>'+esc(v)+'</option>';}).join('');
+    if (cur) sel.value=cur;
+  }
+
+  window.loadMPs = async function(force){
+    if (_mpLoaded && !force){ renderMpGrid(); return; }
+    var grid = document.getElementById('mlaGrid');
+    if (grid) grid.innerHTML = '<div class="mla-loading">&#8987; Loading MPs&hellip;</div>';
+    try {
+      var res = await _supabase.from('mps').select('*').order('constituency');
+      if (res.error) throw res.error;
+      _mpData = res.data || []; _mpLoaded = true;
+      console.log('[MP] rows fetched from `mps`:', _mpData.length);
+      fillSel('mpFilterParty',    'All Parties',    _mpData.map(function(m){ return m.party; }));
+      fillSel('mpFilterCategory', 'All Categories', _mpData.map(function(m){ return m.category; }));
+      renderMpGrid();
+    } catch(e){ if (grid) grid.innerHTML = '<div class="mla-loading" style="color:#b91c1c;">Could not load MPs: '+esc(e.message)+'<br>Have you run mps_table.sql + mps_seed.sql in Supabase?</div>'; }
+  };
+
+  function renderMpGrid(){
+    var grid = document.getElementById('mlaGrid'); if (!grid) return;
+    var q = _v('mpFilterSearch').toLowerCase(), fp = _v('mpFilterParty'), fc = _v('mpFilterCategory');
+    var list = _mpData.filter(function(m){
+      if (fp && (m.party||'') !== fp) return false;
+      if (fc && (m.category||'') !== fc) return false;
+      if (q){ var hay=((m.full_name||'')+' '+(m.constituency||'')).toLowerCase(); if (hay.indexOf(q)===-1) return false; }
+      return true;
+    });
+    var sortBy = _v('mpSort') || 'constituency';
+    list.sort(function(a,b){
+      switch(sortBy){
+        case 'name':  return _cmp(a.full_name, b.full_name);
+        case 'party': return _cmp(a.party, b.party) || _cmp(a.constituency, b.constituency);
+        default:      return _cmp(a.constituency, b.constituency);
+      }
+    });
+    var cnt = document.getElementById('mlaCount'); if (cnt) cnt.textContent = list.length + ' MP' + (list.length!==1?'s':'');
+    if (!list.length){ grid.innerHTML = '<div class="mla-loading">'+(_mpData.length ? 'No MPs match your search.' : 'No MPs found. Run mps_table.sql + mps_seed.sql in Supabase.')+'</div>'; return; }
+    grid.innerHTML = list.map(function(m){
+      var idEsc = esc(String(m.member_id)).replace(/'/g,"\\'");
+      return '<div class="c360" title="View profile" onclick="openMpDetail(\''+idEsc+'\')">'
+        + '<img src="'+esc(m.photo_url||window.MLA_NO_PHOTO)+'" alt="'+esc(m.full_name)+'" onerror="this.src=window.MLA_NO_PHOTO;this.onerror=null" loading="lazy">'
+        + '<div class="c360-body">'
+        +   '<div class="c360-name">'+esc(m.full_name)+'</div>'
+        +   '<div class="mla-const2">&#127963; '+esc(m.constituency||'')+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.renderMpGrid = renderMpGrid;
+
+  window.openMpDetail = function(mid){
+    var m = _mpData.find(function(x){ return String(x.member_id) === String(mid); });
+    if (!m) return;
+    var pop = document.getElementById('mlaDetailPopup'), body = document.getElementById('mlaDetailBody'); if (!pop||!body) return;
+    var ph = m.photo_url
+      ? '<img src="'+esc(m.photo_url)+'" class="mlad-photo" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="mlad-photo-ph" style="display:none;">&#128100;</span>'
+      : '<span class="mlad-photo-ph">&#128100;</span>';
+    function _has(v){ v=(v==null?'':String(v)).trim(); return !(v===''||v==='-'||v==='--'||v.toLowerCase()==='nil'||v.toLowerCase()==='na'||v.toLowerCase()==='n/a'); }
+    function fN(lbl,val){ return '<div class="mlad-field"><span class="mlad-flabel">'+lbl+'</span><span class="mlad-fval">'+(_has(val)?esc(String(val).trim()):'Nil')+'</span></div>'; }
+    function blkN(lbl,val){ return '<div class="mlad-block"><div class="mlad-blabel">'+lbl+'</div><div class="mlad-btext">'+(_has(val)?esc(String(val).trim()):'Nil')+'</div></div>'; }
+    function fLink(lbl,val){ var v=(_has(val)?String(val).trim():''); var inner = v ? '<a href="'+esc(v)+'" target="_blank" rel="noopener" style="color:#c2410c;word-break:break-all;">'+esc(v)+'</a>' : 'Nil'; return '<div class="mlad-field"><span class="mlad-flabel">'+lbl+'</span><span class="mlad-fval">'+inner+'</span></div>'; }
+
+    var tabs = [
+      { id:'personal', label:'Personal', html:
+          '<div class="mlad-grid">'+fN('Date of Birth',m.date_of_birth)+fN('Place of Birth',m.place_of_birth)+fN('Marital Status',m.marital_status)+fN('Date of Marriage',m.date_of_marriage)+fN('Spouse',m.spouse_name)
+          +fN('Sons',m.sons)+fN('Daughters',m.daughters)+fN("Father's Name",m.father_name)+fN("Mother's Name",m.mother_name)+fN('Category',m.category)+fN('State / UT',m.state_ut)+fN('Membership Status',m.membership_status)+fN('Freedom Fighter',m.freedom_fighter)+'</div>' },
+      { id:'education', label:'Education', html:
+          '<div class="mlad-grid">'+fN('Highest Qualification',m.highest_qualification)+'</div>'+blkN('Educational Qualification', m.educational_qualification) },
+      { id:'profession', label:'Profession', html:
+          '<div class="mlad-grid">'+fN('Profession',m.profession)+fN('Other Profession',m.other_profession)+fN('Lok Sabha Terms',m.lok_sabha_terms)+'</div>' },
+      { id:'positions', label:'Positions Held', html: blkN('Positions Held', m.positions_held) },
+      { id:'interests', label:'Interests', html:
+          blkN('Special Interests', m.special_interests)+blkN('Hobbies', m.hobbies)+blkN('Sports & Clubs', m.sports_clubs)+blkN('Social & Cultural Activities', m.social_cultural)
+          +blkN('Countries Visited', m.countries_visited)+blkN('Books Published', m.books_published)+blkN('Literary Activities', m.literary_activities)+blkN('Other Information', m.other_information) },
+      { id:'contact', label:'Contact', html:
+          '<div class="mlad-grid">'+fN('Phone',m.phone)+fN('Email',m.email1)+fN('Email (Alt)',m.email2)+fN('Constituency',m.constituency)+'</div>'
+          +blkN('Present Address (New Delhi)', m.present_address)+blkN('Permanent Address', m.permanent_address)
+          +'<div class="mlad-grid">'+fLink('Facebook',m.facebook)+fLink('Twitter / X',m.twitter)+fLink('Instagram',m.instagram)+fLink('Profile (Sansad)',m.profile_url)+'</div>' },
+      { id:'record', label:'Record', html:
+          '<div class="mlad-grid">'+fN('Row ID',m.id)+fN('Member ID',m.member_id)+fN('Full Name',m.full_name)+fN('Party',m.party)+fN('Party (Short)',m.party_short)+fN('Created At',m.created_at)+'</div>'
+          +blkN('Photo URL', m.photo_url)+blkN('Source Photo URL', m.source_photo_url) }
+    ];
+    var tabBar = '<div class="mlad-tabs">'+tabs.map(function(t,i){ return '<button class="mlad-tab'+(i===0?' active':'')+'" onclick="mlaTab(this,\''+t.id+'\')">'+t.label+'</button>'; }).join('')+'</div>';
+    var panels = tabs.map(function(t,i){ return '<div class="mlad-panel'+(i===0?' active':'')+'" id="mlad-panel-'+t.id+'">'+t.html+'</div>'; }).join('');
+
+    var bar = pop.querySelector('.mlad-bar-title'); if (bar) bar.innerHTML = '&#128100; MP Profile &mdash; <span id="mlaDetailName">'+esc(m.full_name||'')+'</span>';
+    body.innerHTML = '<div class="mlad-head"><div class="mlad-photo-wrap">'+ph+'</div>'
+      + '<div><div class="mlad-name">'+esc(m.full_name)+'</div>'
+      +   '<div class="mlad-sub"><span class="mla-party" style="--pc:'+partyColor(m.party)+'">'+esc(m.party||'')+'</span>'+(m.category?('<span class="mla-pos">'+esc(m.category)+'</span>'):'')+'</div>'
+      +   '<div class="mlad-const">&#127963; '+esc(m.constituency||'')+' &middot; Lok Sabha</div></div></div>'
+      + tabBar + panels;
+    pop.classList.add('open');
+  };
+
+  // In-page switch to the MP (Lok Sabha) view (no reload → keeps fullscreen)
+  window.goMPs = function(){
+    var r = document.documentElement;
+    r.classList.remove('ais-home','ais-soon','ais-mla','ais-mlc','ais-rs'); r.classList.add('ais-mp');
+    window.AIS_MODE = 'mp'; window.AIS_SVC = 'MP';
+    try { history.replaceState(null, '', '360_live.html?service=MP'); } catch(e){}
+    var title = "Andhra Pradesh MP's (Lok Sabha) Performance Tracking System";
+    var hs = document.getElementById('hdrSys'); if (hs) hs.innerHTML = title;
+    try { document.title = title; } catch(e){}
+    var h2 = document.getElementById('mlaHeading'); if (h2) h2.innerHTML = '&#127963; Members of Parliament (Lok Sabha)';
+    document.querySelectorAll('#bar360 .b360-view-btn.active, #bar360 .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
+    var mb = document.getElementById('navMP'); if (mb) mb.classList.add('active');
+    var vg = document.getElementById('viewGridBtn'); if (vg) vg.classList.add('active');
+    window.loadMPs();
+    try { window.closeMobilePanels && window.closeMobilePanels(); } catch(e){}
+    window.scrollTo(0,0);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){ if (window.AIS_MODE === 'mp') window.goMPs(); });
+})();
+</script>
+
+<script>
+// ── MLC (Legislative Council) 360 view (fully in-page, mirrors the MP view) ──
+(function(){
+  var _mlcData = [], _mlcLoaded = false;
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function partyColor(p){ p=(p||'').toLowerCase();
+    if (p.indexOf('tdp')>-1 || p.indexOf('telugu desam')>-1) return '#fde047';
+    if (p.indexOf('jana sena')>-1 || p.indexOf('jsp')>-1)    return '#f87171';
+    if (p.indexOf('bjp')>-1 || p.indexOf('bharatiya')>-1)    return '#fdba74';
+    if (p.indexOf('ysr')>-1)                                  return '#93c5fd';
+    if (p.indexOf('pdf')>-1)                                  return '#c4b5fd';
+    return '#cbd5e1'; }
+  function _v(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+  function _cmp(a,b){ return String(a==null?'':a).localeCompare(String(b==null?'':b), undefined, {sensitivity:'base'}); }
+  function fillSel(id, allLabel, vals){
+    var sel=document.getElementById(id); if(!sel) return; var cur=sel.value;
+    var uniq=Array.from(new Set(vals.filter(Boolean).map(function(v){return String(v).trim();}))).sort(_cmp);
+    sel.innerHTML='<option value="">'+allLabel+'</option>'+uniq.map(function(v){return '<option>'+esc(v)+'</option>';}).join('');
+    if (cur) sel.value=cur;
+  }
+
+  window.loadMLCs = async function(force){
+    if (_mlcLoaded && !force){ renderMlcGrid(); return; }
+    var grid = document.getElementById('mlaGrid');
+    if (grid) grid.innerHTML = '<div class="mla-loading">&#8987; Loading MLCs&hellip;</div>';
+    try {
+      var res = await _supabase.from('mlcs').select('*').order('name');
+      if (res.error) throw res.error;
+      _mlcData = res.data || []; _mlcLoaded = true;
+      console.log('[MLC] rows fetched from `mlcs`:', _mlcData.length);
+      fillSel('mlcFilterCategory', 'All Categories', _mlcData.map(function(m){ return m.category; }));
+      fillSel('mlcFilterParty',    'All Parties',    _mlcData.map(function(m){ return m.party; }));
+      renderMlcGrid();
+    } catch(e){ if (grid) grid.innerHTML = '<div class="mla-loading" style="color:#b91c1c;">Could not load MLCs: '+esc(e.message)+'<br>Have you run mlcs_table.sql + mlcs_seed.sql in Supabase?</div>'; }
+  };
+
+  function renderMlcGrid(){
+    var grid = document.getElementById('mlaGrid'); if (!grid) return;
+    var q = _v('mlcFilterSearch').toLowerCase(), fc = _v('mlcFilterCategory'), fp = _v('mlcFilterParty');
+    var list = _mlcData.filter(function(m){
+      if (fc && (m.category||'') !== fc) return false;
+      if (fp && (m.party||'') !== fp) return false;
+      if (q){ var hay=((m.name||'')+' '+(m.constituency||'')).toLowerCase(); if (hay.indexOf(q)===-1) return false; }
+      return true;
+    });
+    var sortBy = _v('mlcSort') || 'constituency';
+    list.sort(function(a,b){
+      switch(sortBy){
+        case 'name':     return _cmp(a.name, b.name);
+        case 'category': return _cmp(a.category, b.category) || _cmp(a.constituency, b.constituency);
+        case 'party':    return _cmp(a.party, b.party) || _cmp(a.constituency, b.constituency);
+        default:         return _cmp(a.constituency, b.constituency) || _cmp(a.name, b.name);
+      }
+    });
+    var cnt = document.getElementById('mlaCount'); if (cnt) cnt.textContent = list.length + ' MLC' + (list.length!==1?'s':'');
+    if (!list.length){ grid.innerHTML = '<div class="mla-loading">'+(_mlcData.length ? 'No MLCs match your search.' : 'No MLCs found. Run mlcs_table.sql + mlcs_seed.sql in Supabase.')+'</div>'; return; }
+    grid.innerHTML = list.map(function(m){
+      var idEsc = esc(String(m.mlc_id)).replace(/'/g,"\\'");
+      return '<div class="c360" title="View profile" onclick="openMlcDetail(\''+idEsc+'\')">'
+        + '<img src="'+esc(m.photo_url||window.MLA_NO_PHOTO)+'" alt="'+esc(m.name)+'" onerror="this.src=window.MLA_NO_PHOTO;this.onerror=null" loading="lazy">'
+        + '<div class="c360-body">'
+        +   '<div class="c360-name">'+esc(m.name)+'</div>'
+        +   '<div class="mla-const2">&#127963; '+esc(m.constituency||'')+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.renderMlcGrid = renderMlcGrid;
+
+  window.openMlcDetail = function(mid){
+    var m = _mlcData.find(function(x){ return String(x.mlc_id) === String(mid); });
+    if (!m) return;
+    var pop = document.getElementById('mlaDetailPopup'), body = document.getElementById('mlaDetailBody'); if (!pop||!body) return;
+    var ph = m.photo_url
+      ? '<img src="'+esc(m.photo_url)+'" class="mlad-photo" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="mlad-photo-ph" style="display:none;">&#128100;</span>'
+      : '<span class="mlad-photo-ph">&#128100;</span>';
+    function _has(v){ v=(v==null?'':String(v)).trim(); return !(v===''||v==='-'||v==='--'||v.toLowerCase()==='nil'||v.toLowerCase()==='na'||v.toLowerCase()==='n/a'); }
+    function fN(lbl,val){ return '<div class="mlad-field"><span class="mlad-flabel">'+lbl+'</span><span class="mlad-fval">'+(_has(val)?esc(String(val).trim()):'Nil')+'</span></div>'; }
+    function blkN(lbl,val){ return '<div class="mlad-block"><div class="mlad-blabel">'+lbl+'</div><div class="mlad-btext">'+(_has(val)?esc(String(val).trim()):'Nil')+'</div></div>'; }
+
+    var tabs = [
+      { id:'personal', label:'Personal', html:
+          '<div class="mlad-grid">'+fN('Category',m.category)+fN('Date of Birth',m.date_of_birth)+fN('Marital Status',m.marital_status)+fN('Spouse',m.spouse_name)
+          +fN("Father's Name",m.father_name)+fN("Mother's Name",m.mother_name)+'</div>' },
+      { id:'profession', label:'Profession', html:
+          '<div class="mlad-grid">'+fN('Qualifications',m.qualifications)+fN('Profession',m.profession)+'</div>'
+          +blkN('Special Interests', m.special_interests)+blkN('Hobbies', m.hobbies) },
+      { id:'tenure', label:'Tenure', html:
+          '<div class="mlad-grid">'+fN('Present Term',m.present_term)+fN('Retirement Date',m.retirement_date)+'</div>'+blkN('Positions Held', m.positions_held) },
+      { id:'activities', label:'Activities', html:
+          blkN('Countries Visited', m.countries_visited)+blkN('Publications', m.publications) },
+      { id:'contact', label:'Contact', html:
+          '<div class="mlad-grid">'+fN('Phone',m.phone_no)+fN('Email',m.email)+fN('Constituency',m.constituency)+fN('Party',m.party)+'</div>'+blkN('Permanent Address', m.permanent_address) },
+      { id:'record', label:'Record', html:
+          '<div class="mlad-grid">'+fN('Row ID',m.id)+fN('MLC ID',m.mlc_id)+fN('Name',m.name)+fN('Created At',m.created_at)+'</div>'
+          +blkN('Photo URL', m.photo_url)+blkN('Source Photo URL', m.source_photo_url) }
+    ];
+    var tabBar = '<div class="mlad-tabs">'+tabs.map(function(t,i){ return '<button class="mlad-tab'+(i===0?' active':'')+'" onclick="mlaTab(this,\''+t.id+'\')">'+t.label+'</button>'; }).join('')+'</div>';
+    var panels = tabs.map(function(t,i){ return '<div class="mlad-panel'+(i===0?' active':'')+'" id="mlad-panel-'+t.id+'">'+t.html+'</div>'; }).join('');
+
+    var bar = pop.querySelector('.mlad-bar-title'); if (bar) bar.innerHTML = '&#128100; MLC Profile &mdash; <span id="mlaDetailName">'+esc(m.name||'')+'</span>';
+    body.innerHTML = '<div class="mlad-head"><div class="mlad-photo-wrap">'+ph+'</div>'
+      + '<div><div class="mlad-name">'+esc(m.name)+'</div>'
+      +   '<div class="mlad-sub"><span class="mla-party" style="--pc:'+partyColor(m.party)+'">'+esc(m.party||'')+'</span>'+(m.category?('<span class="mla-pos">'+esc(m.category)+'</span>'):'')+'</div>'
+      +   '<div class="mlad-const">&#127963; '+esc(m.constituency||'')+' &middot; Legislative Council</div></div></div>'
+      + tabBar + panels;
+    pop.classList.add('open');
+  };
+
+  // In-page switch to the MLC view (no reload → keeps fullscreen)
+  window.goMLCs = function(){
+    var r = document.documentElement;
+    r.classList.remove('ais-home','ais-soon','ais-mla','ais-mp','ais-rs'); r.classList.add('ais-mlc');
+    window.AIS_MODE = 'mlc'; window.AIS_SVC = 'MLC';
+    try { history.replaceState(null, '', '360_live.html?service=MLC'); } catch(e){}
+    var title = "Andhra Pradesh MLC's Performance Tracking System";
+    var hs = document.getElementById('hdrSys'); if (hs) hs.innerHTML = title;
+    try { document.title = title; } catch(e){}
+    var h2 = document.getElementById('mlaHeading'); if (h2) h2.innerHTML = '&#127963; Members of Legislative Council';
+    document.querySelectorAll('#bar360 .b360-view-btn.active, #bar360 .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
+    var mb = document.getElementById('navMLC'); if (mb) mb.classList.add('active');
+    var vg = document.getElementById('viewGridBtn'); if (vg) vg.classList.add('active');
+    window.loadMLCs();
+    try { window.closeMobilePanels && window.closeMobilePanels(); } catch(e){}
+    window.scrollTo(0,0);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){ if (window.AIS_MODE === 'mlc') window.goMLCs(); });
+})();
+</script>
+
+<script>
+// ── MP (Rajya Sabha) 360 view (fully in-page, mirrors the MP view) ──
+(function(){
+  var _rsData = [], _rsLoaded = false;
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function partyColor(p){ p=(p||'').toLowerCase();
+    if (p.indexOf('telugu desam')>-1 || p.indexOf('tdp')>-1) return '#fde047';
+    if (p.indexOf('jana sena')>-1 || p.indexOf('jsp')>-1)    return '#f87171';
+    if (p.indexOf('bharatiya')>-1 || p.indexOf('bjp')>-1)    return '#fdba74';
+    if (p.indexOf('ysr')>-1)                                  return '#93c5fd';
+    return '#cbd5e1'; }
+  function _v(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+  function _cmp(a,b){ return String(a==null?'':a).localeCompare(String(b==null?'':b), undefined, {sensitivity:'base'}); }
+  function fillSel(id, allLabel, vals){
+    var sel=document.getElementById(id); if(!sel) return; var cur=sel.value;
+    var uniq=Array.from(new Set(vals.filter(Boolean).map(function(v){return String(v).trim();}))).sort(_cmp);
+    sel.innerHTML='<option value="">'+allLabel+'</option>'+uniq.map(function(v){return '<option>'+esc(v)+'</option>';}).join('');
+    if (cur) sel.value=cur;
+  }
+  function _toDate(s){ s=String(s||'').trim(); var m=s.match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(+m[3],+m[2]-1,+m[1]).getTime() : 0; }
+
+  window.loadRS = async function(force){
+    if (_rsLoaded && !force){ renderRsGrid(); return; }
+    var grid = document.getElementById('mlaGrid');
+    if (grid) grid.innerHTML = '<div class="mla-loading">&#8987; Loading Rajya Sabha MPs&hellip;</div>';
+    try {
+      var res = await _supabase.from('mp_rs').select('*').order('member_name');
+      if (res.error) throw res.error;
+      _rsData = res.data || []; _rsLoaded = true;
+      console.log('[RS] rows fetched from `mp_rs`:', _rsData.length);
+      fillSel('rsFilterParty',  'All Parties',   _rsData.map(function(m){ return m.party; }));
+      fillSel('rsFilterStatus', 'All Statuses',  _rsData.map(function(m){ return m.status; }));
+      renderRsGrid();
+    } catch(e){ if (grid) grid.innerHTML = '<div class="mla-loading" style="color:#b91c1c;">Could not load Rajya Sabha MPs: '+esc(e.message)+'<br>Have you run mp_rs_table.sql + mp_rs_seed.sql in Supabase?</div>'; }
+  };
+
+  function renderRsGrid(){
+    var grid = document.getElementById('mlaGrid'); if (!grid) return;
+    var q = _v('rsFilterSearch').toLowerCase(), fp = _v('rsFilterParty'), fs = _v('rsFilterStatus');
+    var list = _rsData.filter(function(m){
+      if (fp && (m.party||'') !== fp) return false;
+      if (fs && (m.status||'') !== fs) return false;
+      if (q){ var hay=((m.member_name||'')+' '+(m.state_ut||'')).toLowerCase(); if (hay.indexOf(q)===-1) return false; }
+      return true;
+    });
+    var sortBy = _v('rsSort') || 'name';
+    list.sort(function(a,b){
+      switch(sortBy){
+        case 'party':      return _cmp(a.party, b.party) || _cmp(a.member_name, b.member_name);
+        case 'expiration': return _toDate(a.expiration_date) - _toDate(b.expiration_date);
+        default:           return _cmp(a.member_name, b.member_name);
+      }
+    });
+    var cnt = document.getElementById('mlaCount'); if (cnt) cnt.textContent = list.length + ' MP' + (list.length!==1?'s':'');
+    if (!list.length){ grid.innerHTML = '<div class="mla-loading">'+(_rsData.length ? 'No MPs match your search.' : 'No Rajya Sabha MPs found. Run mp_rs_table.sql + mp_rs_seed.sql in Supabase.')+'</div>'; return; }
+    grid.innerHTML = list.map(function(m){
+      var idEsc = esc(String(m.mp_code)).replace(/'/g,"\\'");
+      return '<div class="c360" title="View profile" onclick="openRsDetail(\''+idEsc+'\')">'
+        + '<img src="'+esc(m.photo_url||window.MLA_NO_PHOTO)+'" alt="'+esc(m.member_name)+'" onerror="this.src=window.MLA_NO_PHOTO;this.onerror=null" loading="lazy">'
+        + '<div class="c360-body">'
+        +   '<div class="c360-name">'+esc(m.member_name)+'</div>'
+        +   '<div class="mla-const2">&#127963; '+esc(m.state_ut||'')+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.renderRsGrid = renderRsGrid;
+
+  window.openRsDetail = function(code){
+    var m = _rsData.find(function(x){ return String(x.mp_code) === String(code); });
+    if (!m) return;
+    var pop = document.getElementById('mlaDetailPopup'), body = document.getElementById('mlaDetailBody'); if (!pop||!body) return;
+    var ph = m.photo_url
+      ? '<img src="'+esc(m.photo_url)+'" class="mlad-photo" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="mlad-photo-ph" style="display:none;">&#128100;</span>'
+      : '<span class="mlad-photo-ph">&#128100;</span>';
+    function _has(v){ v=(v==null?'':String(v)).trim(); return !(v===''||v==='-'||v==='--'||v.toLowerCase()==='nil'||v.toLowerCase()==='na'||v.toLowerCase()==='n/a'); }
+    function fN(lbl,val){ return '<div class="mlad-field"><span class="mlad-flabel">'+lbl+'</span><span class="mlad-fval">'+(_has(val)?esc(String(val).trim()):'Nil')+'</span></div>'; }
+    function blkN(lbl,val){ return '<div class="mlad-block"><div class="mlad-blabel">'+lbl+'</div><div class="mlad-btext">'+(_has(val)?esc(String(val).trim()):'Nil')+'</div></div>'; }
+    function prof(m){ return [m.profession,m.profession1,m.profession2,m.profession3].filter(_has).join('; ') || ''; }
+
+    var tabs = [
+      { id:'personal', label:'Personal', html:
+          '<div class="mlad-grid">'+fN('Gender',m.gender)+fN('Age',m.age)+fN('Date of Birth',m.date_of_birth)+fN('Place of Birth',m.place_of_birth)+fN('Marital Status',m.marital_status)+fN('Date of Marriage',m.date_of_marriage)
+          +fN('Spouse',m.spouse_name)+fN('Sons',m.sons)+fN('Daughters',m.daughters)+fN("Father's Name",m.father_name)+fN("Mother's Name",m.mother_name)+fN('State / UT',m.state_ut)+fN('Freedom Fighter',m.freedom_fighter)+'</div>' },
+      { id:'profession', label:'Profession', html:
+          '<div class="mlad-grid">'+fN('Profession',prof(m))+'</div>'+blkN('Educational Qualification', m.educational_qualification)+blkN('Previous Membership', m.previous_membership) },
+      { id:'terms', label:'Term History', html:
+          '<div class="mlad-grid">'+fN('Current Term',m.current_term)+fN('Total Terms',m.total_terms)+fN('Status',m.status)+fN('Notification Date',m.notification_date)+fN('Expiration Date',m.expiration_date)+'</div>'+blkN('Term History', m.term_history) },
+      { id:'positions', label:'Positions Held', html: blkN('Positions Held', m.positions_held) },
+      { id:'interests', label:'Interests', html:
+          blkN('Social & Cultural / Literary / Scientific', m.social_cultural)+blkN('Sports, Clubs & Pastimes', m.sports_clubs)+blkN('Countries Visited', m.countries_visited)
+          +blkN('Books Published', m.books_published)+blkN('Other Information', m.other_information)+blkN('Brief Bio Data', m.brief_bio_data) },
+      { id:'contact', label:'Contact', html:
+          '<div class="mlad-grid">'+fN('Mobile',m.mobile)+fN('Mobile (Alt)',m.mobile2)+fN('Email',m.email)+fN('Local Telephone',m.local_telephone)+fN('Permanent Telephone',m.permanent_telephone)+'</div>'
+          +blkN('Local Address (New Delhi)', m.local_address)+blkN('Permanent Address', m.permanent_address)+blkN('Other Permanent Address', m.other_permanent_address) },
+      { id:'record', label:'Record', html:
+          '<div class="mlad-grid">'+fN('Row ID',m.id)+fN('MP Code',m.mp_code)+fN('Member Name',m.member_name)+fN('Party',m.party)+fN('Created At',m.created_at)+'</div>' }
+    ];
+    var tabBar = '<div class="mlad-tabs">'+tabs.map(function(t,i){ return '<button class="mlad-tab'+(i===0?' active':'')+'" onclick="mlaTab(this,\''+t.id+'\')">'+t.label+'</button>'; }).join('')+'</div>';
+    var panels = tabs.map(function(t,i){ return '<div class="mlad-panel'+(i===0?' active':'')+'" id="mlad-panel-'+t.id+'">'+t.html+'</div>'; }).join('');
+
+    var bar = pop.querySelector('.mlad-bar-title'); if (bar) bar.innerHTML = '&#128100; MP (Rajya Sabha) &mdash; <span id="mlaDetailName">'+esc(m.member_name||'')+'</span>';
+    body.innerHTML = '<div class="mlad-head"><div class="mlad-photo-wrap">'+ph+'</div>'
+      + '<div><div class="mlad-name">'+esc(m.member_name)+'</div>'
+      +   '<div class="mlad-sub"><span class="mla-party" style="--pc:'+partyColor(m.party)+'">'+esc(m.party||'')+'</span>'+(m.status?('<span class="mla-pos">'+esc(m.status)+'</span>'):'')+'</div>'
+      +   '<div class="mlad-const">&#127963; '+esc(m.state_ut||'')+' &middot; Rajya Sabha</div></div></div>'
+      + tabBar + panels;
+    pop.classList.add('open');
+  };
+
+  // In-page switch to the MP (Rajya Sabha) view
+  window.goRS = function(){
+    var r = document.documentElement;
+    r.classList.remove('ais-home','ais-soon','ais-mla','ais-mp','ais-mlc'); r.classList.add('ais-rs');
+    window.AIS_MODE = 'rs'; window.AIS_SVC = 'RS';
+    try { history.replaceState(null, '', '360_live.html?service=RS'); } catch(e){}
+    var title = "Andhra Pradesh MP's (Rajya Sabha) Performance Tracking System";
+    var hs = document.getElementById('hdrSys'); if (hs) hs.innerHTML = title;
+    try { document.title = title; } catch(e){}
+    var h2 = document.getElementById('mlaHeading'); if (h2) h2.innerHTML = '&#127963; Members of Parliament (Rajya Sabha)';
+    document.querySelectorAll('#bar360 .b360-view-btn.active, #bar360 .b360-svc-btn.active').forEach(function(b){ b.classList.remove('active'); });
+    var mb = document.getElementById('navRS'); if (mb) mb.classList.add('active');
+    var vg = document.getElementById('viewGridBtn'); if (vg) vg.classList.add('active');
+    window.loadRS();
+    try { window.closeMobilePanels && window.closeMobilePanels(); } catch(e){}
+    window.scrollTo(0,0);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){ if (window.AIS_MODE === 'rs') window.goRS(); });
+})();
+</script>
 <script src="script_360_live.js?v=20260607b"></script>
 <script src="voice_360.js?v=20260607a"></script>
 

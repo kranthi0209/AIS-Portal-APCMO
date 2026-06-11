@@ -305,7 +305,7 @@
     if (g) g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 0;color:#64748b;">&#8987; Loading ' + svc + ' officers&hellip;</div>';
     return _load360();
   };
-  requireAuth().then(function (session) { if (session) _load360(); });
+  requireAuth().then(function (session) { if (session && svc !== 'MLA' && svc !== 'MP' && svc !== 'MLC' && svc !== 'RS') _load360(); });
 
   // ================================================================
   // FILTERS & SORT  (identical to script_360.js)
