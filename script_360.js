@@ -1,4 +1,4 @@
-// ================================================================
+﻿// ================================================================
 // script_360.js — 360° Comprehensive Officer Photo Gallery
 // Service read from URL ?service=IAS|IPS|IFS
 // ================================================================
@@ -527,7 +527,7 @@
     grid.innerHTML = entries.map(([name, grpData], idx) => {
       const { meta } = grpData;
       const identityNo = String(meta['IdentityNo.'] || '').trim();
-      const imgUrl     = photoMap[identityNo] || 'https://placehold.co/105x86?text=No+Photo';
+      const imgUrl     = photoMap[identityNo] || NO_PHOTO_SVG;
       const batch      = meta.AllotmentYear || '—';
       const color      = cadreColor(meta.Cadre);
 
@@ -545,7 +545,7 @@
       return `<div class="c360" data-name="${escAttr(name)}" data-seq="${idx + 1}"
                    style="border-top-color:${color}">
         <img src="${imgUrl}" alt="${escAttr(name)}"
-             onerror="this.src='https://placehold.co/105x86?text=No+Photo'" loading="lazy">
+             onerror="this.src=NO_PHOTO_SVG;this.onerror=null" loading="lazy">
         <div class="c360-body">
           <div class="c360-sno">#${idx + 1}</div>
           <div class="c360-name">${esc(name)}</div>
@@ -575,8 +575,8 @@
     const identityNo = String(meta['IdentityNo.'] || '').trim();
     const imgUrl = photoMap[identityNo] || '';
     const ph = document.getElementById('detailPhoto');
-    ph.src = imgUrl || 'https://placehold.co/90x90?text=?';
-    ph.onerror = () => { ph.src = 'https://placehold.co/90x90?text=?'; };
+    ph.src = imgUrl || NO_PHOTO_SVG;
+    ph.onerror = function() { ph.src = NO_PHOTO_SVG; ph.onerror = null; };
 
     // Name / cadre strip
     function abbrevSOR(s) {

@@ -1,4 +1,4 @@
-// ================================================================
+﻿// ================================================================
 // script_photo.js — Photo-tile view for AIS Dashboard
 // Service type read from URL ?service=IAS|IPS|IFS
 // ================================================================
@@ -139,7 +139,7 @@
     grid.innerHTML = entries.map(([name, { meta }], idx) => {
       const identityNo   = String(meta['IdentityNo.'] || '').trim(); // used for photo lookup
       const displayNo    = idx + 1;                                  // sequential from 1
-      const imgUrl       = photoMap[identityNo] || 'https://placehold.co/160x200?text=No+Photo';
+      const imgUrl       = photoMap[identityNo] || NO_PHOTO_SVG;
       const batch        = meta.AllotmentYear   || '—';
       const allotType    = meta.SourceOfRecruitment || '—';
       const retires      = retirementMonthYear(meta.DateOfBirth);
@@ -147,7 +147,7 @@
       return `<div class="photo-tile" data-name="${escAttr(name)}" data-seq="${displayNo}">
         <img src="${imgUrl}"
              alt="${escAttr(name)}"
-             onerror="this.src='https://placehold.co/160x200?text=No+Photo'"
+             onerror="this.src=NO_PHOTO_SVG;this.onerror=null"
              loading="lazy">
         <div class="photo-tile-body">
           <div class="photo-tile-sno">#${displayNo}</div>
@@ -178,7 +178,7 @@
 
     const { meta, services } = officer;
     const identityNo  = String(meta['IdentityNo.'] || '').trim(); // used for photo lookup
-    const imgUrl      = photoMap[identityNo] || 'https://placehold.co/140x180?text=No+Photo';
+    const imgUrl      = photoMap[identityNo] || NO_PHOTO_SVG;
 
     // Category totals — sum computed years for every row, descending
     const catTotals = {};
@@ -233,7 +233,7 @@
     document.getElementById('photo-popup-details').innerHTML = `
       <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);padding:16px 20px 12px;text-align:center;">
         <img src="${imgUrl}"
-             onerror="this.src='https://placehold.co/130x165?text=No+Photo'"
+             onerror="this.src=NO_PHOTO_SVG;this.onerror=null"
              style="width:130px;height:165px;object-fit:cover;border-radius:14px;border:4px solid #a5b4fc;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:inline-block;">
         <h2 style="margin:10px 0 3px;color:#fff;font-size:16px;font-weight:800;">${esc(name)}</h2>
         <div style="font-size:12px;color:#c7d2fe;font-weight:600;font-style:italic;">${esc(meta.currentposting || '—')}</div>
@@ -317,7 +317,7 @@
         <input type="checkbox" id="${id}" value="${escAttr(hcm)}" style="display:none">
         <div class="hcm-card-tick">&#10003;</div>
         <img src="${img}" alt="${esc(name)}"
-             onerror="this.src='https://placehold.co/130x140?text=No+Photo'">
+             onerror="this.src=NO_PHOTO_SVG;this.onerror=null">
         <div class="hcm-card-name">${esc(name)}</div>
         ${term ? `<div class="hcm-card-term">${esc(term)}</div>` : '<div class="hcm-card-term">&nbsp;</div>'}
       </div>`;
