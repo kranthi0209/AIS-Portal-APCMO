@@ -17,6 +17,7 @@
     { label:'Public Perception', color:'#ea580c', light:'#fdba74', live:true },
   ];
   const NCATS = WHEEL_CATS.length;
+  let wheelActiveIdx = [];   // which WHEEL_CATS indices are plotted on the wheel (checklist-controlled)
 
   const CAT_DETAILS = [
     { icon:'💻', source:'e-Office Live Data — file movement system',
@@ -32,6 +33,28 @@
       desc:'Citizen perception score, period-weighted across the officer\'s posts and campaigns (0–100).',
       metrics:[] },
   ];
+
+  // Full set of performance parameters shown on the wheel / checklist.
+  // The 4 "live" ones map (via src) to the officer's computed scores[0..3];
+  // the rest are not-yet-live (no data) and only appear when "Show all" is on.
+  const WHEEL_DISPLAY = [
+    { label:'e-Office',              color:'#6366f1', light:'#a5b4fc', icon:'💻', live:true,  src:0, source:'e-Office Live Data — file movement system', desc:'File processing efficiency — disposal, clearance speed, volume and consistency (0–100).', metrics:[] },
+    { label:'Swarna AP',             color:'#16a34a', light:'#86efac', icon:'⭐', live:true,  src:1, source:'Swarnandhra KPI', desc:'Swarna Andhra Pradesh KPI score, days-weighted across the officer\'s posts (0–100).', metrics:[] },
+    { label:'GoI Funds',             color:'#0d9488', light:'#5eead4', icon:'💰', live:true,  src:2, source:'GoI (CSS) Funds — utilization', desc:'Government of India fund utilization (0–100).', metrics:[] },
+    { label:'Public Perception',     color:'#ea580c', light:'#fdba74', icon:'👥', live:true,  src:3, source:'I&PR Public Perception', desc:'Citizen perception score, period-weighted (0–100).', metrics:[] },
+    { label:'GSDP',                  color:'#0891b2', light:'#67e8f9', icon:'📈', live:false, source:'GSDP Score', desc:'Gross State Domestic Product contribution (data not yet live).', metrics:[] },
+    { label:'APAR',                  color:'#7c3aed', light:'#c4b5fd', icon:'📝', live:false, source:'APAR Score', desc:'Annual Performance Appraisal Report (data not yet live).', metrics:[] },
+    { label:'CMO Feedback',          color:'#b91c1c', light:'#fca5a5', icon:'🏛', live:false, source:'CMO Feedback', desc:'Chief Minister\'s Office feedback (data not yet live).', metrics:[] },
+    { label:'Party Feedback',        color:'#db2777', light:'#f9a8d4', icon:'🎴', live:false, source:'Party Feedback', desc:'Party feedback (data not yet live).', metrics:[] },
+    { label:'Media Feedback',        color:'#9333ea', light:'#d8b4fe', icon:'📰', live:false, source:'Media Feedback', desc:'Media feedback (data not yet live).', metrics:[] },
+    { label:'Subordinates Feedback', color:'#0284c7', light:'#7dd3fc', icon:'👨‍💼', live:false, source:'Subordinates Feedback', desc:'Feedback from subordinates (data not yet live).', metrics:[] },
+    { label:'Integrity Index',       color:'#ca8a04', light:'#fde047', icon:'🛡', live:false, source:'Integrity Index', desc:'Integrity index (data not yet live).', metrics:[] },
+    { label:'Innovations',           color:'#15803d', light:'#86efac', icon:'💡', live:false, source:'Innovations Score', desc:'Innovations score (data not yet live).', metrics:[] },
+    { label:'Digitalisations',       color:'#2563eb', light:'#93c5fd', icon:'📱', live:false, source:'Digitalisations Score', desc:'Digitalisation score (data not yet live).', metrics:[] },
+    { label:'New Policies',          color:'#c2410c', light:'#fdba74', icon:'📜', live:false, source:'New Policies Score', desc:'New policies score (data not yet live).', metrics:[] },
+    { label:'De-Regularisation',     color:'#0f766e', light:'#5eead4', icon:'✅', live:false, source:'De-Regularisation Score', desc:'De-regularisation score (data not yet live).', metrics:[] }
+  ];
+  const NDISP = WHEEL_DISPLAY.length;
 
   const CADRE_COLORS = {
     'CHIEF SECRETARY':         '#16a34a',
@@ -650,7 +673,15 @@
       ? `Peer rank is among officers who share the same parameters: <b>${esc(peerLabel)}</b>`
       : 'No live scores available for this officer yet.';
 
-    drawWheel(scores, name, photoUrl);
+    // full display set: 4 live scores + the coming-soon performance parameters (no data yet)
+    const dispScores = WHEEL_DISPLAY.map(c => c.live ? (scores[c.src] != null ? scores[c.src] : null) : null);
+    currentWheelData.scores = dispScores;
+    currentWheelData.name = name; currentWheelData.photo = photoUrl;
+    // default: only parameters that have data are checked / plotted
+    wheelActiveIdx = dispScores.map((s, i) => s !== null ? i : -1).filter(i => i >= 0);
+    buildWheelScoresPanel(dispScores);
+
+    drawWheel(dispScores, name, photoUrl);
     document.getElementById('wheelOverlay').classList.add('open');
 
     const closeBtn = document.getElementById('wheelClose');
@@ -667,6 +698,49 @@
     });
   }
 
+  // ── Companion "Scores Included" checklist panel ──
+  function buildWheelScoresPanel(scores) {
+    const list = document.getElementById('wspList');
+    if (!list) return;
+    list.innerHTML = WHEEL_DISPLAY.map((cat, i) => {
+      const sc = scores[i];
+      const has = sc !== null && sc !== undefined;
+      const checked = wheelActiveIdx.indexOf(i) > -1 ? 'checked' : '';
+      const valHtml = has
+        ? '<span class="wsp-val has" style="background:' + cat.color + '">' + sc.toFixed(2) + '</span>'
+        : '<span class="wsp-val no">No data</span>';
+      return '<label class="wsp-row">'
+        + '<input type="checkbox" data-i="' + i + '" ' + checked + ' onchange="wheelToggleScore(' + i + ',this.checked)">'
+        + '<span class="wsp-icon">' + (cat.icon || '') + '</span>'
+        + '<span class="wsp-name">' + esc(cat.label) + '</span>'
+        + valHtml + '</label>';
+    }).join('');
+    const sw = document.getElementById('wspShowAll');
+    if (sw) sw.checked = (wheelActiveIdx.length === NDISP);
+  }
+  function redrawWheel() {
+    if (!currentWheelData) return;
+    drawWheel(currentWheelData.scores, currentWheelData.name, currentWheelData.photo);
+  }
+  window.wheelToggleScore = function (i, checked) {
+    i = +i;
+    const pos = wheelActiveIdx.indexOf(i);
+    if (checked && pos < 0) wheelActiveIdx.push(i);
+    if (!checked && pos > -1) wheelActiveIdx.splice(pos, 1);
+    wheelActiveIdx.sort((a, b) => a - b);
+    const sw = document.getElementById('wspShowAll'); if (sw) sw.checked = (wheelActiveIdx.length === NDISP);
+    redrawWheel();
+  };
+  window.wheelToggleShowAll = function () {
+    const sw = document.getElementById('wspShowAll');
+    const on = sw ? sw.checked : false;
+    const scores = (currentWheelData && currentWheelData.scores) || [];
+    if (on) wheelActiveIdx = WHEEL_DISPLAY.map((_, i) => i);
+    else    wheelActiveIdx = scores.map((s, i) => s !== null ? i : -1).filter(i => i >= 0);
+    buildWheelScoresPanel(scores);
+    redrawWheel();
+  };
+
   function drawWheel(scores, officerName, photoUrl) {
     const svg = document.getElementById('wheelSvg');
     if (!svg) return;
@@ -674,8 +748,12 @@
     const cx = 320, cy = 320;
     const innerR = 96, outerR = 250;
     const maxScore = 100;
-    const angleStep = (2 * Math.PI) / NCATS;
-    const gap = 0.045;
+    // which categories to plot (checklist-controlled); default to all if unset
+    let activeIdx = (Array.isArray(wheelActiveIdx) ? wheelActiveIdx : WHEEL_DISPLAY.map((_, i) => i))
+      .filter(i => i >= 0 && i < NDISP);
+    const N = activeIdx.length;
+    const angleStep = (2 * Math.PI) / (N || 1);
+    const gap = N <= 1 ? 0.06 : 0.045;
     const startOffset = -Math.PI / 2 - angleStep / 2;  // first segment centred at top
 
     svg.innerHTML = '';
@@ -691,10 +769,19 @@
     // pivot any element around the wheel centre (for CSS scale/rotate animations)
     const pivot = (e) => { e.style.transformBox = 'view-box'; e.style.transformOrigin = cx + 'px ' + cy + 'px'; };
 
+    if (N === 0) {
+      svg.appendChild(Object.assign(el('text', {
+        x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        'font-size': '16', 'font-weight': '800', fill: '#94a3b8', 'font-family': 'Inter,Arial,sans-serif'
+      }), { textContent: 'No scores selected' }));
+      return;
+    }
+
     // ── defs: per-segment gradients + glow ──
     const defs = el('defs', {});
-    WHEEL_CATS.forEach((cat, i) => {
-      const g = el('linearGradient', { id:'wseg'+i, x1:'0%', y1:'0%', x2:'0%', y2:'100%' });
+    activeIdx.forEach((oi) => {
+      const cat = WHEEL_DISPLAY[oi];
+      const g = el('linearGradient', { id:'wseg'+oi, x1:'0%', y1:'0%', x2:'0%', y2:'100%' });
       g.appendChild(el('stop', { offset:'0%',  'stop-color':cat.light }));
       g.appendChild(el('stop', { offset:'100%','stop-color':cat.color }));
       defs.appendChild(g);
@@ -722,15 +809,16 @@
     spinRing.style.animation = 'wheelSpin 44s linear infinite';
     svg.appendChild(spinRing);
 
-    WHEEL_CATS.forEach((cat, i) => {
-      const a1 = startOffset + i * angleStep + gap / 2;
-      const a2 = startOffset + (i + 1) * angleStep - gap / 2;
+    activeIdx.forEach((oi, p) => {
+      const cat = WHEEL_DISPLAY[oi];
+      const a1 = startOffset + p * angleStep + gap / 2;
+      const a2 = startOffset + (p + 1) * angleStep - gap / 2;
       const midA = (a1 + a2) / 2;
-      const sc = scores[i];
-      const isNull = sc === null;
+      const sc = scores[oi];
+      const isNull = sc === null || sc === undefined;
       const frac = isNull ? 0 : Math.max(0.06, sc / maxScore);
       const segR = innerR + (outerR - innerR) * frac;
-      const delay = 0.14 + i * 0.12;
+      const delay = 0.14 + p * 0.12;
 
       // 1) full-range track
       const track = el('path', {
@@ -740,7 +828,7 @@
         'stroke-width': '1.5', 'stroke-linejoin':'round', cursor: 'pointer'
       });
       if (isNull) track.setAttribute('stroke-dasharray', '5 5');
-      track.addEventListener('click', () => onSegClick(i, officerName));
+      track.addEventListener('click', () => onSegClick(oi, officerName));
       track.addEventListener('mouseenter', () => track.setAttribute('fill', isNull ? '#e2e8f0' : '#eef2ff'));
       track.addEventListener('mouseleave', () => track.setAttribute('fill', isNull ? '#f1f5f9' : '#f8fafc'));
       svg.appendChild(track);
@@ -748,7 +836,7 @@
       // 2) coloured value arc — grows out from centre + fades in (staggered)
       if (!isNull) {
         const seg = el('path', {
-          d: sector(innerR, segR, a1, a2), fill: 'url(#wseg'+i+')',
+          d: sector(innerR, segR, a1, a2), fill: 'url(#wseg'+oi+')',
           stroke: cat.color, 'stroke-width': '2', 'stroke-linejoin': 'round',
           filter: 'url(#wglow)', cursor: 'pointer'
         });
@@ -758,7 +846,7 @@
         seg.style.transition = 'transform 0.7s cubic-bezier(0.34,1.45,0.5,1) ' + delay + 's, opacity 0.55s ease ' + delay + 's';
         seg.addEventListener('mouseenter', () => seg.style.filter = 'url(#wglow) brightness(1.07)');
         seg.addEventListener('mouseleave', () => seg.style.filter = 'url(#wglow)');
-        seg.addEventListener('click', () => onSegClick(i, officerName));
+        seg.addEventListener('click', () => onSegClick(oi, officerName));
         svg.appendChild(seg);
         requestAnimationFrame(() => requestAnimationFrame(() => { seg.style.transform = 'scale(1)'; seg.style.opacity = '1'; }));
       }
@@ -767,7 +855,7 @@
       const [lx, ly] = polar(outerR + 34, midA);
       svg.appendChild(Object.assign(el('text', {
         x: lx, y: ly - 12, 'text-anchor': 'middle', 'font-size': '23'
-      }), { textContent: (CAT_DETAILS[i] && CAT_DETAILS[i].icon) || '' }));
+      }), { textContent: cat.icon || '' }));
       const labelColor = isNull ? '#94a3b8' : cat.color;
       const words = cat.label.split(' ');
       if (cat.label.length > 9 && words.length > 1) {
@@ -869,10 +957,10 @@
   function showSegDetail(idx, officerName) {
     const existing = document.getElementById('sdpBg_' + idx);
     if (existing) existing.remove();
-    const cat  = WHEEL_CATS[idx];
-    const dets = CAT_DETAILS[idx];
+    const cat  = WHEEL_DISPLAY[idx];
+    const dets = WHEEL_DISPLAY[idx];
     const sc   = currentWheelData.scores[idx];
-    const isNull = sc === null;
+    const isNull = sc === null || sc === undefined;
 
     const bg = document.createElement('div');
     bg.className = 'sdp-popup-bg'; bg.id = 'sdpBg_' + idx;
@@ -890,7 +978,7 @@
         <div class="sdp-popup-body">
           ${isNull
             ? `<div style="padding:20px;text-align:center;font-size:12px;color:#94a3b8;">⏳ Live data for this parameter is not yet available.</div>`
-            : dets.metrics.map(m => {
+            : (dets.metrics || []).map(m => {
                 const v = m.val !== null ? m.val : Math.round((sc / 10) * 100);
                 return `<div class="sdp-metric-row">
                   <div class="sdp-metric-label">${esc(m.label)}</div>

@@ -338,6 +338,7 @@
   <button class="tab-btn" onclick="showTab('control',this)">&#9881; Module Control</button>
   <button class="tab-btn" onclick="showTab('mapping',this)">&#128506; Officer Posts &mdash; Dept Mapping</button>
   <button class="tab-btn" onclick="showTab('weights',this)">&#9878; Score Weights</button>
+  <button class="tab-btn" onclick="showTab('members',this)">&#127963; Members (Ministers/MLA/MP/MLC)</button>
 </div>
 
 <div class="content">
@@ -727,6 +728,36 @@
   </div><!-- #tab-weights -->
 
   <!-- ============================================================
+       TAB: Members (Ministers / MLA / MP Lok Sabha / MP Rajya Sabha / MLC)
+       ============================================================ -->
+  <div class="tab-panel" id="tab-members">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#127963; Member Data &mdash; Ministers &middot; MLAs &middot; MPs &middot; MLCs</h3>
+        <div class="toolbar">
+          <select id="memDataset" onchange="loadMembers()">
+            <option value="ministers">Ministers (within MLAs)</option>
+            <option value="mlas">MLAs</option>
+            <option value="mps">MP &mdash; Lok Sabha</option>
+            <option value="mp_rs">MP &mdash; Rajya Sabha</option>
+            <option value="mlcs">MLCs</option>
+          </select>
+          <input type="text" id="memSearch" placeholder="&#128269; Search&hellip;" oninput="renderMembers()">
+          <button class="btn btn-primary btn-sm" onclick="memAddNew()">&#10133; Add New</button>
+          <button class="btn btn-nav btn-sm" onclick="loadMembers()">&#8634; Reload</button>
+        </div>
+      </div>
+      <div style="padding:14px 16px 18px;">
+        <div id="mem-msg" style="font-size:12.5px;font-weight:700;margin-bottom:10px;color:#9a6b3a;"></div>
+        <div class="data-table-wrap" style="max-height:62vh;overflow-y:auto;">
+          <table class="data-table" id="memTable"><thead id="memThead"></thead><tbody id="memTbody"></tbody></table>
+        </div>
+        <div style="margin-top:8px;font-size:11.5px;color:#9a6b3a;">Tip: write access needs <b>member_admin_grants.sql</b> run once in Supabase. &nbsp; <b>Count:</b> <span id="mem-count">0</span></div>
+      </div>
+    </div>
+  </div><!-- #tab-members -->
+
+  <!-- ============================================================
        TAB 5: Officer Posts — Dept & HoD Mapping
        ============================================================ -->
   <div class="tab-panel" id="tab-mapping">
@@ -1021,6 +1052,19 @@
   </div>
 </div>
 
+<!-- Member add/edit modal -->
+<div class="modal-overlay" id="mem-modal">
+  <div class="modal" style="max-width:940px;">
+    <h2 id="mem-modal-title">Edit Member</h2>
+    <div id="mem-modal-sub" style="font-size:12px;color:#64748b;margin:-10px 0 14px;"></div>
+    <div class="form-grid" id="mem-form"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('mem-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="memSave()">&#128190; Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- 5c. Reset Request Complete Info Modal -->
 <div class="modal-overlay" id="reset-complete-modal">
   <div class="modal" style="max-width:500px;text-align:center;">
@@ -1158,6 +1202,133 @@ function showTab(name, btn) {
   if (name === 'control') loadModuleControl();
   if (name === 'mapping') loadDeptMapping();
   if (name === 'weights') loadScoreWeights();
+  if (name === 'members') loadMembers();
+}
+
+// ================================================================
+// Member Data Management  (Supabase: mlas / mps / mp_rs / mlcs)
+// ================================================================
+const MEM_DS = {
+  ministers: { table:'mlas',  key:'candidate_id', noun:'Minister',
+               list:['name','position','constituency','party','district'],
+               filter:r => ['chief minister','deputy chief minister','minister'].indexOf((r.position||'').toLowerCase().trim()) > -1 },
+  mlas:      { table:'mlas',  key:'candidate_id', noun:'MLA',
+               list:['name','constituency','party','district','position'] },
+  mps:       { table:'mps',   key:'member_id',    noun:'MP (Lok Sabha)',
+               list:['full_name','constituency','party','category'] },
+  mp_rs:     { table:'mp_rs', key:'mp_code',      noun:'MP (Rajya Sabha)',
+               list:['member_name','party','state_ut','status'] },
+  mlcs:      { table:'mlcs',  key:'mlc_id',       noun:'MLC',
+               list:['name','category','constituency','party'] }
+};
+const MEM_NUMERIC = new Set(['age','criminal_cases_count','constituency_no']);
+const MEM_LONG = new Set(['positions_held','term_history','criminal_case_details','education_details','educational_qualification',
+  'permanent_address','communication_address','present_address','local_address','other_permanent_address','address',
+  'special_interests','social_cultural','other_information','books_published','literary_activities','previous_membership',
+  'brief_bio_data','sports_clubs','countries_visited','hobbies','qualifications','profession','positions_held']);
+let _memRows = [], _memCols = [], _memEditId = null;
+
+function memCfg(){ return MEM_DS[(document.getElementById('memDataset')||{}).value] || MEM_DS.mlas; }
+function _memTrunc(v){ v = (v==null?'':String(v)); return v.length>60 ? v.slice(0,57)+'…' : v; }
+
+async function loadMembers(){
+  const cfg = memCfg();
+  const tb = document.getElementById('memTbody'); const msg = document.getElementById('mem-msg');
+  if (tb) tb.innerHTML = '<tr><td style="padding:14px;color:#9a6b3a;">Loading&hellip;</td></tr>';
+  if (msg) msg.textContent = '';
+  const { data, error } = await _supabase.from(cfg.table).select('*');
+  if (error){ if (msg){ msg.style.color='#b91c1c'; msg.innerHTML = 'Could not load <b>'+cfg.table+'</b>: '+esc(error.message)+'. Run the table SQL (and <b>member_admin_grants.sql</b>) in Supabase.'; } if (tb) tb.innerHTML=''; return; }
+  _memRows = data || [];
+  _memCols = _memRows.length ? Object.keys(_memRows[0]) : [cfg.key];
+  renderMembers();
+}
+
+function renderMembers(){
+  const cfg = memCfg();
+  const q = ((document.getElementById('memSearch')||{}).value||'').toLowerCase().trim();
+  let rows = _memRows.slice();
+  if (cfg.filter) rows = rows.filter(cfg.filter);
+  if (q) rows = rows.filter(r => Object.values(r).some(v => String(v==null?'':v).toLowerCase().indexOf(q) > -1));
+  rows.sort((a,b)=> String(a[cfg.list[0]]||'').localeCompare(String(b[cfg.list[0]]||''), undefined, {sensitivity:'base'}));
+  const cols = cfg.list;
+  document.getElementById('memThead').innerHTML = '<tr><th style="width:120px;">'+esc(cfg.key)+'</th>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'<th style="width:160px;">Actions</th></tr>';
+  const tb = document.getElementById('memTbody');
+  if (!rows.length){
+    tb.innerHTML = '<tr><td colspan="'+(cols.length+2)+'" style="padding:16px;color:#9a6b3a;">'+(_memRows.length? 'No match in this group.':'No records. Run the table + seed SQL in Supabase (and member_admin_grants.sql for write access).')+'</td></tr>';
+  } else {
+    tb.innerHTML = rows.map(r => {
+      const idv = r.id;
+      return '<tr><td style="font-weight:700;">'+esc(r[cfg.key])+'</td>'
+        + cols.map(c => '<td>'+esc(_memTrunc(r[c]))+'</td>').join('')
+        + '<td style="white-space:nowrap;"><button class="btn btn-nav btn-sm" onclick="memEdit(\''+idv+'\')">&#9998; Edit</button> '
+        + '<button class="btn btn-danger btn-sm" onclick="memDelete(\''+idv+'\')">&#128465; Delete</button></td></tr>';
+    }).join('');
+  }
+  document.getElementById('mem-count').textContent = rows.length;
+}
+
+function _memFormFields(row){
+  const cfg = memCfg();
+  const seen = {}, order = [];
+  function add(c){ if (c && !seen[c] && c!=='id' && c!=='created_at'){ seen[c]=1; order.push(c); } }
+  add(cfg.key); cfg.list.forEach(add); _memCols.forEach(add);
+  return order.map(c => {
+    const val = row ? (row[c]==null?'':String(row[c])) : '';
+    const isKey = (c === cfg.key);
+    const long = MEM_LONG.has(c) || (val.length > 70);
+    const lblExtra = isKey ? ' <span style="color:#c2410c;">(key &middot; required)</span>' : '';
+    const field = long
+      ? '<textarea id="memf-'+esc(c)+'" rows="3" style="resize:vertical;">'+esc(val)+'</textarea>'
+      : '<input type="'+(MEM_NUMERIC.has(c)?'number':'text')+'" id="memf-'+esc(c)+'" value="'+esc(val).replace(/"/g,'&quot;')+'">';
+    return '<div class="form-group'+(long?' full':'')+'"><label>'+esc(c)+lblExtra+'</label>'+field+'</div>';
+  }).join('');
+}
+
+function memAddNew(){
+  const cfg = memCfg(); _memEditId = null;
+  document.getElementById('mem-modal-title').innerHTML = '&#10133; Add '+esc(cfg.noun);
+  document.getElementById('mem-modal-sub').textContent = 'New record in table "'+cfg.table+'". Fill the key ('+cfg.key+') and required fields.';
+  document.getElementById('mem-form').innerHTML = _memFormFields(null);
+  document.getElementById('mem-modal').classList.add('open');
+}
+function memEdit(id){
+  const cfg = memCfg();
+  const row = _memRows.find(r => String(r.id) === String(id)); if (!row) return;
+  _memEditId = id;
+  document.getElementById('mem-modal-title').innerHTML = '&#9998; Edit '+esc(cfg.noun);
+  document.getElementById('mem-modal-sub').textContent = 'Table "'+cfg.table+'" · id '+id+' · '+cfg.key+' = '+(row[cfg.key]||'');
+  document.getElementById('mem-form').innerHTML = _memFormFields(row);
+  document.getElementById('mem-modal').classList.add('open');
+}
+
+async function memSave(){
+  const cfg = memCfg();
+  const payload = {};
+  document.querySelectorAll('#mem-form [id^="memf-"]').forEach(el => {
+    const col = el.id.slice(5);
+    let v = (el.value==null?'':String(el.value)).trim();
+    if (MEM_NUMERIC.has(col)) payload[col] = (v===''?null:(isNaN(+v)?v:+v));
+    else payload[col] = (v===''?null:v);
+  });
+  if (!payload[cfg.key]){ showToast('The key field ('+cfg.key+') is required.', true); return; }
+  let res;
+  if (_memEditId == null) res = await _supabase.from(cfg.table).insert(payload);
+  else res = await _supabase.from(cfg.table).update(payload).eq('id', _memEditId);
+  if (res.error){ showToast('Save failed: '+res.error.message, true); return; }
+  closeModal('mem-modal');
+  showToast((_memEditId==null?'Added':'Updated')+' '+cfg.noun+'. Reload the dashboard to see changes.');
+  loadMembers();
+}
+
+async function memDelete(id){
+  const cfg = memCfg();
+  const row = _memRows.find(r => String(r.id) === String(id));
+  const nm = row ? (row[cfg.list[0]] || row[cfg.key]) : id;
+  if (!confirm('Delete this '+cfg.noun+' permanently?\n\n'+nm+'\n\nThis cannot be undone.')) return;
+  const res = await _supabase.from(cfg.table).delete().eq('id', id);
+  if (res.error){ showToast('Delete failed: '+res.error.message, true); return; }
+  showToast('Deleted '+cfg.noun+'.');
+  loadMembers();
 }
 
 // ================================================================
