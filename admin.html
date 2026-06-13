@@ -163,6 +163,47 @@
     .form-group input[readonly] { background: #f1f5f9; color: #64748b; }
     .form-group.full { grid-column: 1 / -1; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e0e7ff; }
+    /* GSDP mapping */
+    .gsdp-sec-row td { background: linear-gradient(135deg,#fff3d6,#fde7bd); font-weight: 800; color: #7c2d12; font-size: 12.5px; letter-spacing: 0.3px; }
+    .gsdp-ms-btn { width: 100%; text-align: left; padding: 7px 11px; border: 1.5px solid #e0b878; border-radius: 8px; background: #fffdf7; color: #5c2102; font-size: 12.5px; cursor: pointer; font-family: inherit; transition: border-color .15s, background .15s; }
+    .gsdp-ms-btn:hover { border-color: #c2410c; background: #fff7e8; }
+    .gsdp-ms-pop { display: none; position: absolute; z-index: 700; width: 320px; max-width: 92vw; background: #fff; border: 1.5px solid #e0b878; border-radius: 12px; box-shadow: 0 18px 50px rgba(120,53,15,0.32); padding: 12px; }
+    .gsdp-ms-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 800; color: #7c2d12; margin-bottom: 9px; gap: 8px; }
+    .gsdp-ms-x { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e0b878; background: #fff3d6; color: #9a3412; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+    .gsdp-ms-actions { display: flex; gap: 7px; margin-bottom: 8px; }
+    .gsdp-ms-list { max-height: 270px; overflow-y: auto; border: 1px solid #f0d6a0; border-radius: 8px; padding: 4px; }
+    .gsdp-ms-opt { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; color: #4a2810; cursor: pointer; }
+    .gsdp-ms-opt:hover { background: #fff3d6; }
+    .gsdp-ms-opt input { width: 15px; height: 15px; cursor: pointer; accent-color: #c2410c; flex-shrink: 0; }
+    .gsdp-ms-foot { display: flex; justify-content: flex-end; margin-top: 9px; }
+    /* GSDP mapping matrix grid */
+    table.gsdp-grid { border-collapse: separate; border-spacing: 0; font-size: 12px; width: auto; }
+    .gsdp-grid th, .gsdp-grid td { border: 1px solid #ecddc4; }
+    .gsdp-grid thead th { position: sticky; top: 0; background: #fbf3e6; z-index: 3; vertical-align: middle; }
+    .gsdp-corner { position: sticky; left: 0; top: 0; z-index: 6 !important; background: #f5e7cf !important; text-align: left; padding: 8px 11px; min-width: 240px; color: #7c2d12; font-weight: 800; }
+    .gsdp-sec-th { cursor: pointer; padding: 7px 9px; white-space: normal; word-break: break-word; line-height: 1.22; color: #7c3a12; font-weight: 800; text-align: center; user-select: none; min-width: 84px; max-width: 130px; }
+    .gsdp-sec-th:hover { background: #f6e6c8; }
+    .gsdp-sec-th.open { background: #f1ddb8; }
+    .gsdp-sub-th { padding: 7px 8px; font-weight: 700; color: #0c4a6e; text-align: center; background: #eef6fb !important; min-width: 78px; vertical-align: middle; z-index: 3; }
+    /* inline-block wrapper forces header text to wrap (max-width is ignored on auto-layout table cells) */
+    .gsdp-thwrap { display: inline-block; max-width: 96px; white-space: normal; word-break: break-word; line-height: 1.2; vertical-align: middle; }
+    /* HoD-mapping distribution chips above the grid */
+    .gsdp-sumbar { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 12px; }
+    .gsdp-sumchip { display: inline-flex; align-items: baseline; gap: 5px; background: #fffdf7; border: 1.5px solid #e7d4ad; border-radius: 9px; padding: 5px 11px; font-size: 11.5px; font-weight: 700; color: #6b4423; }
+    .gsdp-sumchip b { font-size: 14px; font-weight: 900; }
+    .gsdp-dept-tot { font-size: 10.5px; font-weight: 700; }
+    .gsdp-rowhead { position: sticky; left: 0; z-index: 2; background: #fff; text-align: left; padding: 7px 11px; min-width: 240px; cursor: pointer; user-select: none; }
+    .gsdp-dept-row .gsdp-rowhead { background: #fff7ea; }
+    .gsdp-dept-row:hover .gsdp-rowhead { background: #fdeed4; }
+    .gsdp-hod-row .gsdp-rowhead { background: #fbfbfd; color: #475569; font-size: 11.5px; }
+    .gsdp-hod-row:hover .gsdp-rowhead { background: #f3f4f8; }
+    .gsdp-cell { text-align: center; padding: 4px 6px; min-width: 78px; }
+    .gsdp-cell input { width: 16px; height: 16px; cursor: pointer; accent-color: #c2410c; }
+    .gsdp-hod-row .gsdp-cell input { accent-color: #2563eb; }
+    .gsdp-closed { background: #faf6ee; cursor: pointer; }
+    .gsdp-closed:hover { background: #f3e9d6; }
+    .gsdp-badge { display: inline-block; min-width: 18px; padding: 1px 5px; border-radius: 9px; background: #c2410c; color: #fff; font-size: 10px; font-weight: 800; }
+    .gsdp-hod-row .gsdp-badge { background: #2563eb; }
 
     /* ---- Officer context banner in posting modal ---- */
     .officer-banner {
@@ -339,6 +380,7 @@
   <button class="tab-btn" onclick="showTab('mapping',this)">&#128506; Officer Posts &mdash; Dept Mapping</button>
   <button class="tab-btn" onclick="showTab('weights',this)">&#9878; Score Weights</button>
   <button class="tab-btn" onclick="showTab('members',this)">&#127963; Members (Ministers/MLA/MP/MLC)</button>
+  <button class="tab-btn" onclick="showTab('gsdpmap',this)">&#127806; GSDP Mapping</button>
 </div>
 
 <div class="content">
@@ -756,6 +798,29 @@
       </div>
     </div>
   </div><!-- #tab-members -->
+
+  <!-- ============================================================
+       TAB: GSDP Mapping — each sub-sector -> Departments / HoDs
+       ============================================================ -->
+  <div class="tab-panel" id="tab-gsdpmap">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#127806; GSDP Mapping &mdash; Sub-sector &rarr; Departments / HoDs</h3>
+        <div class="toolbar">
+          <button class="btn btn-primary btn-sm" onclick="saveGsdpMapping()">&#128190; Save Mapping</button>
+          <button class="btn btn-nav btn-sm" onclick="loadGsdpMapping()">&#8634; Reload</button>
+        </div>
+      </div>
+      <div style="padding:14px 16px 18px;">
+        <p style="color:#6b4423;font-size:12.5px;margin:0 0 12px;line-height:1.55;">Departments &amp; HoDs (rows) come from <code>department_hod</code>; Sectors &amp; Sub-sectors (columns) from <code>gsdp</code>. Click a sector / department to expand; only one of each open at a time. Tick a cell to map that <b>Department</b> (orange ▸ Secretariat posts) or <b>HoD</b> (blue ▸ HoD posts) to a sub-sector — a sub-sector may have several HoDs. On <b>Save</b>, the selections are written to the <code>gsdp_mapping</code> table as normalised rows (one row per Sector, Sub-sector, Department, HoD — a sub-sector with several HoDs makes several rows). Closed-sector cells show a count badge of existing mappings.</p>
+        <div id="gsdp-map-msg" style="font-size:12.5px;font-weight:700;margin-bottom:10px;color:#9a6b3a;"></div>
+        <div id="gsdp-map-summary" class="gsdp-sumbar"></div>
+        <div class="data-table-wrap" style="max-height:66vh;overflow:auto;">
+          <table class="data-table gsdp-grid" id="gsdpMapTable"></table>
+        </div>
+      </div>
+    </div>
+  </div><!-- #tab-gsdpmap -->
 
   <!-- ============================================================
        TAB 5: Officer Posts — Dept & HoD Mapping
@@ -1203,6 +1268,204 @@ function showTab(name, btn) {
   if (name === 'mapping') loadDeptMapping();
   if (name === 'weights') loadScoreWeights();
   if (name === 'members') loadMembers();
+  if (name === 'gsdpmap') loadGsdpMapping();
+}
+
+// ================================================================
+// GSDP Mapping  (department_hod → gsdp_mapping table: one row per Sector,
+//                Sub-sector, Department, HoD; a sub-sector with several HoDs
+//                makes several rows, each with a unique HoD)
+// ================================================================
+let _gsdpSubs = [];        // [{sector, sub_sector}]
+let _gsdpDeptHods = {};    // department -> [hods under it]
+let _gsdpDepts = [];       // distinct departments
+let _gsdpHods = [];        // distinct hods
+let _gsdpMap = {};         // sub_sector -> { department:{val:1}, hod:{val:1} }
+let _gsdpSectors = [];     // [{sector, subs:[sub_sector,...]}]  (column groups)
+let _gsdpOpenSector = null;// the one expanded sector (column)
+let _gsdpOpenDept = null;  // the one expanded department (row)
+
+async function loadGsdpMapping(){
+  const tbl = document.getElementById('gsdpMapTable');
+  const msg = document.getElementById('gsdp-map-msg'); if (msg) msg.textContent = '';
+  if (tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#9a6b3a;">Loading…</td></tr></tbody>';
+  try {
+    const [gRes, dhRes, mRes] = await Promise.all([
+      _supabase.from('gsdp').select('sector,sub_sector'),
+      _supabase.from('department_hod').select('department,hod'),
+      _supabase.from('gsdp_mapping').select('sub_sector,department,hod')
+    ]);
+    if (gRes.error){ tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">Could not read <b>gsdp</b>: '+esc(gRes.error.message)+'<br>Run <b>gsdp_table.sql</b> + <b>gsdp_seed.sql</b> + <b>gsdp_mapping_v3.sql</b> in Supabase first.</td></tr></tbody>'; return; }
+    // distinct (sector, sub_sector) preserving sector grouping
+    const SECTOR_ORDER = { 'Agricultural Sector':0, 'Industrial Sector':1, 'Services Sector':2 };
+    const seen = {}; _gsdpSubs = [];
+    (gRes.data||[]).forEach(r => { const k=(r.sector||'')+'||'+(r.sub_sector||''); if(!seen[k]){ seen[k]=1; _gsdpSubs.push({sector:r.sector||'', sub_sector:r.sub_sector||''}); } });
+    _gsdpSubs.sort((a,b)=> (SECTOR_ORDER[a.sector]??9)-(SECTOR_ORDER[b.sector]??9) || a.sub_sector.localeCompare(b.sub_sector));
+    // column groups: Sector -> [sub-sectors]
+    _gsdpSectors = []; const secIdx = {};
+    _gsdpSubs.forEach(s => { if (secIdx[s.sector]==null){ secIdx[s.sector]=_gsdpSectors.length; _gsdpSectors.push({sector:s.sector, subs:[]}); } _gsdpSectors[secIdx[s.sector]].subs.push(s.sub_sector); });
+    // distinct depts / hods
+    const ds={}, hs={}, dh={};
+    (dhRes.data||[]).forEach(r=>{ const d=(r.department||'').trim(), h=(r.hod||'').trim(); if(d) ds[d]=1; if(h) hs[h]=1; if(d&&h){ (dh[d]=dh[d]||{})[h]=1; } });
+    _gsdpDepts = Object.keys(ds).sort(); _gsdpHods = Object.keys(hs).sort();
+    _gsdpDeptHods = {}; Object.keys(dh).forEach(d=>{ _gsdpDeptHods[d] = Object.keys(dh[d]).sort(); });
+    // existing mapping — from gsdp_mapping (one row per HoD; dept-only rows have no hod)
+    _gsdpMap = {}; _gsdpSubs.forEach(s=>{ _gsdpMap[s.sub_sector] = { department:{}, hod:{} }; });
+    if (!mRes.error) (mRes.data||[]).forEach(r=>{ const sub=(r.sub_sector||'').trim(); if(!_gsdpMap[sub]) _gsdpMap[sub]={department:{},hod:{}}; const h=(r.hod||'').trim(); if(h) _gsdpMap[sub].hod[h]=1; else { const d=(r.department||'').trim(); if(d) _gsdpMap[sub].department[d]=1; } });
+    // default: open the first sector so checkboxes are visible right away
+    _gsdpOpenSector = _gsdpSectors.length ? _gsdpSectors[0].sector : null;
+    _gsdpOpenDept = null;
+    renderGsdpMapping();
+    if (msg){ msg.style.color='#9a6b3a'; msg.textContent = _gsdpSectors.length+' sectors · '+_gsdpSubs.length+' sub-sectors · '+_gsdpDepts.length+' departments · '+_gsdpHods.length+' HoDs'; }
+  } catch(e){ if(tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">'+esc(e.message)+'</td></tr></tbody>'; }
+}
+
+function gsdpCountInSector(kind, val, sec){ let n=0; sec.subs.forEach(function(sub){ if(_gsdpMap[sub] && _gsdpMap[sub][kind][val]) n++; }); return n; }
+
+function gsdpRowCells(kind, val){
+  let out = '';
+  _gsdpSectors.forEach(function(sec){
+    if (sec.sector === _gsdpOpenSector){
+      sec.subs.forEach(function(sub){
+        const on = !!(_gsdpMap[sub] && _gsdpMap[sub][kind][val]);
+        out += '<td class="gsdp-cell"><input type="checkbox" class="gsdp-cb" data-kind="'+kind+'" data-val="'+esc(val)+'" data-sub="'+esc(sub)+'" '+(on?'checked':'')+'></td>';
+      });
+    } else {
+      const n = gsdpCountInSector(kind, val, sec);
+      out += '<td class="gsdp-cell gsdp-closed" data-opensec="'+esc(sec.sector)+'" title="Click to open '+esc(sec.sector)+'">'+(n>0?'<span class="gsdp-badge">'+n+'</span>':'')+'</td>';
+    }
+  });
+  return out;
+}
+
+function renderGsdpMapping(){
+  const tbl = document.getElementById('gsdpMapTable');
+  if (!tbl) return;
+  if (_gsdpOpenSector && !_gsdpSectors.some(function(s){return s.sector===_gsdpOpenSector;})) _gsdpOpenSector = null;
+  const open = _gsdpSectors.filter(function(s){return s.sector===_gsdpOpenSector;})[0];
+
+  // THEAD — row 1: corner + sector headers; row 2: sub-sectors of the open sector
+  let h = '<thead><tr>';
+  h += '<th class="gsdp-corner" rowspan="2">Department \\ Sector<div style="font-weight:600;font-size:10px;color:#9a6b3a;margin-top:2px;">click a sector &#9656; and a department &#9662; to expand</div></th>';
+  _gsdpSectors.forEach(function(sec){
+    if (sec.sector === _gsdpOpenSector)
+      h += '<th class="gsdp-sec-th open" colspan="'+sec.subs.length+'" data-opensec="'+esc(sec.sector)+'" title="Click to collapse">&#9662; '+esc(sec.sector)+'</th>';
+    else
+      h += '<th class="gsdp-sec-th" rowspan="2" data-opensec="'+esc(sec.sector)+'" title="Click to expand">&#9656; <span class="gsdp-thwrap">'+esc(sec.sector)+'</span></th>';
+  });
+  h += '</tr><tr>';
+  if (open) open.subs.forEach(function(sub){ h += '<th class="gsdp-sub-th"><span class="gsdp-thwrap">'+esc(sub)+'</span></th>'; });
+  h += '</tr></thead>';
+
+  // TBODY — Department rows (expand → HoD rows)
+  let b = '<tbody>';
+  if (!_gsdpDepts.length){ b += '<tr><td style="padding:16px;color:#9a6b3a;">No departments found in <b>department_hod</b>.</td></tr>'; }
+  _gsdpDepts.forEach(function(dept, di){
+    const hods = _gsdpDeptHods[dept] || [];
+    const deptOpen = dept === _gsdpOpenDept;
+    b += '<tr class="gsdp-dept-row">'
+      + '<td class="gsdp-rowhead" data-opendept="'+esc(dept)+'"><span style="color:#7c3a12;">'+(deptOpen?'&#9662;':'&#9656;')+'</span> <b>'+esc(dept)+'</b> <span id="gsdp-dtot-'+di+'" class="gsdp-dept-tot"></span></td>'
+      + gsdpRowCells('department', dept)
+      + '</tr>';
+    if (deptOpen){
+      if (!hods.length){ const nc = _gsdpSectors.reduce(function(a,s){ return a + (s.sector===_gsdpOpenSector? s.subs.length : 1); }, 0); b += '<tr class="gsdp-hod-row"><td class="gsdp-rowhead gsdp-hod-head" style="color:#94a3b8;">&nbsp;&nbsp;&#9492; (no HoDs in this department)</td>'+(nc>0?'<td colspan="'+nc+'" style="color:#cbd5e1;">&mdash;</td>':'')+'</tr>'; }
+      hods.forEach(function(hod){
+        b += '<tr class="gsdp-hod-row">'
+          + '<td class="gsdp-rowhead gsdp-hod-head">&nbsp;&nbsp;&#9492; '+esc(hod)+'</td>'
+          + gsdpRowCells('hod', hod)
+          + '</tr>';
+      });
+    }
+  });
+  b += '</tbody>';
+
+  tbl.className = 'data-table gsdp-grid';
+  tbl.innerHTML = h + b;
+  gsdpStickyHeader(tbl);
+  gsdpUpdateCounts();
+}
+
+// Stick BOTH header rows: row 2 (sub-sectors) sits just below row 1 (sectors).
+function gsdpStickyHeader(tbl){
+  const thead = tbl.querySelector('thead'); if (!thead || thead.rows.length < 2) return;
+  const h1 = thead.rows[0].offsetHeight;
+  Array.prototype.forEach.call(thead.rows[1].cells, function(th){ th.style.top = h1 + 'px'; });
+}
+
+// How many sub-sectors each HoD is mapped to (across all sub-sectors).
+function gsdpHodSubCount(){
+  const c = {}; (_gsdpHods||[]).forEach(function(h){ c[h] = 0; });
+  (_gsdpSubs||[]).forEach(function(s){ const m = _gsdpMap[s.sub_sector]; if (!m) return; Object.keys(m.hod).forEach(function(h){ c[h] = (c[h]||0) + 1; }); });
+  return c;
+}
+// Top distribution chips + per-department HoDs total / Mapped / Remaining.
+function gsdpUpdateCounts(){
+  const hsc = gsdpHodSubCount();
+  const total = (_gsdpHods||[]).length;
+  const dist = {}; let maxN = 0;
+  (_gsdpHods||[]).forEach(function(h){ const n = hsc[h]||0; dist[n] = (dist[n]||0) + 1; if (n>maxN) maxN = n; });
+  function chip(lbl, val, col){ return '<span class="gsdp-sumchip" style="border-color:'+col+'33;"><b style="color:'+col+';">'+val+'</b> '+lbl+'</span>'; }
+  let s = chip('Total HoDs', total, '#7c2d12') + chip('Not mapped', dist[0]||0, '#b91c1c');
+  for (let n=1; n<=maxN; n++){ if (dist[n]) s += chip('mapped to '+n+' sub-sector'+(n>1?'s':''), dist[n], '#15803d'); }
+  const sum = document.getElementById('gsdp-map-summary'); if (sum) sum.innerHTML = s;
+  (_gsdpDepts||[]).forEach(function(dept, di){
+    const el = document.getElementById('gsdp-dtot-'+di); if (!el) return;
+    const hods = _gsdpDeptHods[dept] || [];
+    const mapped = hods.filter(function(h){ return (hsc[h]||0) > 0; }).length;
+    const rem = hods.length - mapped;
+    el.innerHTML = '<span style="color:#b08968;">HoDs '+hods.length+'</span> · <span style="color:#15803d;">Mapped '+mapped+'</span> · <span style="color:'+(rem>0?'#c2410c':'#94a3b8')+';">Rem '+rem+'</span>';
+  });
+}
+
+// One delegated handler for the whole grid (attached once)
+(function gsdpGridInit(){
+  const tbl = document.getElementById('gsdpMapTable');
+  if (!tbl) return;
+  tbl.addEventListener('change', function(e){
+    const cb = e.target;
+    if (!cb.classList || !cb.classList.contains('gsdp-cb')) return;
+    const kind = cb.getAttribute('data-kind'), val = cb.getAttribute('data-val'), sub = cb.getAttribute('data-sub');
+    if (!_gsdpMap[sub]) _gsdpMap[sub] = { department:{}, hod:{} };
+    if (cb.checked) _gsdpMap[sub][kind][val] = 1; else delete _gsdpMap[sub][kind][val];
+    if (kind === 'hod') gsdpUpdateCounts();   // live refresh of distribution + per-dept totals
+  });
+  tbl.addEventListener('click', function(e){
+    const secEl = e.target.closest('[data-opensec]');
+    if (secEl){ const s = secEl.getAttribute('data-opensec'); _gsdpOpenSector = (_gsdpOpenSector===s)?null:s; renderGsdpMapping(); return; }
+    const depEl = e.target.closest('[data-opendept]');
+    if (depEl){ const d = depEl.getAttribute('data-opendept'); _gsdpOpenDept = (_gsdpOpenDept===d)?null:d; renderGsdpMapping(); return; }
+  });
+})();
+
+async function saveGsdpMapping(){
+  const msg = document.getElementById('gsdp-map-msg');
+  if (msg){ msg.style.color='#9a6b3a'; msg.textContent = 'Saving…'; }
+  try {
+    // Each HoD belongs to a department (department_hod). Build hod -> its dept.
+    const hodDept = {};
+    Object.keys(_gsdpDeptHods).forEach(d => (_gsdpDeptHods[d]||[]).forEach(h => { if (hodDept[h]==null) hodDept[h]=d; }));
+    // Build the NORMALISED rows: one row per (sub-sector × HoD), plus one row per
+    // (sub-sector × Department) for department-only (Secretariat) mappings.
+    const rows = [];
+    _gsdpSubs.forEach(function(s){
+      const m = _gsdpMap[s.sub_sector] || { department:{}, hod:{} };
+      Object.keys(m.department).sort().forEach(d => rows.push({ sector:s.sector, sub_sector:s.sub_sector, department:d, hod:null }));
+      Object.keys(m.hod).sort().forEach(h => rows.push({ sector:s.sector, sub_sector:s.sub_sector, department:hodDept[h]||null, hod:h }));
+    });
+    // Replace the whole table (delete-all then chunked insert).
+    const del = await _supabase.from('gsdp_mapping').delete().gte('id', 0);
+    if (del.error) throw new Error('clear: ' + del.error.message);
+    for (let i=0;i<rows.length;i+=500){
+      const ins = await _supabase.from('gsdp_mapping').insert(rows.slice(i,i+500));
+      if (ins.error) throw new Error('insert: ' + ins.error.message);
+    }
+    const hodRows = rows.filter(r=>r.hod).length, deptRows = rows.length - hodRows;
+    if (msg){ msg.style.color='#15803d'; msg.textContent = '✓ Saved '+rows.length+' rows to gsdp_mapping ('+hodRows+' HoD · '+deptRows+' Department).'; }
+    showToast('GSDP mapping saved · '+rows.length+' rows.');
+  } catch(e){
+    if (msg){ msg.style.color='#b91c1c'; msg.textContent = '✗ '+e.message; }
+    showToast('Save failed: '+e.message, true);
+  }
 }
 
 // ================================================================
@@ -1341,7 +1604,7 @@ async function loadScoreWeights(){
   const { data, error } = await _supabase.from('score_config').select('*').order('score_key').order('sort_order');
   if (error) { wrap.innerHTML = '<div style="color:#b91c1c;padding:8px;">Could not load <b>score_config</b>: ' + esc(error.message) + '<br>Run <b>score_config.sql</b> in the Supabase SQL editor first.</div>'; return; }
   if (!data || !data.length) { wrap.innerHTML = '<div style="color:#b45309;padding:8px;line-height:1.6;">No rows returned. If you have <b>already run score_config.sql</b> and seeded the table, this is almost certainly <b>Row-Level Security</b> hiding the rows from the dashboard key.<br>Run the <b>ACCESS block</b> at the bottom of <b>score_config.sql</b> (it disables RLS + grants access), then reload this tab.</div>'; return; }
-  const titles = { eoffice:'&#128202; e-Office', goi:'&#128176; GoI Funds', composite:'&#127919; Composite' };
+  const titles = { eoffice:'&#128202; e-Office', goi:'&#128176; GoI Funds', gsdp:'&#128200; GSDP', composite:'&#127919; Composite' };
   const byScore = {};
   data.forEach(r => { (byScore[r.score_key] = byScore[r.score_key] || []).push(r); });
   let html = '';

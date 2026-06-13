@@ -683,7 +683,7 @@
 
   /* ---- Page background: warm solid cream ---- */
   body { background:#f3ddbb !important; font-family:'Inter',Arial,sans-serif !important; }
-  #grid360wrap, #eofficeTableWrap, #perceptionTableWrap, #swarnaTableWrap, #goiTableWrap, #combinedTableWrap { background:transparent !important; }
+  #grid360wrap, #eofficeTableWrap, #perceptionTableWrap, #swarnaTableWrap, #goiTableWrap, #combinedTableWrap, #gsdpTableWrap { background:transparent !important; }
 
   /* ---- Header banner: dark solid saffron-maroon, gold trim ---- */
   #topHeader {
@@ -759,9 +759,9 @@
   #homeScreen, #soonScreen { display:none; position:fixed; top:var(--bar360-h,80px); left:var(--side-w,248px); right:var(--side-w-r,248px); bottom:0; z-index:170; overflow-y:auto; background:#5e2008; }
   html.ais-home #homeScreen { display:block; }
   html.ais-soon #soonScreen { display:flex; align-items:center; justify-content:center; left:var(--side-w,248px); right:0; }
-  html.ais-home #grid360wrap, html.ais-home #eofficeTableWrap, html.ais-home #perceptionTableWrap, html.ais-home #swarnaTableWrap, html.ais-home #goiTableWrap, html.ais-home #combinedTableWrap, html.ais-home #tableViewWrap, html.ais-home #graphViewWrap { display:none !important; }
+  html.ais-home #grid360wrap, html.ais-home #eofficeTableWrap, html.ais-home #perceptionTableWrap, html.ais-home #swarnaTableWrap, html.ais-home #goiTableWrap, html.ais-home #combinedTableWrap, html.ais-home #gsdpTableWrap, html.ais-home #tableViewWrap, html.ais-home #graphViewWrap { display:none !important; }
   html.ais-soon #rightPanel, html.ais-soon #showRightPanel, html.ais-soon #mobileFilterBtn { display:none !important; }
-  html.ais-soon #grid360wrap, html.ais-soon #eofficeTableWrap, html.ais-soon #perceptionTableWrap, html.ais-soon #swarnaTableWrap, html.ais-soon #goiTableWrap, html.ais-soon #combinedTableWrap, html.ais-soon #tableViewWrap, html.ais-soon #graphViewWrap { display:none !important; }
+  html.ais-soon #grid360wrap, html.ais-soon #eofficeTableWrap, html.ais-soon #perceptionTableWrap, html.ais-soon #swarnaTableWrap, html.ais-soon #goiTableWrap, html.ais-soon #combinedTableWrap, html.ais-soon #gsdpTableWrap, html.ais-soon #tableViewWrap, html.ais-soon #graphViewWrap { display:none !important; }
   @media (max-width:980px){ #homeScreen, #soonScreen { left:0 !important; right:0 !important; } }
   .home-inner { max-width:1180px; margin:0 auto; padding:34px 26px 60px; text-align:center; }
   .home-title { font-size:clamp(23px,4vw,40px); font-weight:900; color:#fff7ed; line-height:1.15; margin:0 0 8px; letter-spacing:0.3px; text-shadow:0 2px 16px rgba(0,0,0,0.45); }
@@ -844,19 +844,19 @@
   /* ── MLA 360 view ── */
   #mla360wrap { position:fixed; top:var(--bar360-h,80px); left:var(--side-w,248px); right:var(--side-w-r,248px); bottom:0; overflow:auto; background:#f3ddbb; padding:14px 18px 26px; display:none; flex-direction:column; }
   html.ais-mla #mla360wrap { display:flex; }
-  html.ais-mla #grid360wrap, html.ais-mla #eofficeTableWrap, html.ais-mla #perceptionTableWrap, html.ais-mla #swarnaTableWrap, html.ais-mla #goiTableWrap, html.ais-mla #combinedTableWrap, html.ais-mla #tableViewWrap, html.ais-mla #graphViewWrap, html.ais-mla #homeScreen { display:none !important; }
+  html.ais-mla #grid360wrap, html.ais-mla #eofficeTableWrap, html.ais-mla #perceptionTableWrap, html.ais-mla #swarnaTableWrap, html.ais-mla #goiTableWrap, html.ais-mla #combinedTableWrap, html.ais-mla #gsdpTableWrap, html.ais-mla #tableViewWrap, html.ais-mla #graphViewWrap, html.ais-mla #homeScreen { display:none !important; }
   html.ais-mla #sortBySection, html.ais-mla #officerFilterFields, html.ais-mla #scoreComboFilter, html.ais-mla #perfSection { display:none !important; }
   html.ais-mla #mlaFilters, html.ais-mla #mlaPerfSection, html.ais-mla #mlaSortSection { display:block !important; }
   html.ais-mp #mla360wrap { display:flex; }
-  html.ais-mp #grid360wrap, html.ais-mp #eofficeTableWrap, html.ais-mp #perceptionTableWrap, html.ais-mp #swarnaTableWrap, html.ais-mp #goiTableWrap, html.ais-mp #combinedTableWrap, html.ais-mp #tableViewWrap, html.ais-mp #graphViewWrap, html.ais-mp #homeScreen { display:none !important; }
+  html.ais-mp #grid360wrap, html.ais-mp #eofficeTableWrap, html.ais-mp #perceptionTableWrap, html.ais-mp #swarnaTableWrap, html.ais-mp #goiTableWrap, html.ais-mp #combinedTableWrap, html.ais-mp #gsdpTableWrap, html.ais-mp #tableViewWrap, html.ais-mp #graphViewWrap, html.ais-mp #homeScreen { display:none !important; }
   html.ais-mp #sortBySection, html.ais-mp #officerFilterFields, html.ais-mp #scoreComboFilter, html.ais-mp #perfSection, html.ais-mp #mlaFilters, html.ais-mp #mlaSortSection { display:none !important; }
   html.ais-mp #mpFilters, html.ais-mp #mlaPerfSection, html.ais-mp #mpSortSection { display:block !important; }
   html.ais-mlc #mla360wrap { display:flex; }
-  html.ais-mlc #grid360wrap, html.ais-mlc #eofficeTableWrap, html.ais-mlc #perceptionTableWrap, html.ais-mlc #swarnaTableWrap, html.ais-mlc #goiTableWrap, html.ais-mlc #combinedTableWrap, html.ais-mlc #tableViewWrap, html.ais-mlc #graphViewWrap, html.ais-mlc #homeScreen { display:none !important; }
+  html.ais-mlc #grid360wrap, html.ais-mlc #eofficeTableWrap, html.ais-mlc #perceptionTableWrap, html.ais-mlc #swarnaTableWrap, html.ais-mlc #goiTableWrap, html.ais-mlc #combinedTableWrap, html.ais-mlc #gsdpTableWrap, html.ais-mlc #tableViewWrap, html.ais-mlc #graphViewWrap, html.ais-mlc #homeScreen { display:none !important; }
   html.ais-mlc #sortBySection, html.ais-mlc #officerFilterFields, html.ais-mlc #scoreComboFilter, html.ais-mlc #perfSection, html.ais-mlc #mlaFilters, html.ais-mlc #mlaSortSection { display:none !important; }
   html.ais-mlc #mlcFilters, html.ais-mlc #mlaPerfSection, html.ais-mlc #mlcSortSection { display:block !important; }
   html.ais-rs #mla360wrap { display:flex; }
-  html.ais-rs #grid360wrap, html.ais-rs #eofficeTableWrap, html.ais-rs #perceptionTableWrap, html.ais-rs #swarnaTableWrap, html.ais-rs #goiTableWrap, html.ais-rs #combinedTableWrap, html.ais-rs #tableViewWrap, html.ais-rs #graphViewWrap, html.ais-rs #homeScreen { display:none !important; }
+  html.ais-rs #grid360wrap, html.ais-rs #eofficeTableWrap, html.ais-rs #perceptionTableWrap, html.ais-rs #swarnaTableWrap, html.ais-rs #goiTableWrap, html.ais-rs #combinedTableWrap, html.ais-rs #gsdpTableWrap, html.ais-rs #tableViewWrap, html.ais-rs #graphViewWrap, html.ais-rs #homeScreen { display:none !important; }
   html.ais-rs #sortBySection, html.ais-rs #officerFilterFields, html.ais-rs #scoreComboFilter, html.ais-rs #perfSection, html.ais-rs #mlaFilters, html.ais-rs #mlaSortSection { display:none !important; }
   html.ais-rs #rsFilters, html.ais-rs #mlaPerfSection, html.ais-rs #rsSortSection { display:block !important; }
   #mlaFilters .b360-fl, #mpFilters .b360-fl, #mlcFilters .b360-fl, #rsFilters .b360-fl { margin-top:8px; }
@@ -1241,7 +1241,7 @@
 
   @media (max-width:980px) {
     /* content uses the full width — panels float over it */
-    #grid360wrap, #eofficeTableWrap, #perceptionTableWrap, #swarnaTableWrap, #goiTableWrap, #combinedTableWrap, #tableViewWrap, #graphViewWrap {
+    #grid360wrap, #eofficeTableWrap, #perceptionTableWrap, #swarnaTableWrap, #goiTableWrap, #combinedTableWrap, #gsdpTableWrap, #tableViewWrap, #graphViewWrap {
       left:0 !important; right:0 !important;
     }
     /* panels become off-canvas drawers */
@@ -1466,7 +1466,7 @@
       <button id="viewPerceptionBtn" class="b360-view-btn" onclick="switchView('perception')">&#128172; Public Perception Scores</button>
       <button id="viewSwarnaBtn"     class="b360-view-btn" onclick="switchView('swarna')">&#127942; Swarnandhra KPI Scores</button>
       <button id="viewGoiBtn"        class="b360-view-btn" onclick="switchView('goi')">&#128176; GoI (CSS) Fund Score</button>
-      <button class="b360-view-btn nav-soon" onclick="comingSoon('GSDP Scores')">&#128200; GSDP Scores</button>
+      <button id="viewGsdpBtn" class="b360-view-btn" onclick="switchView('gsdp')">&#128200; GSDP Scores</button>
       <button class="b360-view-btn nav-soon" onclick="comingSoon('APAR Scores')">&#128221; APAR Scores</button>
 
       <div class="sp-sublabel">Feedback Scores</div>
@@ -1895,6 +1895,47 @@
   </div>
 </div>
 
+<!-- ── GSDP Scores Table ── -->
+<div id="gsdpTableWrap" style="position:fixed;top:var(--bar360-h,80px);left:var(--side-w,248px);right:var(--side-w-r,248px);bottom:0;overflow:hidden;background:#eef0fb;padding:10px;display:none;flex-direction:column;">
+  <div class="eo-card">
+    <div class="eo-card-header" style="background:linear-gradient(135deg,#0c4a6e,#0369a1);">
+      <div class="eo-card-title">
+        <span class="eo-live-dot" style="background:#38bdf8;box-shadow:0 0 8px rgba(56,189,248,0.8);"></span>
+        &#128200; GSDP Performance
+        <span id="gsdpMetaLabel" style="font-size:11px;font-weight:600;color:#bae6fd;margin-left:4px;"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="eo-meta" id="gsdpRowCount" style="color:#bae6fd;"></span>
+        <button class="eo-refresh-btn" onclick="openGsdpStatePopup()" title="View original GSDP data (sector / sub-sector)">&#128202; State Data</button>
+        <button id="gsdpNormBtn" class="eo-refresh-btn" onclick="toggleGsdpNorm()" title="Toggle normalized / absolute scores">&#9878; Normalized</button>
+        <button class="eo-refresh-btn" onclick="loadGsdpTable()">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="eo-table-wrap">
+      <table class="eo-table" id="gsdpTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="officer_id" onclick="sortGsdp('officer_id')" style="text-align:center;width:34px;">S.No <span class="sort-icon">&#9650;</span></th>
+            <th style="text-align:center;width:46px;">Photo</th>
+            <th class="sortable" data-col="name" onclick="sortGsdp('name')">Officer Name <span class="sort-icon">&#9651;</span></th>
+            <th>Present Post</th>
+            <th class="sortable" data-col="sectorsCovered" onclick="sortGsdp('sectorsCovered')" style="text-align:center;">Sectors<br>Covered <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="subSectorsCovered" onclick="sortGsdp('subSectorsCovered')" style="text-align:center;">Sub-sectors<br>Covered <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="aggTarget" onclick="sortGsdp('aggTarget')" style="text-align:right;min-width:110px;">Aggregated<br>Target <span style="font-size:6px;font-weight:700;opacity:0.85;">pro-rata days</span> <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="aggAch" onclick="sortGsdp('aggAch')" style="text-align:right;min-width:110px;">Aggregated<br>Achievement <span style="font-size:6px;font-weight:700;opacity:0.85;">pro-rata days</span> <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="pctAchieved" onclick="sortGsdp('pctAchieved')" style="text-align:center;min-width:80px;">%<br>Achieved <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="gsdpScore" onclick="sortGsdp('gsdpScore')" style="text-align:center;min-width:90px;background:linear-gradient(135deg,#0c4a6e,#0369a1);">GSDP<br>Score <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="_gsdpStateRank" onclick="sortGsdp('_gsdpStateRank')" style="text-align:center;width:46px;background:linear-gradient(135deg,#0c4a6e,#0369a1);">Rank<br><span style="font-size:6px;font-weight:700;opacity:0.85;line-height:1;">state wide</span> <span class="sort-icon">&#9651;</span></th>
+          </tr>
+        </thead>
+        <tbody id="gsdpTbody">
+          <tr><td colspan="11" class="eo-empty">&#8987; Loading GSDP data&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ── GoI (CSS) Funds Table ── -->
 <div id="goiTableWrap" style="position:fixed;top:var(--bar360-h,80px);left:var(--side-w,248px);right:var(--side-w-r,248px);bottom:0;overflow:hidden;background:#eef0fb;padding:10px;display:none;flex-direction:column;">
   <div class="eo-card">
@@ -2160,6 +2201,62 @@
         Click <b>Posts Held</b> or <b>Posts in KPI</b> to peek at the stars for each job!
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── GSDP posts popup ── -->
+<div id="gsdpPostsPopup" style="position:fixed;inset:0;background:rgba(5,25,40,0.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:960;display:none;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:18px;width:min(98vw,1000px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:14px 22px;background:linear-gradient(135deg,#0c4a6e,#0369a1);flex-shrink:0;gap:10px;">
+      <div style="min-width:0;">
+        <div id="gsdpPostsTitle" style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="gsdpPostsSub" style="font-size:11px;color:#bae6fd;margin-top:2px;"></div>
+      </div>
+      <button onclick="document.getElementById('gsdpPostsPopup').style.display='none'" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;">&#10006;</button>
+    </div>
+    <div id="gsdpPostsSummary" style="display:flex;gap:9px;flex-wrap:wrap;padding:12px 22px;border-bottom:1px solid #e0f2fe;flex-shrink:0;"></div>
+    <div style="flex:1;overflow:auto;">
+      <table class="eo-table" id="gsdpPostsTable" style="font-size:12px;">
+        <thead>
+          <tr>
+            <th style="min-width:320px;">Sector <span style="opacity:0.6;">&#8250;</span> Sub-sector <span style="opacity:0.6;">&#8250;</span> Post <span style="opacity:0.6;">&#8250;</span> Period</th>
+            <th style="text-align:right;min-width:120px;">Target<br><span style="font-weight:600;font-size:9px;opacity:0.8;">pro-rata days</span></th>
+            <th style="text-align:right;min-width:120px;">Achievement<br><span style="font-weight:600;font-size:9px;opacity:0.8;">pro-rata days</span></th>
+            <th style="text-align:center;width:96px;background:#0c4a6e;">% Achieved</th>
+          </tr>
+        </thead>
+        <tbody id="gsdpPostsTbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:10px 22px;border-top:1px solid #e0f2fe;flex-shrink:0;font-size:11.5px;color:#64748b;" id="gsdpPostsFooter"></div>
+  </div>
+</div>
+
+<!-- ── GSDP State (original) data popup ── -->
+<div id="gsdpStatePopup" style="position:fixed;inset:0;background:rgba(5,25,40,0.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:961;display:none;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:18px;width:min(98vw,920px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:14px 22px;background:linear-gradient(135deg,#0c4a6e,#0369a1);flex-shrink:0;gap:10px;">
+      <div style="min-width:0;">
+        <div style="font-size:15px;font-weight:800;color:#fff;">&#128202; State GSDP Data &mdash; 2025-26</div>
+        <div id="gsdpStateSub" style="font-size:11px;color:#bae6fd;margin-top:2px;">Original targets &amp; achievements, aggregated across all districts</div>
+      </div>
+      <button onclick="document.getElementById('gsdpStatePopup').style.display='none'" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;">&#10006;</button>
+    </div>
+    <div id="gsdpStateSummary" style="display:flex;gap:9px;flex-wrap:wrap;padding:12px 22px;border-bottom:1px solid #e0f2fe;flex-shrink:0;"></div>
+    <div style="flex:1;overflow:auto;">
+      <table class="eo-table" id="gsdpStateTable" style="font-size:12px;">
+        <thead>
+          <tr>
+            <th style="min-width:320px;">Sector <span style="opacity:0.6;">&#8250;</span> Sub-sector</th>
+            <th style="text-align:right;min-width:130px;">Target</th>
+            <th style="text-align:right;min-width:130px;">Achievement</th>
+            <th style="text-align:center;width:96px;background:#0c4a6e;">% Achieved</th>
+          </tr>
+        </thead>
+        <tbody id="gsdpStateTbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:10px 22px;border-top:1px solid #e0f2fe;flex-shrink:0;font-size:11.5px;color:#64748b;" id="gsdpStateFooter"></div>
   </div>
 </div>
 
@@ -2838,6 +2935,7 @@ window.switchView = function (view) {
   var ppWrap  = document.getElementById('perceptionTableWrap');
   var swWrap  = document.getElementById('swarnaTableWrap');
   var goWrap  = document.getElementById('goiTableWrap');
+  var gsdpWrap= document.getElementById('gsdpTableWrap');
   var cmpWrap = document.getElementById('combinedTableWrap');
   var tbWrap  = document.getElementById('tableViewWrap');
   var gpWrap  = document.getElementById('graphViewWrap');
@@ -2846,12 +2944,13 @@ window.switchView = function (view) {
   var btnPp   = document.getElementById('viewPerceptionBtn');
   var btnSw   = document.getElementById('viewSwarnaBtn');
   var btnGo   = document.getElementById('viewGoiBtn');
+  var btnGsdp = document.getElementById('viewGsdpBtn');
   var btnCmp  = document.getElementById('viewCombinedBtn');
   var btnTb   = document.getElementById('viewTableBtn');
   var btnGp   = document.getElementById('viewGraphBtn');
 
-  [grid, eoWrap, ppWrap, swWrap, goWrap, cmpWrap, tbWrap, gpWrap].forEach(function(el) { if (el) el.style.display = 'none'; });
-  [btnGrid, btnEo, btnPp, btnSw, btnGo, btnCmp, btnTb, btnGp].forEach(function(b) { if (b) b.classList.remove('active'); });
+  [grid, eoWrap, ppWrap, swWrap, goWrap, gsdpWrap, cmpWrap, tbWrap, gpWrap].forEach(function(el) { if (el) el.style.display = 'none'; });
+  [btnGrid, btnEo, btnPp, btnSw, btnGo, btnGsdp, btnCmp, btnTb, btnGp].forEach(function(b) { if (b) b.classList.remove('active'); });
   var _scf = document.getElementById('scoreComboFilter'); if (_scf) _scf.style.display = (view === 'combined') ? '' : 'none';
   var _sbs = document.getElementById('sortBySection'); if (_sbs) _sbs.style.display = (view === 'grid') ? '' : 'none';
 
@@ -2871,6 +2970,10 @@ window.switchView = function (view) {
     if (goWrap)  goWrap.style.display = 'flex';
     if (btnGo)   btnGo.classList.add('active');
     loadGoiTable();
+  } else if (view === 'gsdp') {
+    if (gsdpWrap) gsdpWrap.style.display = 'flex';
+    if (btnGsdp)  btnGsdp.classList.add('active');
+    loadGsdpTable();
   } else if (view === 'combined') {
     if (cmpWrap) cmpWrap.style.display = 'flex';
     if (btnCmp)  btnCmp.classList.add('active');
@@ -2898,6 +3001,7 @@ window.applyAllFilters = function () {
   try { if (_currentView === 'perception') renderPerceptionTable();} catch (e) { console.warn('renderPerceptionTable failed', e); }
   try { if (_currentView === 'swarna')     renderSwarnaTable();    } catch (e) { console.warn('renderSwarnaTable failed', e); }
   try { if (_currentView === 'goi')        renderGoiTable();       } catch (e) { console.warn('renderGoiTable failed', e); }
+  try { if (_currentView === 'gsdp')       renderGsdpTable();      } catch (e) { console.warn('renderGsdpTable failed', e); }
   try { if (_currentView === 'combined')   renderCombinedTable();  } catch (e) { console.warn('renderCombinedTable failed', e); }
   try { if (_currentView === 'table' && window.tableApplyFilter) window.tableApplyFilter(); } catch (e) { console.warn('tableApplyFilter failed', e); }
   try { if (_currentView === 'graph' && window.graphApplyFilter) window.graphApplyFilter(); } catch (e) { console.warn('graphApplyFilter failed', e); }
@@ -3065,6 +3169,9 @@ function applyScoreConfig(rows){
     if (go.w_ufs != null) GOI_W.UFS = go.w_ufs;
   }
   if (typeof GOI_DIFF_FLOOR !== 'undefined' && go.diff_floor != null) GOI_DIFF_FLOOR = go.diff_floor;
+  var gd = m.gsdp || {};
+  if (typeof GSDP_DIFF_FLOOR !== 'undefined' && gd.load_floor   != null) GSDP_DIFF_FLOOR = gd.load_floor;
+  if (typeof GSDP_DIFF_CEIL  !== 'undefined' && gd.load_ceiling != null) GSDP_DIFF_CEIL  = gd.load_ceiling;
   var cp = m.composite || {};
   window._CMP_W = {
     eo: cp.w_eoffice    != null ? cp.w_eoffice    : 1,
@@ -3082,6 +3189,7 @@ async function loadScoreConfig(){
     if (typeof _currentView !== 'undefined') {
       if (_currentView === 'eoffice'  && typeof renderEofficeTable === 'function') renderEofficeTable();
       else if (_currentView === 'goi' && typeof renderGoiTable === 'function')     renderGoiTable();
+      else if (_currentView === 'gsdp' && typeof loadGsdpTable === 'function')      loadGsdpTable();
       else if (_currentView === 'combined' && typeof loadCombinedTable === 'function') loadCombinedTable();
     }
   } catch(e){ console.warn('[score_config] load failed', e); }
@@ -5235,6 +5343,478 @@ function _cmpFocusRow(row){
     document.addEventListener('click', function _clr(){ _cmpClearFocus(); }, { once:true });
   }, 0);
 }
+
+// ================================================================
+// GSDP Scores table  (mapping read from the gsdp_mapping table)
+//   District post   → all sub-sectors of its district (office_location)
+//   Secretariat post→ sub-sectors whose gsdp_mapping row has this department
+//   HoD post        → sub-sectors whose gsdp_mapping row has this HoD (statewide)
+//   Efficiency = FY-day-weighted average of post % achieved.
+//   Score = Efficiency × log-scaled target-LOAD factor (0.70→1.00, like GoI),
+//           so a larger GSDP target carried = heavier load = weighted higher.
+//   Aggregated Target/Achievement = per-post (cell target/ach) × days-in-FY2025-26
+//   ÷ 365, summed across posts — i.e. pro-rata to days worked in the GSDP year.
+// ================================================================
+var _gsdpData = [];
+var _gsdpRows = [];            // [{sector, sub_sector, district(norm), target, ach}]
+var _gsdpSubSectorOf = {};     // sub_sector -> sector
+var _gsdpCellDays = {};        // cell index -> total person-days across all officers
+var GSDP_DIFF_FLOOR = 0.70;    // target-load factor floor (smallest target keeps this) — admin-tunable
+var GSDP_DIFF_CEIL  = 1.00;    // target-load factor ceiling (largest target reaches this) — admin-tunable
+var _gsdpSortCol = '_gsdpStateRank';
+var _gsdpSortDir = 'asc';
+var _gsdpNormalized = true;
+document.getElementById('gsdpPostsPopup').addEventListener('click', function(e){ if (e.target === this) this.style.display = 'none'; });
+document.getElementById('gsdpStatePopup').addEventListener('click', function(e){ if (e.target === this) this.style.display = 'none'; });
+
+function _gsdpNum(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+function _gsdpCr(v){ if (v == null) return '—'; var a = Math.abs(v), dec = 2; if (a > 0){ if (a < 0.0005) dec = 4; else if (a < 0.005) dec = 3; } return '₹ ' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + ' Cr'; }
+function gsdpScoreBadge(v){
+  if (v == null) return '<span style="font-size:11px;color:#94a3b8;">—</span>';
+  var c = v>=95?'#15803d':v>=80?'#0891b2':v>=60?'#ca8a04':'#dc2626';
+  return '<span style="display:inline-block;min-width:50px;padding:3px 9px;border-radius:8px;background:'+c+';color:#fff;font-weight:800;font-size:12.5px;">'+Number(v).toFixed(2)+'</span>';
+}
+function gsdpPctCell(v){
+  if (v == null) return '<span style="color:#cbd5e1;">—</span>';
+  var c = v>=100?'#15803d':v>=85?'#0891b2':v>=60?'#ca8a04':'#dc2626';
+  return '<span style="font-weight:800;color:'+c+';">'+Number(v).toFixed(1)+'%</span>';
+}
+
+async function loadGsdpTable(){
+  var svc = (new URLSearchParams(location.search).get('service') || 'IAS').toUpperCase();
+  var tbody = document.getElementById('gsdpTbody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="eo-empty">&#8987; Loading…</td></tr>';
+  try {
+    var ofrRes = await _supabase.from('officers').select('id,identity_no,name_of_officer,cadre,source_of_recruitment,domicile,post_type,photo_url,current_posting').eq('service_type', svc).eq('is_retired', false).eq('is_transferred_from_ap', false);
+    if (ofrRes.error) throw new Error('officers: ' + ofrRes.error.message);
+
+    // posts (the dept/HoD→sub-sector mapping now lives on the gsdp table, not here)
+    var pdRes = await ppFetchAll('officer_post_dates', 'identity_no,post_name,from_date,to_date,office_location,department,hod,office_status');
+    if (pdRes.error) throw new Error('officer_post_dates: ' + pdRes.error.message);
+
+    // gsdp cells (target/achievement per district × sub-sector — no mapping columns now)
+    var gRes = await ppFetchAll('gsdp', 'sector,sub_sector,district,target_2025_26,achievement_2025_26');
+    var noGsdp = !!gRes.error;
+    // dept/HoD → sub-sector mapping (separate normalised table; tolerate if absent)
+    var mRes = await ppFetchAll('gsdp_mapping', 'sub_sector,department,hod');
+    var mapRows = mRes.error ? [] : (mRes.data || []);
+
+    _gsdpRows = (noGsdp ? [] : (gRes.data || [])).map(function(r){ return { sector:(r.sector||'').trim(), sub_sector:(r.sub_sector||'').trim(), district:ppNorm(r.district), target:_gsdpNum(r.target_2025_26), ach:_gsdpNum(r.achievement_2025_26) }; });
+    var byDistrict = {}, bySub = {}, subSectorOf = {};
+    _gsdpRows.forEach(function(r, i){
+      (byDistrict[r.district]=byDistrict[r.district]||[]).push(i);
+      (bySub[r.sub_sector]=bySub[r.sub_sector]||[]).push(i);
+      if (r.sub_sector && !subSectorOf[r.sub_sector]) subSectorOf[r.sub_sector] = r.sector;
+    });
+    // Map each Department / HoD to its cells via the sub-sectors tagged to it in
+    // gsdp_mapping (one row per HoD).  Secretariat post → matched by the row's
+    // department column; HoD post → matched by the row's hod column.
+    var deptSubs = {}, hodSubs = {};
+    mapRows.forEach(function(r){
+      var sub=(r.sub_sector||'').trim(), d=ppNorm(r.department), h=ppNorm(r.hod);
+      if (d) (deptSubs[d]=deptSubs[d]||{})[sub]=1;
+      if (h) (hodSubs[h]=hodSubs[h]||{})[sub]=1;
+    });
+    function _cellsFor(subSet){ var s={}; Object.keys(subSet).forEach(function(sub){ (bySub[sub]||[]).forEach(function(ci){ s[ci]=1; }); }); return Object.keys(s).map(Number); }
+    var deptCells = {}, hodCells = {};
+    Object.keys(deptSubs).forEach(function(d){ deptCells[d]=_cellsFor(deptSubs[d]); });
+    Object.keys(hodSubs).forEach(function(h){ hodCells[h]=_cellsFor(hodSubs[h]); });
+    var ctx = { byDistrict:byDistrict, bySub:bySub, deptCells:deptCells, hodCells:hodCells };
+    _gsdpSubSectorOf = subSectorOf;
+
+    _eoOfficerMap = _eoOfficerMap || {};
+    (ofrRes.data || []).forEach(function(o){ _eoOfficerMap[String(o.identity_no)] = { officerId:o.id||0, name:o.name_of_officer||'', cadre:(o.cadre||'').trim(), source:(o.source_of_recruitment||'').trim(), domicile:(o.domicile||'').trim(), postType:(o.post_type||'').trim(), photoUrl:o.photo_url||'', currentPosting:(o.current_posting||'').trim() }; });
+
+    var postsByOfficer = {};
+    (pdRes.data || []).forEach(function(pd){ var k=String(pd.identity_no); (postsByOfficer[k]=postsByOfficer[k]||[]).push(pd); });
+
+    // PHASE A — per-officer post breakdowns. Same posts are merged and their
+    // overlapping date ranges unioned (overlapping days counted once) first.
+    var officerList = (ofrRes.data || []).map(function(o){
+      var key = String(o.identity_no);
+      var posts = postsByOfficer[key] || [];
+      var merged = gsdpMergePosts(posts);
+      return { o:o, key:key, posts:posts, breakdown: merged.map(function(mp){ return gsdpComputeMergedPost(mp, ctx); }) };
+    });
+
+    // PHASE B — for every GSDP cell, total person-days across ALL officers/posts that
+    // cover it. This denominator is what makes each cell's value split (never
+    // double-counted) so Σ(all officers) = state total over covered cells.
+    var cellDays = {};
+    officerList.forEach(function(of){ of.breakdown.forEach(function(b){ if (b.overlapDays<=0) return; b.cells.forEach(function(ci){ cellDays[ci] = (cellDays[ci]||0) + b.overlapDays; }); }); });
+    _gsdpCellDays = cellDays;
+
+    // PHASE C — attribute each cell's target/achievement to a post in proportion to
+    // days: share = cell × (this post's days ÷ all days on that cell).
+    _gsdpData = officerList.map(function(of){
+      var o=of.o, key=of.key, posts=of.posts, breakdown=of.breakdown;
+      breakdown.forEach(function(b){
+        var pt=0, pa=0;
+        if (b.overlapDays>0){ b.cells.forEach(function(ci){ var cd=cellDays[ci]||0; if(cd<=0)return; var w=b.overlapDays/cd; pt+=_gsdpRows[ci].target*w; pa+=_gsdpRows[ci].ach*w; }); }
+        b.ptarget=pt; b.pach=pa;
+      });
+      var aggTarget = 0, aggAch = 0;
+      breakdown.forEach(function(b){ aggTarget += b.ptarget; aggAch += b.pach; });
+      var pctAchieved = aggTarget > 0 ? parseFloat((aggAch/aggTarget*100).toFixed(2)) : null;
+      var wsum = 0, vsum = 0, covered = 0;
+      breakdown.forEach(function(b){ if (b.pct != null && b.overlapDays > 0){ covered++; wsum += b.overlapDays; vsum += b.pct * b.overlapDays; } });
+
+      // Drill-down: Sub-sector → Posts → Periods using the same per-cell day-share.
+      var subMap = {};
+      breakdown.forEach(function(b){
+        if (b.overlapDays <= 0) return;
+        var perSub = {};
+        b.cells.forEach(function(ci){ var cd=cellDays[ci]||0; if(cd<=0)return; var w=b.overlapDays/cd; var c=_gsdpRows[ci]; var ps=perSub[c.sub_sector]=perSub[c.sub_sector]||{target:0,ach:0}; ps.target+=c.target*w; ps.ach+=c.ach*w; });
+        Object.keys(perSub).forEach(function(S){
+          var ps=perSub[S];
+          var sm=subMap[S]=subMap[S]||{ sub_sector:S, sector:_gsdpSubSectorOf[S]||'', target:0, ach:0, posts:{} };
+          sm.target+=ps.target; sm.ach+=ps.ach;
+          var pk=b.post_name||'—';
+          var pm=sm.posts[pk]=sm.posts[pk]||{ post_name:pk, category:b.category, target:0, ach:0, periods:[] };
+          pm.target+=ps.target; pm.ach+=ps.ach;
+          var subPct = ps.target>0?parseFloat((ps.ach/ps.target*100).toFixed(2)):null;
+          (b.periods||[]).forEach(function(pe){
+            var frac = b.overlapDays>0 ? pe.days/b.overlapDays : 0;
+            pm.periods.push({ from:pe.from, to:pe.to, days:pe.days, category:b.category, target:ps.target*frac, ach:ps.ach*frac, pct:subPct });
+          });
+        });
+      });
+      var subBreakdown = Object.keys(subMap).map(function(S){
+        var m=subMap[S]; m.pct = m.target>0?parseFloat((m.ach/m.target*100).toFixed(2)):null;
+        m.postsArr = Object.keys(m.posts).map(function(pk){ var p=m.posts[pk]; p.pct=p.target>0?parseFloat((p.ach/p.target*100).toFixed(2)):null; p.periods.sort(function(a,b){ return (a.from||'').localeCompare(b.from||''); }); return p; }).sort(function(a,b){ return b.target-a.target; });
+        return m;
+      }).sort(function(a,b){ return b.target-a.target; });
+      var sectorSet={}; subBreakdown.forEach(function(m){ if(m.sector) sectorSet[m.sector]=1; });
+      // Roll the sub-sectors up into their parent Sector (top drill-down level)
+      var sectorMap={};
+      subBreakdown.forEach(function(m){ var sec=m.sector||'—'; var sm=sectorMap[sec]=sectorMap[sec]||{ sector:sec, target:0, ach:0, subs:[] }; sm.target+=m.target; sm.ach+=m.ach; sm.subs.push(m); });
+      var sectorBreakdown=Object.keys(sectorMap).map(function(sec){ var s=sectorMap[sec]; s.pct=s.target>0?parseFloat((s.ach/s.target*100).toFixed(2)):null; return s; }).sort(function(a,b){ return b.target-a.target; });
+      return {
+        identity_no:key, officer_id:o.id||0, name:o.name_of_officer||key,
+        present_post:o.current_posting||'', photo_url:o.photo_url||'',
+        posts_held:posts.length, posts_gsdp:covered, breakdown:breakdown,
+        subBreakdown:subBreakdown, sectorBreakdown:sectorBreakdown, subSectorsCovered:subBreakdown.length, sectorsCovered:Object.keys(sectorSet).length,
+        aggTarget:aggTarget, aggAch:aggAch, pctAchieved:pctAchieved,
+        gsdpEff: wsum>0 ? parseFloat((vsum/wsum).toFixed(2)) : null,   // FY-day-weighted % achieved (efficiency)
+        gsdpScore: null
+      };
+    });
+
+    // Load-of-target weighting (same idea as GoI Funds): an officer carrying a
+    // larger GSDP target works under a heavier load, so their efficiency is
+    // multiplied by a log-scaled difficulty factor (floor → ceiling, admin-tunable
+    // via score_config 'gsdp') computed state-wide across all scored officers.
+    var _act = _gsdpData.filter(function(r){ return r.gsdpEff != null && r.aggTarget > 0; });
+    if (_act.length){
+      var _logs = _act.map(function(r){ return Math.log((r.aggTarget||0)+1); });
+      var _lmin = Math.min.apply(null,_logs), _lmax = Math.max.apply(null,_logs), _lr = _lmax-_lmin;
+      _act.forEach(function(r){
+        var _lv = Math.log((r.aggTarget||0)+1);
+        var _vw = _lr>0 ? (_lv-_lmin)/_lr : 1;                       // 0 (smallest target) … 1 (largest)
+        r.gsdpLoadFactor = GSDP_DIFF_FLOOR + (GSDP_DIFF_CEIL - GSDP_DIFF_FLOOR)*_vw;
+        r.gsdpScore = Math.max(0, Math.min(100, parseFloat((r.gsdpEff * r.gsdpLoadFactor).toFixed(2))));
+      });
+    }
+
+    // Coverage: state total vs the portion attributed to officers (covered cells).
+    var stateT = 0, attribT = 0;
+    _gsdpRows.forEach(function(r, ci){ stateT += r.target; if ((cellDays[ci]||0) > 0) attribT += r.target; });
+    var covPct = stateT > 0 ? Math.round(attribT/stateT*100) : 0;
+    var lbl = document.getElementById('gsdpMetaLabel');
+    if (lbl){
+      if (noGsdp) lbl.innerHTML = '&#9888; gsdp table not found — run <b>gsdp_table.sql</b> + <b>gsdp_seed.sql</b>';
+      else lbl.innerHTML = '— State target ' + _gsdpCr(stateT) + ' · ' + covPct + '% attributed to officers' + (covPct<100?' <span style="color:#b45309;">('+(100-covPct)+'% of cells have no mapped officer)</span>':'');
+    }
+    renderGsdpTable();
+  } catch(err){
+    if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="eo-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
+  }
+}
+
+var _GSDP_FY_S = Date.UTC(2025,3,1), _GSDP_FY_E = Date.UTC(2026,2,31);
+function _gsdpISO(ms){ return new Date(ms).toISOString().slice(0,10); }
+
+// Merge an officer's post rows that are the SAME post (same name + office context),
+// unioning their date ranges so overlapping / contiguous stints are counted once.
+function gsdpMergePosts(rows){
+  var groups = {};
+  (rows||[]).forEach(function(pd){
+    var key = ppNorm(pd.post_name)+'|'+ppNorm(pd.office_status)+'|'+ppNorm(pd.office_location)+'|'+ppNorm(pd.department)+'|'+ppNorm(pd.hod);
+    var g = groups[key] || (groups[key] = { sample: pd, ivs: [] });
+    var s = pd.from_date ? Date.parse(pd.from_date) : NaN;
+    if (isNaN(s)) return;
+    var e = pd.to_date ? Date.parse(pd.to_date) : Date.now();
+    if (isNaN(e)) e = Date.now();
+    g.ivs.push({ s:s, e:e, ongoing: !pd.to_date });
+  });
+  return Object.keys(groups).map(function(k){
+    var g = groups[k];
+    g.ivs.sort(function(a,b){ return a.s - b.s; });
+    var merged = [];
+    g.ivs.forEach(function(iv){
+      var last = merged[merged.length-1];
+      if (last && iv.s <= last.e + 86400000){ if (iv.e > last.e) last.e = iv.e; last.ongoing = last.ongoing || iv.ongoing; }   // overlap or ≤1-day gap → union
+      else merged.push({ s:iv.s, e:iv.e, ongoing:iv.ongoing });
+    });
+    return { sample: g.sample, merged: merged };
+  });
+}
+
+function gsdpComputeMergedPost(mp, ctx){
+  var pd = mp.sample;
+  var statusN = ppNorm(pd.office_status);
+  var loc = (pd.office_location || '').trim();
+
+  // Cells now come from the gsdp table's own department / hod mapping columns:
+  //  • District post     → every sub-sector of its district
+  //  • Secretariat post  → gsdp rows whose department column lists this post's department
+  //  • HoD post          → gsdp rows whose hod column lists this post's HoD
+  var cells = [], category = '', basis = '';
+  if (/^district/.test(statusN)){
+    category = 'District';
+    cells = (ctx.byDistrict[ppNorm(loc)] || []).slice();
+    basis = 'District (all sub-sectors): ' + (loc||'—');
+  } else if (statusN === 'secretariat'){
+    category = 'Secretariat';
+    cells = (ctx.deptCells[ppNorm(pd.department)] || []).slice();
+    basis = 'Secretariat · ' + (pd.department||'—');
+  } else if (statusN === 'hod'){
+    category = 'HoD';
+    cells = (ctx.hodCells[ppNorm(pd.hod)] || []).slice();
+    basis = 'HoD · ' + (pd.hod||'—');
+  } else { category = 'Unmapped'; basis = 'No office status'; }
+
+  var subSet = {}; cells.forEach(function(ci){ subSet[_gsdpRows[ci].sub_sector] = 1; });
+  var tags = Object.keys(subSet);
+
+  var target = 0, ach = 0;
+  cells.forEach(function(i){ target += _gsdpRows[i].target; ach += _gsdpRows[i].ach; });
+  var pct = target > 0 ? parseFloat((ach/target*100).toFixed(2)) : null;
+
+  // Merged disjoint periods → FY-overlap days (overlaps already removed by the union).
+  var periods = [], overlapDays = 0;
+  mp.merged.forEach(function(iv){
+    var oS = Math.max(iv.s, _GSDP_FY_S), oE = Math.min(iv.e, _GSDP_FY_E);
+    var d = (oE >= oS) ? Math.round((oE - oS)/86400000) + 1 : 0;
+    overlapDays += d;
+    periods.push({ from: _gsdpISO(iv.s), to: iv.ongoing ? null : _gsdpISO(iv.e), days: d });
+  });
+  periods.sort(function(a,b){ return (a.from||'').localeCompare(b.from||''); });
+
+  return { post_name:pd.post_name||'', category:category, basis:basis, subsectors:tags, cells:cells, target:target, ach:ach, pct:pct, overlapDays:overlapDays, periods:periods };
+}
+
+function updateGsdpNormBtn(){ var b=document.getElementById('gsdpNormBtn'); if (b) b.innerHTML = _gsdpNormalized ? '&#9878; Normalized' : '&#128202; Absolute'; }
+window.toggleGsdpNorm = function(){ _gsdpNormalized = !_gsdpNormalized; updateGsdpNormBtn(); renderGsdpTable(); };
+
+// Original GSDP data — Sector → Sub-sector (aggregated across all districts), collapsible.
+window.openGsdpStatePopup = function(){
+  var subAgg = {};
+  (_gsdpRows||[]).forEach(function(r){ var m=subAgg[r.sub_sector]=subAgg[r.sub_sector]||{ sector:r.sector||(_gsdpSubSectorOf[r.sub_sector]||''), sub_sector:r.sub_sector, target:0, ach:0 }; m.target+=r.target; m.ach+=r.ach; });
+  var secMap = {};
+  Object.keys(subAgg).forEach(function(ss){ var m=subAgg[ss]; var sec=m.sector||'—'; var g=secMap[sec]=secMap[sec]||{ sector:sec, target:0, ach:0, subs:[] }; g.target+=m.target; g.ach+=m.ach; g.subs.push(m); });
+  var sectors = Object.keys(secMap).map(function(k){ var g=secMap[k]; g.pct=g.target>0?parseFloat((g.ach/g.target*100).toFixed(2)):null; g.subs.sort(function(a,b){ return b.target-a.target; }); return g; }).sort(function(a,b){ return b.target-a.target; });
+  var gT=0, gA=0; sectors.forEach(function(g){ gT+=g.target; gA+=g.ach; });
+  var gPct = gT>0?parseFloat((gA/gT*100).toFixed(2)):null;
+  var nsub = Object.keys(subAgg).length;
+
+  function chip(lbl,val,col){ return '<div style="background:#fff;border:1px solid #e0f2fe;border-radius:10px;padding:7px 13px;"><div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">'+lbl+'</div><div style="font-size:15px;font-weight:900;color:'+col+';">'+val+'</div></div>'; }
+  document.getElementById('gsdpStateSummary').innerHTML =
+    chip('Sectors', sectors.length, '#7c3aed') +
+    chip('Sub-sectors', nsub, '#0369a1') +
+    chip('State Target', _gsdpCr(gT), '#0c4a6e') +
+    chip('State Achievement', _gsdpCr(gA), '#16a34a') +
+    chip('% Achieved', gPct!=null?gPct+'%':'—', '#0891b2');
+
+  var rows='';
+  sectors.forEach(function(g, si){
+    rows += '<tr style="background:#f5f3ff;cursor:pointer;" onclick="gsdpStateToggle('+si+')" title="Click to expand sub-sectors">'
+      + '<td style="font-weight:900;color:#6d28d9;"><span id="gsdp-stcaret-'+si+'" style="display:inline-block;width:15px;color:#7c3aed;">&#9656;</span> '+_eoEsc(g.sector)+' <span style="font-size:9.5px;font-weight:700;color:#a78bda;">('+g.subs.length+' sub-sector'+(g.subs.length!==1?'s':'')+')</span></td>'
+      + '<td style="text-align:right;font-weight:900;color:#6d28d9;">'+_gsdpCr(g.target)+'</td>'
+      + '<td style="text-align:right;font-weight:900;color:#16a34a;">'+_gsdpCr(g.ach)+'</td>'
+      + '<td style="text-align:center;">'+gsdpPctCell(g.pct)+'</td>'
+      + '</tr>';
+    g.subs.forEach(function(m){
+      var pct=m.target>0?parseFloat((m.ach/m.target*100).toFixed(2)):null;
+      rows += '<tr class="gsdp-st-sub-'+si+'" style="display:none;background:#fff;">'
+        + '<td style="padding-left:32px;font-weight:700;color:#0c4a6e;">'+_eoEsc(m.sub_sector)+'</td>'
+        + '<td style="text-align:right;color:#475569;">'+_gsdpCr(m.target)+'</td>'
+        + '<td style="text-align:right;color:#16a34a;">'+_gsdpCr(m.ach)+'</td>'
+        + '<td style="text-align:center;">'+gsdpPctCell(pct)+'</td>'
+        + '</tr>';
+    });
+  });
+  rows += '<tr style="background:#0c4a6e;">'
+    + '<td style="color:#fff;font-weight:900;letter-spacing:0.3px;">GRAND TOTAL &mdash; State</td>'
+    + '<td style="text-align:right;color:#fff;font-weight:900;">'+_gsdpCr(gT)+'</td>'
+    + '<td style="text-align:right;color:#bbf7d0;font-weight:900;">'+_gsdpCr(gA)+'</td>'
+    + '<td style="text-align:center;color:#fff;font-weight:900;">'+(gPct!=null?gPct+'%':'—')+'</td>'
+    + '</tr>';
+  document.getElementById('gsdpStateTbody').innerHTML = rows || '<tr><td colspan="4" class="eo-empty">No GSDP data — run gsdp_table.sql + gsdp_seed.sql.</td></tr>';
+  document.getElementById('gsdpStateFooter').innerHTML = sectors.length+' sectors · '+nsub+' sub-sectors · Click a sector to expand its sub-sectors. Sector rows are sub-totals; the last row is the state grand total.';
+  document.getElementById('gsdpStatePopup').style.display = 'flex';
+};
+window.gsdpStateToggle = function(si){
+  var subs = document.querySelectorAll('.gsdp-st-sub-'+si);
+  var open = subs.length>0 && subs[0].style.display !== 'none';
+  for (var i=0;i<subs.length;i++) subs[i].style.display = open ? 'none' : '';
+  var caret = document.getElementById('gsdp-stcaret-'+si);
+  if (caret) caret.innerHTML = open ? '&#9656;' : '&#9662;';
+};
+
+function renderGsdpTable(){
+  if (_gsdpData && _gsdpData.length){ _gsdpData.slice().sort(function(a,b){ if(a.gsdpScore==null&&b.gsdpScore==null)return 0; if(a.gsdpScore==null)return 1; if(b.gsdpScore==null)return -1; return b.gsdpScore-a.gsdpScore; }).forEach(function(r,i){ r._gsdpStateRank = r.gsdpScore==null?null:i+1; }); }
+  var cadreVal=(document.getElementById('fCadre')?.value||'').trim(), sourceVal=(document.getElementById('fSource')?.value||'').trim(), domVal=(document.getElementById('fDomicile')?.value||'').trim(), postTypeVal=(document.getElementById('fPostType')?.value||'').trim(), nameVal=(document.getElementById('searchName360')?.value||'').trim().toLowerCase();
+  var data = _gsdpData.filter(function(r){
+    var om=_eoOfficerMap[r.identity_no]||{};
+    if(cadreVal&&om.cadre!==cadreVal)return false;
+    if(sourceVal&&om.source!==sourceVal)return false;
+    if(domVal&&om.domicile!==domVal)return false;
+    if(postTypeVal&&om.postType!==postTypeVal)return false;
+    if(nameVal&&r.name.toLowerCase().indexOf(nameVal)===-1)return false;
+    return true;
+  });
+  updateGsdpNormBtn();
+  data.forEach(function(r){ if (r._gsdpScoreBase === undefined) r._gsdpScoreBase = r.gsdpScore; r.gsdpScore = r._gsdpScoreBase; });
+  if (_gsdpNormalized){
+    var av=data.filter(function(r){return r.gsdpScore!=null;}).map(function(r){return r.gsdpScore;});
+    if (av.length){ var mn=Math.min.apply(null,av), mx=Math.max.apply(null,av), rg=mx-mn; data.forEach(function(r){ if(r.gsdpScore!=null) r.gsdpScore = rg>0 ? parseFloat(((r.gsdpScore-mn)/rg*100).toFixed(2)) : 100; }); }
+  }
+  data.slice().sort(function(a,b){ if(a.gsdpScore==null&&b.gsdpScore==null)return 0; if(a.gsdpScore==null)return 1; if(b.gsdpScore==null)return -1; return b.gsdpScore-a.gsdpScore; }).forEach(function(r,i){ r.gsdpRank = r.gsdpScore==null?null:i+1; });
+  var col=_gsdpSortCol, dir=_gsdpSortDir;
+  data.sort(function(a,b){ var av=a[col],bv=b[col]; if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; if(typeof av==='string')av=av.toLowerCase(); if(typeof bv==='string')bv=bv.toLowerCase(); if(av<bv)return dir==='asc'?-1:1; if(av>bv)return dir==='asc'?1:-1; return 0; });
+  var rc=document.getElementById('gsdpRowCount'); if (rc) rc.textContent = data.length + ' officer' + (data.length!==1?'s':'');
+  var tbody=document.getElementById('gsdpTbody');
+  if (!data.length){ tbody.innerHTML='<tr><td colspan="11" class="eo-empty">No officers match the filters.</td></tr>'; return; }
+  tbody.innerHTML = data.map(function(r, idx){
+    var idEsc = _eoEsc(String(r.identity_no)).replace(/'/g,"\\'");
+    var photoHtml = r.photo_url ? '<img src="'+_eoEsc(r.photo_url)+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid #e0e7ff;" onerror="this.style.display=\'none\'" alt="">' : '<span style="color:#cbd5e1;font-size:18px;">&#128100;</span>';
+    var sc  = r.sectorsCovered>0 ? '<span class="pp-clickable" style="color:#7c3aed;font-weight:800;" onclick="openGsdpPostsPopup(\''+idEsc+'\')">'+r.sectorsCovered+'</span>' : '<span style="color:#cbd5e1;">0</span>';
+    var ssc = r.subSectorsCovered>0 ? '<span class="pp-clickable" style="color:#0369a1;font-weight:800;" onclick="openGsdpPostsPopup(\''+idEsc+'\')">'+r.subSectorsCovered+'</span>' : '<span style="color:#cbd5e1;">0</span>';
+    return '<tr>'
+      + '<td class="eo-slno">'+(idx+1)+'</td>'
+      + '<td class="eo-photo-cell" style="cursor:pointer;" title="View 360° profile" onclick="event.stopPropagation();openOfficerDetailById(\''+idEsc+'\')">'+photoHtml+'</td>'
+      + '<td class="eo-name" title="'+_eoEsc(r.name)+'">'+_eoEsc(r.name)+'</td>'
+      + '<td class="pp-post">'+_eoEsc(r.present_post||'—')+'</td>'
+      + '<td class="eo-num" style="text-align:center;">'+sc+'</td>'
+      + '<td class="eo-num" style="text-align:center;">'+ssc+'</td>'
+      + '<td style="text-align:right;">'+(r.aggTarget>0?_gsdpCr(r.aggTarget):'<span style="color:#cbd5e1;">—</span>')+'</td>'
+      + '<td style="text-align:right;color:#16a34a;">'+(r.aggTarget>0?_gsdpCr(r.aggAch):'<span style="color:#cbd5e1;">—</span>')+'</td>'
+      + '<td style="text-align:center;">'+gsdpPctCell(r.pctAchieved)+'</td>'
+      + '<td class="js-score-cell" style="text-align:center;">'+gsdpScoreBadge(r.gsdpScore)+'</td>'
+      + '<td style="text-align:center;font-weight:800;color:#0c4a6e;">'+(r._gsdpStateRank||'—')+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+window.sortGsdp = function(col){
+  if (_gsdpSortCol === col) _gsdpSortDir = (_gsdpSortDir==='asc'?'desc':'asc');
+  else { _gsdpSortCol = col; _gsdpSortDir = (col==='name'||col==='officer_id'||col==='_gsdpStateRank') ? 'asc' : 'desc'; }
+  renderGsdpTable();
+};
+
+window.openGsdpPostsPopup = function(identityNo){
+  var officer = _gsdpData.find(function(r){ return r.identity_no === String(identityNo); });
+  if (!officer) return;
+  document.getElementById('gsdpPostsTitle').textContent = officer.name + '  —  GSDP Coverage';
+  document.getElementById('gsdpPostsSub').textContent = 'Identity No: ' + identityNo + (officer.gsdpScore!=null ? '   •   GSDP Score: ' + officer.gsdpScore + '   (efficiency ' + (officer.gsdpEff!=null?officer.gsdpEff+'%':'—') + ' × load ' + (officer.gsdpLoadFactor!=null?officer.gsdpLoadFactor.toFixed(2):'—') + ')' : '   •   Not yet scored');
+  function chip(lbl,val,col){ return '<div style="background:#fff;border:1px solid #e0f2fe;border-radius:10px;padding:7px 13px;"><div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">'+lbl+'</div><div style="font-size:15px;font-weight:900;color:'+col+';">'+val+'</div></div>'; }
+  document.getElementById('gsdpPostsSummary').innerHTML =
+    chip('Sectors Covered', officer.sectorsCovered, '#7c3aed') +
+    chip('Sub-sectors Covered', officer.subSectorsCovered, '#0369a1') +
+    chip('Aggregated Target', _gsdpCr(officer.aggTarget), '#0c4a6e') +
+    chip('Aggregated Achievement', _gsdpCr(officer.aggAch), '#16a34a') +
+    chip('% Achieved', officer.pctAchieved!=null?officer.pctAchieved+'%':'—', '#0891b2');
+
+  var rows = '';
+  (officer.sectorBreakdown||[]).forEach(function(sec, si){
+    rows += '<tr class="gsdp-sec-row" style="background:#f5f3ff;cursor:pointer;" onclick="gsdpToggleSector('+si+')" title="Click to see sub-sectors">'
+      + '<td style="font-weight:900;color:#6d28d9;">'
+        + '<span id="gsdp-seccaret-'+si+'" style="display:inline-block;width:15px;color:#7c3aed;">&#9656;</span> '
+        + _eoEsc(sec.sector) + ' <span style="font-size:9.5px;font-weight:700;color:#a78bda;">('+sec.subs.length+' sub-sector'+(sec.subs.length!==1?'s':'')+')</span>'
+        + '</td>'
+      + '<td style="text-align:right;font-weight:900;color:#6d28d9;">'+_gsdpCr(sec.target)+'</td>'
+      + '<td style="text-align:right;font-weight:900;color:#16a34a;">'+_gsdpCr(sec.ach)+'</td>'
+      + '<td style="text-align:center;">'+gsdpPctCell(sec.pct)+'</td>'
+      + '</tr>';
+    sec.subs.forEach(function(m, ui){
+      rows += '<tr class="gsdp-sub-of-'+si+'" style="display:none;background:#eff6ff;cursor:pointer;" onclick="gsdpToggleSub('+si+','+ui+')" title="Click to see posts">'
+        + '<td style="padding-left:28px;font-weight:800;color:#0c4a6e;">'
+          + '<span id="gsdp-subcaret-'+si+'-'+ui+'" style="display:inline-block;width:14px;color:#0369a1;">&#9656;</span> '
+          + _eoEsc(m.sub_sector) + ' <span style="font-size:9px;color:#94a3b8;">('+m.postsArr.length+' post'+(m.postsArr.length!==1?'s':'')+')</span>'
+          + '</td>'
+        + '<td style="text-align:right;font-weight:800;color:#0c4a6e;">'+_gsdpCr(m.target)+'</td>'
+        + '<td style="text-align:right;font-weight:800;color:#16a34a;">'+_gsdpCr(m.ach)+'</td>'
+        + '<td style="text-align:center;">'+gsdpPctCell(m.pct)+'</td>'
+        + '</tr>';
+      m.postsArr.forEach(function(p, pi){
+        var cc = gsdpCatColor(p.category);
+        rows += '<tr class="gsdp-post-of-'+si+'-'+ui+'" style="display:none;background:#fff;cursor:pointer;" onclick="gsdpTogglePost('+si+','+ui+','+pi+')" title="Click to see periods">'
+          + '<td style="padding-left:52px;font-weight:700;color:#1e293b;white-space:normal;word-break:break-word;line-height:1.45;">'
+            + '<span id="gsdp-postcaret-'+si+'-'+ui+'-'+pi+'" style="display:inline-block;width:14px;color:#0d9488;">&#9656;</span> '
+            + _eoEsc(p.post_name) + ' <span style="font-size:9.5px;font-weight:800;color:'+cc+';">'+_eoEsc(p.category)+'</span>'
+            + ' <span style="font-size:9px;color:#94a3b8;">('+p.periods.length+' period'+(p.periods.length!==1?'s':'')+')</span>'
+            + '</td>'
+          + '<td style="text-align:right;color:#475569;">'+_gsdpCr(p.target)+'</td>'
+          + '<td style="text-align:right;color:#16a34a;">'+_gsdpCr(p.ach)+'</td>'
+          + '<td style="text-align:center;">'+gsdpPctCell(p.pct)+'</td>'
+          + '</tr>';
+        p.periods.forEach(function(pe){
+          rows += '<tr class="gsdp-period-of-'+si+'-'+ui+'-'+pi+'" style="display:none;background:#f8fafc;">'
+            + '<td style="padding-left:78px;font-size:11px;color:#475569;white-space:nowrap;">'
+              + (pe.from?fmtDate(pe.from):'—') + ' &#8594; ' + (pe.to?fmtDate(pe.to):'<em style="font-style:normal;font-weight:700;color:#0369a1;">Present</em>')
+              + ' <span style="color:#94a3b8;">&#183; '+pe.days+' day'+(pe.days!==1?'s':'')+'</span>'
+              + '</td>'
+            + '<td style="text-align:right;font-size:11px;">'+_gsdpCr(pe.target)+'</td>'
+            + '<td style="text-align:right;font-size:11px;color:#16a34a;">'+_gsdpCr(pe.ach)+'</td>'
+            + '<td style="text-align:center;">'+gsdpPctCell(pe.pct)+'</td>'
+            + '</tr>';
+        });
+      });
+    });
+  });
+  document.getElementById('gsdpPostsTbody').innerHTML = rows || '<tr><td colspan="4" class="eo-empty">No GSDP sectors mapped for this officer.</td></tr>';
+  document.getElementById('gsdpPostsFooter').innerHTML = officer.sectorsCovered + ' sector' + (officer.sectorsCovered!==1?'s':'') + ' · ' + officer.subSectorsCovered + ' sub-sector' + (officer.subSectorsCovered!==1?'s':'') + ' · Click a sector → sub-sectors → posts → periods · Target &amp; Achievement pro-rata to days in FY 2025-26.';
+  document.getElementById('gsdpPostsPopup').style.display = 'flex';
+};
+
+function gsdpCatColor(cat){ cat = cat||''; return cat.indexOf('Secretariat')===0?'#1d4ed8':cat.indexOf('District')===0?'#0d9488':cat.indexOf('HoD')===0?'#15803d':'#94a3b8'; }
+
+window.gsdpToggleSector = function(si){
+  var subs = document.querySelectorAll('.gsdp-sub-of-'+si);
+  var open = subs.length>0 && subs[0].style.display !== 'none';
+  for (var i=0;i<subs.length;i++) subs[i].style.display = open ? 'none' : '';
+  var caret = document.getElementById('gsdp-seccaret-'+si);
+  if (caret) caret.innerHTML = open ? '&#9656;' : '&#9662;';
+  if (open){
+    var desc = document.querySelectorAll('[class^="gsdp-post-of-'+si+'-"],[class^="gsdp-period-of-'+si+'-"]');
+    for (var j=0;j<desc.length;j++) desc[j].style.display = 'none';
+    var cs = document.querySelectorAll('[id^="gsdp-subcaret-'+si+'-"],[id^="gsdp-postcaret-'+si+'-"]');
+    for (var k=0;k<cs.length;k++) cs[k].innerHTML = '&#9656;';
+  }
+};
+
+window.gsdpToggleSub = function(si,ui){
+  var posts = document.querySelectorAll('.gsdp-post-of-'+si+'-'+ui);
+  var open = posts.length>0 && posts[0].style.display !== 'none';
+  for (var i=0;i<posts.length;i++) posts[i].style.display = open ? 'none' : '';
+  var caret = document.getElementById('gsdp-subcaret-'+si+'-'+ui);
+  if (caret) caret.innerHTML = open ? '&#9656;' : '&#9662;';
+  if (open){
+    var pers = document.querySelectorAll('[class^="gsdp-period-of-'+si+'-'+ui+'-"]');
+    for (var j=0;j<pers.length;j++) pers[j].style.display = 'none';
+    var pcs = document.querySelectorAll('[id^="gsdp-postcaret-'+si+'-'+ui+'-"]');
+    for (var k=0;k<pcs.length;k++) pcs[k].innerHTML = '&#9656;';
+  }
+};
+
+window.gsdpTogglePost = function(si,ui,pi){
+  var pers = document.querySelectorAll('.gsdp-period-of-'+si+'-'+ui+'-'+pi);
+  var open = pers.length>0 && pers[0].style.display !== 'none';
+  for (var i=0;i<pers.length;i++) pers[i].style.display = open ? 'none' : '';
+  var caret = document.getElementById('gsdp-postcaret-'+si+'-'+ui+'-'+pi);
+  if (caret) caret.innerHTML = open ? '&#9656;' : '&#9662;';
+};
 
 function renderCombinedTable() {
   if (_cmpData && _cmpData.length) { _cmpData.slice().sort(function(a,b){ if(a.finalScore==null&&b.finalScore==null)return 0; if(a.finalScore==null)return 1; if(b.finalScore==null)return -1; return b.finalScore-a.finalScore; }).forEach(function(r,i){ r._cmpStateRank = r.finalScore==null?null:i+1; }); }
