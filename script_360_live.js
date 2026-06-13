@@ -9,12 +9,13 @@
 
   let svc = (new URLSearchParams(window.location.search).get('service') || 'IAS').toUpperCase();
 
-  // ── 4 live evaluation categories (from the capsule scores) ──────
+  // ── 5 live evaluation categories (from the capsule scores) ──────
   const WHEEL_CATS = [
     { label:'e-Office',          color:'#6366f1', light:'#a5b4fc', live:true },
     { label:'Swarna AP',         color:'#16a34a', light:'#86efac', live:true },
     { label:'GoI Funds',         color:'#0d9488', light:'#5eead4', live:true },
     { label:'Public Perception', color:'#ea580c', light:'#fdba74', live:true },
+    { label:'GSDP',              color:'#0891b2', light:'#67e8f9', live:true },
   ];
   const NCATS = WHEEL_CATS.length;
   let wheelActiveIdx = [];   // which WHEEL_CATS indices are plotted on the wheel (checklist-controlled)
@@ -32,6 +33,9 @@
     { icon:'👥', source:'I&PR Public Perception — district campaign surveys',
       desc:'Citizen perception score, period-weighted across the officer\'s posts and campaigns (0–100).',
       metrics:[] },
+    { icon:'📈', source:'GSDP — sub-sector target mapping',
+      desc:'GSDP contribution — FY-day-weighted achievement of the officer\'s mapped sub-sector targets, target-load weighted (0–100).',
+      metrics:[] },
   ];
 
   // Full set of performance parameters shown on the wheel / checklist.
@@ -42,7 +46,7 @@
     { label:'Swarna AP',             color:'#16a34a', light:'#86efac', icon:'⭐', live:true,  src:1, source:'Swarnandhra KPI', desc:'Swarna Andhra Pradesh KPI score, days-weighted across the officer\'s posts (0–100).', metrics:[] },
     { label:'GoI Funds',             color:'#0d9488', light:'#5eead4', icon:'💰', live:true,  src:2, source:'GoI (CSS) Funds — utilization', desc:'Government of India fund utilization (0–100).', metrics:[] },
     { label:'Public Perception',     color:'#ea580c', light:'#fdba74', icon:'👥', live:true,  src:3, source:'I&PR Public Perception', desc:'Citizen perception score, period-weighted (0–100).', metrics:[] },
-    { label:'GSDP',                  color:'#0891b2', light:'#67e8f9', icon:'📈', live:false, source:'GSDP Score', desc:'Gross State Domestic Product contribution (data not yet live).', metrics:[] },
+    { label:'GSDP',                  color:'#0891b2', light:'#67e8f9', icon:'📈', live:true,  src:4, source:'GSDP — sub-sector target mapping', desc:'GSDP contribution — FY-day-weighted target achievement, target-load weighted (0–100).', metrics:[] },
     { label:'APAR',                  color:'#7c3aed', light:'#c4b5fd', icon:'📝', live:false, source:'APAR Score', desc:'Annual Performance Appraisal Report (data not yet live).', metrics:[] },
     { label:'CMO Feedback',          color:'#b91c1c', light:'#fca5a5', icon:'🏛', live:false, source:'CMO Feedback', desc:'Chief Minister\'s Office feedback (data not yet live).', metrics:[] },
     { label:'Party Feedback',        color:'#db2777', light:'#f9a8d4', icon:'🎴', live:false, source:'Party Feedback', desc:'Party feedback (data not yet live).', metrics:[] },
@@ -55,6 +59,19 @@
     { label:'De-Regularisation',     color:'#0f766e', light:'#5eead4', icon:'✅', live:false, source:'De-Regularisation Score', desc:'De-regularisation score (data not yet live).', metrics:[] }
   ];
   const NDISP = WHEEL_DISPLAY.length;
+  // live-score src index → the score page's switchView name (for click-through)
+  const WHEEL_VIEW_BY_SRC = ['eoffice','swarna','goi','perception','gsdp'];
+
+  // Open a score's full page and highlight this officer — same behaviour as the
+  // Professional Performance Index score cells (reuses window.cmpGotoScore).
+  window.wheelGotoScore = function(view, idNo){
+    document.querySelectorAll('.sdp-popup-bg').forEach(el => el.remove());
+    try { if (activeSegSet && activeSegSet.clear) activeSegSet.clear(); } catch(e){}
+    var wo = document.getElementById('wheelOverlay'); if (wo) wo.classList.remove('open');
+    var dov = document.getElementById('detailOverlay'); if (dov) dov.classList.remove('open');
+    if (typeof window.cmpGotoScore === 'function') window.cmpGotoScore(view, idNo);
+    else if (typeof window.switchView === 'function') window.switchView(view);
+  };
 
   const CADRE_COLORS = {
     'CHIEF SECRETARY':         '#16a34a',
@@ -85,6 +102,17 @@
   let retireRange  = { lo:0, hi:9999 };
   let batchExtent  = { min:0, max:9999 };
   let retireExtent = { min:0, max:9999 };
+  let _rangeById   = {};   // identity_no → { batch, retire } for the score-page filters
+
+  // Shared by the score pages (360_live.html): does this officer pass the current
+  // Batch & Retirement-Year sliders? Unknown values are not excluded.
+  window.officerPassesRange = function (identityNo) {
+    const m = _rangeById[String(identityNo)];
+    if (!m) return true;
+    if (m.batch  != null && (m.batch  < batchRange.lo  || m.batch  > batchRange.hi))  return false;
+    if (m.retire != null && (m.retire < retireRange.lo || m.retire > retireRange.hi)) return false;
+    return true;
+  };
 
   // ── Score data loaded from Supabase ────────────────────────────
   // Maps: identity_no (string) → computed score (0-10) or null
@@ -131,7 +159,7 @@
   }
 
   // Assemble all 14 scores for one officer (null = pending/unavailable)
-  // Build the 4 live scores (0–100) for an officer from the capsule-score map.
+  // Build the 5 live scores (0–100) for an officer from the capsule-score map.
   function buildScores(idNo, scoreMap) {
     const s = (scoreMap && scoreMap[String(idNo)]) || {};
     return [
@@ -139,6 +167,7 @@
       s.sw != null ? s.sw : null,   // 1  Swarna AP
       s.go != null ? s.go : null,   // 2  GoI Funds
       s.pp != null ? s.pp : null,   // 3  Public Perception
+      s.gs != null ? s.gs : null,   // 4  GSDP
     ];
   }
 
@@ -282,7 +311,7 @@
         );
       }
 
-      // Build the 4 live capsule scores for each officer — guarded so a
+      // Build the 5 live capsule scores for each officer — guarded so a
       // scoring failure can never take down the filters or the grid.
       try {
         for (const grp of Object.values(grouped)) {
@@ -362,11 +391,14 @@
 
   function buildRangeSliders() {
     let bMin = Infinity, bMax = -Infinity, rMin = Infinity, rMax = -Infinity;
+    _rangeById = {};
     allOfficers.forEach(([, { meta }]) => {
       const b = parseInt(meta.AllotmentYear, 10);
       if (!isNaN(b)) { bMin = Math.min(bMin, b); bMax = Math.max(bMax, b); }
       const ry = getRetireYear(meta);
       if (ry) { rMin = Math.min(rMin, ry); rMax = Math.max(rMax, ry); }
+      const id = String(meta['IdentityNo.'] || '').trim();
+      if (id) _rangeById[id] = { batch: isNaN(b) ? null : b, retire: ry || null };
     });
     if (!isFinite(bMin)) { bMin = 1980; bMax = 2024; }
     if (!isFinite(rMin)) { rMin = 2024; rMax = 2042; }
@@ -406,7 +438,8 @@
     const rng = type === 'batch' ? batchRange : retireRange;
     rng.lo = lo; rng.hi = hi;
     syncSliderUI(type);
-    applyFilters360();
+    if (typeof window.applyAllFilters === 'function') window.applyAllFilters();  // grid + active score table
+    else applyFilters360();
   };
 
   window.resetRangeSliders = function () {
@@ -673,7 +706,7 @@
       ? `Peer rank is among officers who share the same parameters: <b>${esc(peerLabel)}</b>`
       : 'No live scores available for this officer yet.';
 
-    // full display set: 4 live scores + the coming-soon performance parameters (no data yet)
+    // full display set: 5 live scores + the coming-soon performance parameters (no data yet)
     const dispScores = WHEEL_DISPLAY.map(c => c.live ? (scores[c.src] != null ? scores[c.src] : null) : null);
     currentWheelData.scores = dispScores;
     currentWheelData.name = name; currentWheelData.photo = photoUrl;
@@ -944,6 +977,16 @@
   }
 
   function onSegClick(idx, officerName) {
+    // Live score → open that score's full page and highlight the officer directly
+    // (same as the Professional Performance Index cells). No intermediate popup.
+    const cat  = WHEEL_DISPLAY[idx];
+    const sc   = currentWheelData.scores[idx];
+    const view = (cat && cat.live && cat.src != null) ? WHEEL_VIEW_BY_SRC[cat.src] : null;
+    if (view && sc != null) {
+      const idNo = String((currentWheelData.grp && currentWheelData.grp.meta && currentWheelData.grp.meta['IdentityNo.']) || '').trim();
+      if (idNo) { window.wheelGotoScore(view, idNo); return; }
+    }
+    // Coming-soon parameter (no live page): keep the small info popup
     if (activeSegSet.has(idx)) {
       activeSegSet.delete(idx);
       const bg = document.getElementById('sdpBg_' + idx);

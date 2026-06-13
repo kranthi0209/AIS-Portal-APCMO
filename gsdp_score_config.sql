@@ -11,7 +11,9 @@
 -- ============================================================
 insert into score_config (score_key, param_key, param_label, param_value, unit, grp, sort_order) values
   ('gsdp','load_floor',  'Target-load floor (smallest target keeps)', 0.70, 'factor', 'Load weighting', 1),
-  ('gsdp','load_ceiling','Target-load ceiling (largest target reaches)',1.00, 'factor', 'Load weighting', 2)
+  ('gsdp','load_ceiling','Target-load ceiling (largest target reaches)',1.00, 'factor', 'Load weighting', 2),
+  -- GSDP's weight inside the Composite (Professional Performance Index)
+  ('composite','w_gsdp', 'GSDP weight', 1, 'weight', 'Component weights', 5)
 on conflict (score_key, param_key) do nothing;
 
 notify pgrst, 'reload schema';

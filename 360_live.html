@@ -188,7 +188,7 @@
     .ls-pending { background:rgba(100,116,139,0.15); color:#94a3b8; border:1px solid rgba(100,116,139,0.3); }
 
     /* ── Range strip ── */
-    #rangeStrip { position:sticky; top:0; z-index:10; background:linear-gradient(to bottom,#eef0fb 80%,rgba(238,240,251,0)); border-bottom:1.5px solid #c7d2fe; padding:10px 6px 14px; display:flex; gap:20px; align-items:flex-start; margin:-10px -10px 10px; box-shadow:0 4px 14px rgba(99,102,241,0.1); }
+    #rangeStrip { display:flex; flex-direction:column; gap:13px; margin:9px 0 3px; padding:0; }
     .rs-group { flex:1; min-width:0; }
     .rs-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
     .rs-icon { font-size:10.5px; font-weight:800; color:#3730a3; letter-spacing:0.2px; display:flex; align-items:center; gap:4px; }
@@ -953,10 +953,10 @@
   .c360-name  { color:#5c2e0a !important; font-weight:700 !important; }
   .c360-batch { color:#b45309 !important; }
 
-  /* range strip */
+  /* range strip — sits in the sidebar Filters panel (all views) */
   #rangeStrip { background:#fbe8cf !important;
-    border-bottom:1.5px solid #e0b878 !important; box-shadow:0 4px 14px rgba(120,53,15,0.12) !important;
-    padding:3px 6px 8px !important; margin:-6px -6px 6px !important; gap:16px !important; }
+    border:1px solid #e0b878 !important; box-shadow:none !important; border-radius:10px !important;
+    padding:9px 11px !important; margin:9px 0 3px !important; gap:13px !important; }
   #grid360wrap { padding:8px !important; }
   .rs-head { margin-bottom:3px !important; }
   .rs-icon { color:#9a3412 !important; }
@@ -1539,6 +1539,30 @@
     <select class="b360-select" id="fDomicile" onchange="applyAllFilters()"><option value="">All Domiciles</option></select>
     <span class="b360-fl">Post Type</span>
     <select class="b360-select" id="fPostType" onchange="applyAllFilters()"><option value="">All Post Types</option></select>
+    <div id="rangeStrip">
+      <div class="rs-group">
+        <div class="rs-head">
+          <span class="rs-icon">&#127891; Batch</span>
+          <span class="rs-val" id="batchRangeLabel">—</span>
+        </div>
+        <div class="rs-track-wrap">
+          <div class="rs-track"><div class="rs-fill" id="batchFill"></div></div>
+          <input type="range" class="rs-input" id="batchLo" oninput="onSlider('batch')">
+          <input type="range" class="rs-input" id="batchHi" oninput="onSlider('batch')">
+        </div>
+      </div>
+      <div class="rs-group">
+        <div class="rs-head">
+          <span class="rs-icon">&#128197; Retirement Year</span>
+          <span class="rs-val" id="retireRangeLabel">—</span>
+        </div>
+        <div class="rs-track-wrap">
+          <div class="rs-track"><div class="rs-fill" id="retireFill"></div></div>
+          <input type="range" class="rs-input" id="retireLo" oninput="onSlider('retire')">
+          <input type="range" class="rs-input" id="retireHi" oninput="onSlider('retire')">
+        </div>
+      </div>
+    </div>
     </div>
     <div id="mlaFilters" style="display:none;">
       <span class="b360-fl">Search</span>
@@ -1729,33 +1753,6 @@
 
 <!-- ── Grid Area ── -->
 <div id="grid360wrap">
-
-
-  <!-- Range filter strip -->
-  <div id="rangeStrip">
-    <div class="rs-group">
-      <div class="rs-head">
-        <span class="rs-icon">&#127891; Batch</span>
-        <span class="rs-val" id="batchRangeLabel">—</span>
-      </div>
-      <div class="rs-track-wrap">
-        <div class="rs-track"><div class="rs-fill" id="batchFill"></div></div>
-        <input type="range" class="rs-input" id="batchLo" oninput="onSlider('batch')">
-        <input type="range" class="rs-input" id="batchHi" oninput="onSlider('batch')">
-      </div>
-    </div>
-    <div class="rs-group">
-      <div class="rs-head">
-        <span class="rs-icon">&#128197; Retirement Year</span>
-        <span class="rs-val" id="retireRangeLabel">—</span>
-      </div>
-      <div class="rs-track-wrap">
-        <div class="rs-track"><div class="rs-fill" id="retireFill"></div></div>
-        <input type="range" class="rs-input" id="retireLo" oninput="onSlider('retire')">
-        <input type="range" class="rs-input" id="retireHi" oninput="onSlider('retire')">
-      </div>
-    </div>
-  </div>
 
   <!-- Officer grid -->
   <div id="grid360">
@@ -2013,6 +2010,7 @@
             <th class="sortable" data-col="swScore" onclick="sortCombined('swScore')" style="text-align:center;">Swarna AP<br><span style="font-size:8px;font-weight:600;opacity:0.7;">score (rank)</span> <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="goScore" onclick="sortCombined('goScore')" style="text-align:center;">GoI Funds<br><span style="font-size:8px;font-weight:600;opacity:0.7;">score (rank)</span> <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="ppScore" onclick="sortCombined('ppScore')" style="text-align:center;">Perception<br><span style="font-size:8px;font-weight:600;opacity:0.7;">score (rank)</span> <span class="sort-icon">&#9651;</span></th>
+            <th class="sortable" data-col="gsScore" onclick="sortCombined('gsScore')" style="text-align:center;">GSDP<br><span style="font-size:8px;font-weight:600;opacity:0.7;">score (rank)</span> <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="finalScore" onclick="sortCombined('finalScore')" style="text-align:center;min-width:110px;background:linear-gradient(135deg,#4c1d95,#7c3aed);">Professional<br><span style="font-size:9px;opacity:0.85;">Performance Index</span> <span class="sort-icon">&#9651;</span></th>
             <th class="sortable" data-col="_grpRank" onclick="sortCombined('_grpRank')" style="text-align:center;width:42px;background:linear-gradient(135deg,#7c2d12,#9a3412);">Rank<br><span style="font-size:6px;font-weight:700;opacity:0.85;line-height:1;">state wide<br>in combination</span> <span class="sort-icon">&#9651;</span></th>
           </tr>
@@ -3024,19 +3022,20 @@ function _normalizeScoreKey(map, key) {
 }
 
 window.getLive4ScoreMap = async function (normalize) {
-  try { await Promise.all([ loadEofficeTable(), loadPerceptionTable(), loadSwarnaTable(), loadGoiTable() ]); }
+  try { await Promise.all([ loadEofficeTable(), loadPerceptionTable(), loadSwarnaTable(), loadGoiTable(), loadGsdpTable() ]); }
   catch (e) { console.warn('[live4] load', e); }
   try { if (typeof computeEoScores  === 'function') computeEoScores(_eoData || []); }  catch(e){}
   try { if (typeof computeGoiScores === 'function') computeGoiScores(_goData || []); } catch(e){}
   var m = {};
   try {
-    var ens = function(id){ if (!m[id]) m[id] = { eo:null, sw:null, go:null, pp:null }; return m[id]; };
+    var ens = function(id){ if (!m[id]) m[id] = { eo:null, sw:null, go:null, pp:null, gs:null }; return m[id]; };
     (_eoData || []).forEach(function(r){ ens(r.identity_no).eo = r.noData ? null : (r.eoScore != null ? r.eoScore : null); });
     (_swData || []).forEach(function(r){ ens(r.identity_no).sw = r.swScore != null ? r.swScore : null; });
     (_goData || []).forEach(function(r){ ens(r.identity_no).go = r.goScore != null ? r.goScore : null; });
     (_ppData || []).forEach(function(r){ ens(r.identity_no).pp = r.ppScore != null ? r.ppScore : null; });
-    // Normalise all four to a common 0–100 scale (skipped when caller wants raw/absolute)
-    if (normalize !== false) { ['eo','sw','go','pp'].forEach(function(k){ _normalizeScoreKey(m, k); }); }
+    (_gsdpData || []).forEach(function(r){ ens(r.identity_no).gs = r.gsdpScoreRaw != null ? r.gsdpScoreRaw : null; });
+    // Normalise all five to a common 0–100 scale (skipped when caller wants raw/absolute)
+    if (normalize !== false) { ['eo','sw','go','pp','gs'].forEach(function(k){ _normalizeScoreKey(m, k); }); }
   } catch (e) { console.warn('[live4] map build failed', e); }
   return m;   // never rejects — the grid/filters must always load
 };
@@ -3147,7 +3146,7 @@ var EO_WL_PACE   = 60;      // files per active day that earns full intensity cr
 
 // ── Admin-tunable score configuration (Supabase `score_config`) ────────────
 window._SCORE_CFG = null;
-window._CMP_W = { eo:1, sw:1, go:1, pp:1 };   // composite component weights (equal = simple mean)
+window._CMP_W = { eo:1, sw:1, go:1, pp:1, gs:1 };   // composite component weights (equal = simple mean)
 function applyScoreConfig(rows){
   var m = {}; (rows||[]).forEach(function(r){ (m[r.score_key]=m[r.score_key]||{})[r.param_key]=Number(r.param_value); });
   window._SCORE_CFG = m;
@@ -3177,7 +3176,8 @@ function applyScoreConfig(rows){
     eo: cp.w_eoffice    != null ? cp.w_eoffice    : 1,
     sw: cp.w_swarna     != null ? cp.w_swarna     : 1,
     go: cp.w_goi        != null ? cp.w_goi        : 1,
-    pp: cp.w_perception != null ? cp.w_perception : 1
+    pp: cp.w_perception != null ? cp.w_perception : 1,
+    gs: cp.w_gsdp       != null ? cp.w_gsdp       : 1
   };
 }
 async function loadScoreConfig(){
@@ -3457,6 +3457,7 @@ function renderEofficeTable() {
 
   var data = _eoData.filter(function(r) {
     var om = _eoOfficerMap[r.identity_no] || {};
+    if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
     if (cadreVal    && om.cadre    !== cadreVal)    return false;
     if (sourceVal   && om.source   !== sourceVal)   return false;
     if (domVal      && om.domicile !== domVal)       return false;
@@ -3864,6 +3865,7 @@ function renderPerceptionTable() {
 
   var data = _ppData.filter(function(r) {
     var om = _eoOfficerMap[r.identity_no] || {};
+    if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
     if (cadreVal    && om.cadre    !== cadreVal)    return false;
     if (sourceVal   && om.source   !== sourceVal)   return false;
     if (domVal      && om.domicile !== domVal)       return false;
@@ -4331,6 +4333,7 @@ function renderSwarnaTable() {
 
   var data = _swData.filter(function(r) {
     var om = _eoOfficerMap[r.identity_no] || {};
+    if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
     if (cadreVal    && om.cadre    !== cadreVal)    return false;
     if (sourceVal   && om.source   !== sourceVal)   return false;
     if (domVal      && om.domicile !== domVal)       return false;
@@ -4843,6 +4846,7 @@ function renderGoiTable() {
 
   var data = _goData.filter(function(r){
     var om=_eoOfficerMap[r.identity_no]||{};
+  if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
     if (cadreVal && om.cadre!==cadreVal) return false;
     if (sourceVal && om.source!==sourceVal) return false;
     if (domVal && om.domicile!==domVal) return false;
@@ -5127,7 +5131,7 @@ function renderGoRaw(){
 
 // ================================================================
 // Combined Composite Score
-// Merges e-Office, Swarna KPI, GoI Funds & Public Perception scores.
+// Merges e-Office, Swarna KPI, GoI Funds, Public Perception & GSDP scores.
 // Composite = simple average of whichever scores the officer has.
 // ================================================================
 var _cmpData    = [];
@@ -5137,7 +5141,7 @@ var _cmpSortDir = 'desc';
 
 async function loadCombinedTable() {
   var tbody = document.getElementById('cmpTbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="eo-empty">&#8987; Loading all four score systems&hellip;</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="eo-empty">&#8987; Loading all five score systems&hellip;</td></tr>';
 
   try {
     // Single normalised source — all four scores on a common 0–100 scale
@@ -5145,16 +5149,16 @@ async function loadCombinedTable() {
 
     _cmpData = Object.keys(_eoOfficerMap || {}).map(function(id){
       var om = _eoOfficerMap[id] || {};
-      var s  = m[id] || { eo:null, sw:null, go:null, pp:null };
+      var s  = m[id] || { eo:null, sw:null, go:null, pp:null, gs:null };
       return {
         identity_no:id, officer_id:om.officerId||0, name:om.name||id,
         present_post:om.currentPosting||'', photo_url:om.photoUrl||'',
-        eoRaw:s.eo, swRaw:s.sw, goRaw:s.go, ppRaw:s.pp
+        eoRaw:s.eo, swRaw:s.sw, goRaw:s.go, ppRaw:s.pp, gsRaw:s.gs
       };
     });
 
     // Normalised variant: min–max each component to 0–100 across the cohort
-    ['eo','sw','go','pp'].forEach(function(k){
+    ['eo','sw','go','pp','gs'].forEach(function(k){
       var vals=[]; _cmpData.forEach(function(r){ if (r[k+'Raw']!=null) vals.push(r[k+'Raw']); });
       if (!vals.length){ _cmpData.forEach(function(r){ r[k+'Norm']=null; }); return; }
       var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), rg=mx-mn;
@@ -5168,32 +5172,39 @@ async function loadCombinedTable() {
       return b.finalScore - a.finalScore;
     }).forEach(function(r,i){ r.rank = r.finalScore==null ? null : i+1; });
 
-    var full4 = _cmpData.filter(function(r){ return r.count===4; }).length;
+    var full5 = _cmpData.filter(function(r){ return r.count===5; }).length;
     var meta = document.getElementById('cmpMeta');
-    if (meta) meta.textContent = '— ' + _cmpData.length + ' officers · ' + full4 + ' with all 4 scores';
+    if (meta) meta.textContent = '— ' + _cmpData.length + ' officers · ' + full5 + ' with all 5 scores';
 
     renderCombinedTable();
   } catch(err) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="eo-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="eo-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
   }
 }
 
 // Each tab = officers having EXACTLY this set of scores (set:null = every officer).
 var CMP_TABS = [
-  { id:'all',  label:'All Officers',                   set:null                  },
-  { id:'all4', label:'&#127919; All 4 Scores',         set:['eo','sw','go','pp'] },
-  { id:'noGo', label:'Except GoI Funds',               set:['eo','sw','pp']      },
-  { id:'noPp', label:'Except Public Perception',       set:['eo','sw','go']      },
-  { id:'noSw', label:'Except Swarna AP',               set:['eo','go','pp']      },
-  { id:'noEo', label:'Except e-Office',                set:['sw','go','pp']      },
-  { id:'eoSw', label:'e-Office + Swarna AP',           set:['eo','sw']           },
-  { id:'eoGo', label:'e-Office + GoI Funds',           set:['eo','go']           },
-  { id:'eoPp', label:'e-Office + Perception',          set:['eo','pp']           },
-  { id:'swGo', label:'Swarna AP + GoI Funds',          set:['sw','go']           },
-  { id:'swPp', label:'Swarna AP + Perception',         set:['sw','pp']           },
-  { id:'goPp', label:'GoI Funds + Perception',         set:['go','pp']           }
+  { id:'all',  label:'All Officers',                   set:null                       },
+  { id:'all5', label:'&#127919; All 5 Scores',         set:['eo','sw','go','pp','gs'] },
+  // 4-score combinations (exactly one missing)
+  { id:'noEo', label:'Except e-Office',                set:['sw','go','pp','gs']      },
+  { id:'noSw', label:'Except Swarna AP',               set:['eo','go','pp','gs']      },
+  { id:'noGo', label:'Except GoI Funds',               set:['eo','sw','pp','gs']      },
+  { id:'noPp', label:'Except Public Perception',       set:['eo','sw','go','gs']      },
+  { id:'noGs', label:'Except GSDP',                    set:['eo','sw','go','pp']      },
+  // 2-score combinations
+  { id:'eoSw', label:'e-Office + Swarna AP',           set:['eo','sw']                },
+  { id:'eoGo', label:'e-Office + GoI Funds',           set:['eo','go']                },
+  { id:'eoPp', label:'e-Office + Perception',          set:['eo','pp']                },
+  { id:'eoGs', label:'e-Office + GSDP',                set:['eo','gs']                },
+  { id:'swGo', label:'Swarna AP + GoI Funds',          set:['sw','go']                },
+  { id:'swPp', label:'Swarna AP + Perception',         set:['sw','pp']                },
+  { id:'swGs', label:'Swarna AP + GSDP',               set:['sw','gs']                },
+  { id:'goPp', label:'GoI Funds + Perception',         set:['go','pp']                },
+  { id:'goGs', label:'GoI Funds + GSDP',               set:['go','gs']                },
+  { id:'ppGs', label:'Perception + GSDP',              set:['pp','gs']                }
 ];
-var _cmpTab = 'all4';   // default tab on open
+var _cmpTab = 'all5';   // default tab on open
 var _cmpNormalized = true;   // composite mode: true = normalized 0–100, false = absolute raw scores
 
 function cmpTabMatch(r, tab){ return tab.set===null ? true : cmpExactMatch(r, tab.set); }
@@ -5205,6 +5216,7 @@ function cmpSig(r){
   if (r.swScore!=null) s.push('sw');
   if (r.goScore!=null) s.push('go');
   if (r.ppScore!=null) s.push('pp');
+  if (r.gsScore!=null) s.push('gs');
   return s;
 }
 function cmpExactMatch(r, set){
@@ -5216,6 +5228,7 @@ function cmpExactMatch(r, set){
 // officer-level (cadre/source/domicile/post-type/name) filter, shared by tabs + table
 function cmpPassesOfficer(r){
   var om=_eoOfficerMap[r.identity_no]||{};
+  if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
   var cadreVal=(document.getElementById('fCadre')?.value||'').trim();
   var sourceVal=(document.getElementById('fSource')?.value||'').trim();
   var domVal=(document.getElementById('fDomicile')?.value||'').trim();
@@ -5233,14 +5246,14 @@ window.switchCmpTab = function(id){ _cmpTab = id; renderCombinedTable(); };
 
 function applyCmpMode(){
   var suf = _cmpNormalized ? 'Norm' : 'Raw';
-  var W = window._CMP_W || { eo:1, sw:1, go:1, pp:1 };
+  var W = window._CMP_W || { eo:1, sw:1, go:1, pp:1, gs:1 };
   (_cmpData||[]).forEach(function(r){
-    r.eoScore=r['eo'+suf]; r.swScore=r['sw'+suf]; r.goScore=r['go'+suf]; r.ppScore=r['pp'+suf];
+    r.eoScore=r['eo'+suf]; r.swScore=r['sw'+suf]; r.goScore=r['go'+suf]; r.ppScore=r['pp'+suf]; r.gsScore=r['gs'+suf];
     var num=0, den=0;
-    [['eo',r.eoScore],['sw',r.swScore],['go',r.goScore],['pp',r.ppScore]].forEach(function(p){
+    [['eo',r.eoScore],['sw',r.swScore],['go',r.goScore],['pp',r.ppScore],['gs',r.gsScore]].forEach(function(p){
       if (p[1] != null) { var w = (W[p[0]] != null ? W[p[0]] : 1); num += w * p[1]; den += w; }
     });
-    var vals=[r.eoScore,r.swScore,r.goScore,r.ppScore].filter(function(v){return v!=null;});
+    var vals=[r.eoScore,r.swScore,r.goScore,r.ppScore,r.gsScore].filter(function(v){return v!=null;});
     r.count=vals.length;
     r.finalScore = den > 0 ? parseFloat((num/den).toFixed(2)) : null;
   });
@@ -5306,6 +5319,7 @@ window.cmpGotoScore = function(view, identityNo) {
     else if (view==='swarna')     _swNormalized = norm;
     else if (view==='goi')        _goNormalized = norm;
     else if (view==='perception') _ppNormalized = norm;
+    else if (view==='gsdp')       _gsdpNormalized = norm;
   } catch(e){}
   // Show ALL officers (clear the search), then locate + highlight the clicked officer
   var s = document.getElementById('searchName360'); if (s) s.value = '';
@@ -5313,7 +5327,7 @@ window.cmpGotoScore = function(view, identityNo) {
   _cmpHighlightAfter(view, String(identityNo));
 };
 function _cmpHighlightAfter(view, identityNo){
-  var map = { eoffice:'eoTable', swarna:'swTable', goi:'goTable', perception:'ppTable' };
+  var map = { eoffice:'eoTable', swarna:'swTable', goi:'goTable', perception:'ppTable', gsdp:'gsdpTable' };
   var tableId = map[view]; if (!tableId) return;
   var tries = 0;
   var iv = setInterval(function(){
@@ -5496,7 +5510,7 @@ async function loadGsdpTable(){
         subBreakdown:subBreakdown, sectorBreakdown:sectorBreakdown, subSectorsCovered:subBreakdown.length, sectorsCovered:Object.keys(sectorSet).length,
         aggTarget:aggTarget, aggAch:aggAch, pctAchieved:pctAchieved,
         gsdpEff: wsum>0 ? parseFloat((vsum/wsum).toFixed(2)) : null,   // FY-day-weighted % achieved (efficiency)
-        gsdpScore: null
+        gsdpScore: null, gsdpScoreRaw: null
       };
     });
 
@@ -5513,6 +5527,7 @@ async function loadGsdpTable(){
         var _vw = _lr>0 ? (_lv-_lmin)/_lr : 1;                       // 0 (smallest target) … 1 (largest)
         r.gsdpLoadFactor = GSDP_DIFF_FLOOR + (GSDP_DIFF_CEIL - GSDP_DIFF_FLOOR)*_vw;
         r.gsdpScore = Math.max(0, Math.min(100, parseFloat((r.gsdpEff * r.gsdpLoadFactor).toFixed(2))));
+        r.gsdpScoreRaw = r.gsdpScore;   // stable copy (renderGsdpTable mutates gsdpScore for display)
       });
     }
 
@@ -5667,6 +5682,7 @@ function renderGsdpTable(){
   var cadreVal=(document.getElementById('fCadre')?.value||'').trim(), sourceVal=(document.getElementById('fSource')?.value||'').trim(), domVal=(document.getElementById('fDomicile')?.value||'').trim(), postTypeVal=(document.getElementById('fPostType')?.value||'').trim(), nameVal=(document.getElementById('searchName360')?.value||'').trim().toLowerCase();
   var data = _gsdpData.filter(function(r){
     var om=_eoOfficerMap[r.identity_no]||{};
+  if (window.officerPassesRange && !window.officerPassesRange(r.identity_no)) return false;
     if(cadreVal&&om.cadre!==cadreVal)return false;
     if(sourceVal&&om.source!==sourceVal)return false;
     if(domVal&&om.domicile!==domVal)return false;
@@ -5836,7 +5852,7 @@ function renderCombinedTable() {
     }).forEach(function(r,i){ r._grpRank = r.finalScore==null ? null : i+1; });
 
   // Rank within this group for each component score (nulls excluded)
-  ['eo','sw','go','pp'].forEach(function(k){
+  ['eo','sw','go','pp','gs'].forEach(function(k){
     var key = k+'Score';
     data.filter(function(r){ return r[key] != null; })
         .sort(function(a,b){ return b[key]-a[key]; })
@@ -5866,14 +5882,14 @@ function renderCombinedTable() {
   if (cnt) cnt.textContent = data.length + ' officers shown';
 
   var tbody=document.getElementById('cmpTbody');
-  if (!data.length){ tbody.innerHTML='<tr><td colspan="12" class="eo-empty">No officers have exactly this combination of scores'+( (document.getElementById('fCadre')?.value||document.getElementById('searchName360')?.value) ? ' under the current filters' : '')+'.</td></tr>'; return; }
+  if (!data.length){ tbody.innerHTML='<tr><td colspan="13" class="eo-empty">No officers have exactly this combination of scores'+( (document.getElementById('fCadre')?.value||document.getElementById('searchName360')?.value) ? ' under the current filters' : '')+'.</td></tr>'; return; }
 
   tbody.innerHTML = data.map(function(r, idx){
     var photoHtml = r.photo_url
       ? '<img src="'+_eoEsc(r.photo_url)+'" class="eo-thumb" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" alt=""><span class="eo-thumb-ph" style="display:none;">&#128100;</span>'
       : '<span class="eo-thumb-ph">&#128100;</span>';
-    var cntCol = r.count===4 ? '#166534' : r.count===3 ? '#1d4ed8' : r.count===2 ? '#92400e' : r.count===1 ? '#9a3412' : '#94a3b8';
-    var cntBg  = r.count===4 ? '#dcfce7' : r.count===3 ? '#dbeafe' : r.count===2 ? '#fef3c7' : r.count===1 ? '#ffedd5' : '#f1f5f9';
+    var cntCol = r.count>=5 ? '#166534' : r.count===4 ? '#15803d' : r.count===3 ? '#1d4ed8' : r.count===2 ? '#92400e' : r.count===1 ? '#9a3412' : '#94a3b8';
+    var cntBg  = r.count>=5 ? '#dcfce7' : r.count===4 ? '#dcfce7' : r.count===3 ? '#dbeafe' : r.count===2 ? '#fef3c7' : r.count===1 ? '#ffedd5' : '#f1f5f9';
     var cmpIdEsc = _eoEsc(r.identity_no).replace(/'/g,"\\'");
     return '<tr>'+
       '<td class="eo-slno">'+(idx+1)+'</td>'+
@@ -5884,6 +5900,7 @@ function renderCombinedTable() {
       cmpScoreTd('swarna',     r.swScore, r._swCmpRank, cmpIdEsc)+
       cmpScoreTd('goi',        r.goScore, r._goCmpRank, cmpIdEsc)+
       cmpScoreTd('perception', r.ppScore, r._ppCmpRank, cmpIdEsc)+
+      cmpScoreTd('gsdp',       r.gsScore, r._gsCmpRank, cmpIdEsc)+
       '<td style="text-align:center;">'+cmpBadge(r.finalScore, true)+'</td>'+
       '<td style="text-align:center;font-weight:800;color:#7c2d12;">'+(r._grpRank||'—')+'</td>'+
       '</tr>';
@@ -5911,7 +5928,7 @@ var PDF_REPORTS = {
   go:  { tableId:'goTable',  title:'GoI (CSS) Funds Utilization Report',
          brief:'Government of India Centrally-Sponsored-Scheme fund-utilization efficiency — tenure-weighted and fund-size (difficulty) normalized — 0–100.' },
   cmp: { tableId:'cmpTable', title:'Professional Performance Index Report',
-         brief:'Normalized composite of e-Office, Swarna AP, GoI Funds and Public Perception scores on a common 0–100 scale.' }
+         brief:'Normalized composite of e-Office, Swarna AP, GoI Funds, Public Perception and GSDP scores on a common 0–100 scale.' }
 };
 
 function _pdfFiltersText(key) {
@@ -5988,50 +6005,83 @@ function _pdfLoadImg(url){
 // Count officers per exact set of available scores (respects the active cadre/etc. filters)
 function _cmpStatsCounts(){
   var pop = (_cmpData||[]).filter(function(r){ return (typeof cmpPassesOfficer==='function') ? cmpPassesOfficer(r) : true; });
-  var counts = {}, none = 0, totals = { eo:0, sw:0, go:0, pp:0 };
+  var counts = {}, none = 0, totals = { eo:0, sw:0, go:0, pp:0, gs:0 };
   pop.forEach(function(r){
     var sig = [];
     if (r.eoScore!=null){ sig.push('eo'); totals.eo++; }
     if (r.swScore!=null){ sig.push('sw'); totals.sw++; }
     if (r.goScore!=null){ sig.push('go'); totals.go++; }
     if (r.ppScore!=null){ sig.push('pp'); totals.pp++; }
+    if (r.gsScore!=null){ sig.push('gs'); totals.gs++; }
     if (!sig.length){ none++; return; }
     var k = sig.join('+'); counts[k] = (counts[k]||0)+1;
   });
   return { counts:counts, none:none, total:pop.length, totals:totals };
 }
-// Render a 4-set Venn (e-Office / Swarna / GoI / Perception) to a PNG data URL
-function _cmpVennDataURL(stats){
-  var W = 600, Hh = 430, sc = 2, R = 35*Math.PI/180, CX = 300, CY = 218;
+// Render a 5-set "combination matrix" (UpSet-style) to a PNG data URL: a circle
+// per component (filled = present) in each row, a rectangle bar = how many
+// officers have exactly that combination, captured for ALL 5 scores.
+function _cmpComboMatrixDataURL(stats){
+  var comps = [
+    { k:'eo', code:'EO', lab:'e-Office',   col:'37,99,235'  },
+    { k:'sw', code:'SW', lab:'Swarna AP',  col:'22,163,74'  },
+    { k:'go', code:'GO', lab:'GoI Funds',  col:'13,148,136' },
+    { k:'pp', code:'PP', lab:'Perception', col:'234,88,12'  },
+    { k:'gs', code:'GS', lab:'GSDP',       col:'124,58,237' }
+  ];
+  var order = {}; comps.forEach(function(c,i){ order[c.k]=i; });
+  var rows = Object.keys(stats.counts).map(function(sig){
+    var set = sig.split('+').sort(function(a,b){ return order[a]-order[b]; });
+    return { set:set, count:stats.counts[sig] };
+  }).filter(function(r){ return r.count>0; });
+  rows.sort(function(a,b){ return b.count - a.count || b.set.length - a.set.length; });
+  if (!rows.length) rows = [{ set:[], count:0 }];
+  var maxCount = rows.reduce(function(m,r){ return Math.max(m, r.count); }, 1);
+
+  var sc = 2;
+  var col0 = 34, colGap = 22, dotR = 7;
+  var barX = col0 + (comps.length-1)*colGap + 30;
+  var barMax = 250, headH = 50, rowH = 21;
+  var W = barX + barMax + 64;
+  var Hh = headH + rows.length*rowH + 16;
   var cv = document.createElement('canvas'); cv.width = W*sc; cv.height = Hh*sc;
   var x = cv.getContext('2d'); x.scale(sc,sc);
   x.fillStyle='#ffffff'; x.fillRect(0,0,W,Hh);
-  var E = {
-    eo:{cx:235,cy:250,rx:190,ry:112,rot:-R,col:'37,99,235' },
-    sw:{cx:270,cy:200,rx:190,ry:112,rot:-R,col:'22,163,74' },
-    go:{cx:330,cy:200,rx:190,ry:112,rot: R,col:'13,148,136'},
-    pp:{cx:365,cy:250,rx:190,ry:112,rot: R,col:'234,88,12' }
-  };
-  var keys = ['eo','sw','go','pp'];
-  function inE(px,py,e){ var dx=px-e.cx, dy=py-e.cy, c=Math.cos(-e.rot), s=Math.sin(-e.rot); var xr=dx*c-dy*s, yr=dx*s+dy*c; return (xr*xr)/(e.rx*e.rx)+(yr*yr)/(e.ry*e.ry)<=1; }
-  function path(e){ x.beginPath(); x.ellipse(e.cx,e.cy,e.rx,e.ry,e.rot,0,2*Math.PI); }
-  x.globalAlpha=0.32; keys.forEach(function(k){ path(E[k]); x.fillStyle='rgb('+E[k].col+')'; x.fill(); });
-  x.globalAlpha=1;    keys.forEach(function(k){ path(E[k]); x.strokeStyle='rgba('+E[k].col+',0.95)'; x.lineWidth=1.6; x.stroke(); });
-  // region counts at sampled centroids
-  var acc = {};
-  for (var py=8; py<Hh-8; py+=3){ for (var px=8; px<W-8; px+=3){
-    var sig=[]; keys.forEach(function(k){ if (inE(px,py,E[k])) sig.push(k); });
-    if (!sig.length) continue; var kk=sig.join('+'); var a=acc[kk]||(acc[kk]={sx:0,sy:0,n:0}); a.sx+=px; a.sy+=py; a.n++;
-  }}
-  x.textAlign='center'; x.textBaseline='middle';
-  Object.keys(acc).forEach(function(kk){ var a=acc[kk], cnt=stats.counts[kk]||0; x.font='bold 15px Arial'; x.fillStyle = cnt>0 ? '#0f172a' : '#b8c0cc'; x.fillText(String(cnt), a.sx/a.n, a.sy/a.n); });
-  // set-name labels at each ellipse's outer tip
-  x.font='bold 13px Arial';
-  var labs = { eo:'e-Office', sw:'Swarna AP', go:'GoI Funds', pp:'Perception' };
-  keys.forEach(function(k){ var e=E[k], dx=e.cx-CX, dy=e.cy-CY, L=Math.hypot(dx,dy)||1; dx/=L; dy/=L;
-    var best=-1e9, bx=e.cx, by=e.cy;
-    for (var t=0;t<2*Math.PI;t+=0.08){ var c=Math.cos(e.rot), s=Math.sin(e.rot); var ex=e.cx+e.rx*Math.cos(t)*c-e.ry*Math.sin(t)*s, ey=e.cy+e.rx*Math.cos(t)*s+e.ry*Math.sin(t)*c; var pr=(ex-CX)*dx+(ey-CY)*dy; if (pr>best){ best=pr; bx=ex; by=ey; } }
-    x.fillStyle='rgb('+e.col+')'; x.fillText(labs[k], bx+dx*10, by+dy*8);
+
+  // Header
+  x.textAlign='left'; x.textBaseline='alphabetic';
+  x.font='bold 11px Arial'; x.fillStyle='#7c2d12';
+  x.fillText('Score combination', col0-22, 16);
+  x.fillText('Officers (count)', barX, 16);
+  // component code columns
+  x.textAlign='center';
+  comps.forEach(function(c,i){
+    var cx = col0 + i*colGap;
+    x.font='bold 10px Arial'; x.fillStyle='rgb('+c.col+')';
+    x.fillText(c.code, cx, 40);
+  });
+  x.strokeStyle='#e7d4ad'; x.lineWidth=1; x.beginPath(); x.moveTo(8, headH-4); x.lineTo(W-8, headH-4); x.stroke();
+
+  // Rows
+  x.textBaseline='middle';
+  rows.forEach(function(r, ri){
+    var y = headH + ri*rowH + rowH/2;
+    if (ri % 2 === 0){ x.fillStyle='#fcf7ee'; x.fillRect(8, y-rowH/2, W-16, rowH); }
+    var inSet = {}; r.set.forEach(function(k){ inSet[k]=1; });
+    var filled = comps.map(function(c,i){ return inSet[c.k] ? i : -1; }).filter(function(i){ return i>=0; });
+    if (filled.length>1){ x.strokeStyle='#9aa3af'; x.lineWidth=2.2; x.beginPath(); x.moveTo(col0+filled[0]*colGap, y); x.lineTo(col0+filled[filled.length-1]*colGap, y); x.stroke(); }
+    comps.forEach(function(c,i){
+      var cx = col0 + i*colGap;
+      x.beginPath(); x.arc(cx, y, dotR, 0, 2*Math.PI);
+      x.fillStyle = inSet[c.k] ? 'rgb('+c.col+')' : '#e5e7eb'; x.fill();
+    });
+    // count bar (rectangle) + track
+    x.fillStyle='#f1e3c6'; x.fillRect(barX, y-6.5, barMax, 13);
+    var bw = Math.max(2, (r.count/maxCount)*barMax);
+    x.fillStyle='#c2410c'; x.fillRect(barX, y-6.5, bw, 13);
+    x.fillStyle='#0f172a'; x.font='bold 10px Arial'; x.textAlign='left';
+    x.fillText(String(r.count), barX + barMax + 6, y);
+    x.textAlign='center';
   });
   return { data: cv.toDataURL('image/png'), w:W, h:Hh };
 }
@@ -6209,32 +6259,25 @@ window.exportReportPdf = async function(key) {
     }
   });
 
-  // ── Professional Performance Index: coverage note + score-combination Venn ──
+  // ── Professional Performance Index: coverage note + score-combination matrix ──
   if (key === 'cmp'){
     try {
       var _stats = _cmpStatsCounts();
-      var _venn  = _cmpVennDataURL(_stats);
+      var _venn  = _cmpComboMatrixDataURL(_stats);
       doc.addPage();
       var _yy = 15;
       doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(124,45,18);
       doc.text('Score Coverage — Professional Performance Index', W/2, _yy, { align:'center' }); _yy += 7;
       doc.setFont('helvetica','normal'); doc.setFontSize(8.6); doc.setTextColor(60,40,25);
-      var _note = 'Note: This report lists ONLY officers who share the SAME set of available scores (the selected Score Combination). Officers with any of e-Office, Swarna AP, GoI Funds or Public Perception missing have a different combination and are therefore not shown in this list. The Venn diagram below shows how all officers are distributed across every score combination.';
+      var _note = 'Note: This report lists ONLY officers who share the SAME set of available scores (the selected Score Combination). Officers missing any of e-Office, Swarna AP, GoI Funds, Public Perception or GSDP have a different combination and are not shown in this list. The matrix below captures how all officers are distributed across every score combination — a filled circle means the officer has that score, and the bar shows how many officers have exactly that combination.';
       var _nl = doc.splitTextToSize(_pdfAscii(_note), W - 30);
       doc.text(_nl, 15, _yy); _yy += _nl.length * 4.2 + 3;
-      var _vW = Math.min(W - 60, 168), _vH = _vW * (_venn.h / _venn.w), _vx = (W - _vW)/2;
+      var _vW = Math.min(W - 40, 176), _vH = _vW * (_venn.h / _venn.w), _vx = (W - _vW)/2;
       doc.addImage(_venn.data, 'PNG', _vx, _yy, _vW, _vH); _yy += _vH + 5;
       var _t = _stats.totals;
       doc.setFont('helvetica','bold'); doc.setFontSize(8.6); doc.setTextColor(60,40,25);
-      doc.text(_pdfAscii('Officers having each score —  e-Office: '+_t.eo+'    Swarna AP: '+_t.sw+'    GoI Funds: '+_t.go+'    Perception: '+_t.pp), W/2, _yy, { align:'center' }); _yy += 4.8;
-      doc.text(_pdfAscii('All four scores: '+(_stats.counts['eo+sw+go+pp']||0)+'        None of the four: '+_stats.none+'        Total officers: '+_stats.total), W/2, _yy, { align:'center' }); _yy += 6;
-      var _nm = { 'eo+sw+go+pp':'All 4','eo+sw+go':'Except Perception','eo+sw+pp':'Except GoI','eo+go+pp':'Except Swarna','sw+go+pp':'Except e-Office','eo+sw':'e-Office + Swarna','eo+go':'e-Office + GoI','eo+pp':'e-Office + Perception','sw+go':'Swarna + GoI','sw+pp':'Swarna + Perception','go+pp':'GoI + Perception','eo':'e-Office only','sw':'Swarna only','go':'GoI only','pp':'Perception only' };
-      var _br = Object.keys(_nm).filter(function(k){ return (_stats.counts[k]||0) > 0; }).map(function(k){ return _nm[k]+': '+_stats.counts[k]; });
-      if (_br.length){
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,60,35);
-        var _bl = doc.splitTextToSize('Exact combinations —  ' + _br.join('   ·   '), W - 30);
-        doc.text(_bl, W/2, _yy, { align:'center' });
-      }
+      doc.text(_pdfAscii('Officers having each score —  e-Office: '+_t.eo+'    Swarna AP: '+_t.sw+'    GoI Funds: '+_t.go+'    Perception: '+_t.pp+'    GSDP: '+_t.gs), W/2, _yy, { align:'center' }); _yy += 4.8;
+      doc.text(_pdfAscii('All five scores: '+(_stats.counts['eo+sw+go+pp+gs']||0)+'        None of the five: '+_stats.none+'        Total officers: '+_stats.total), W/2, _yy, { align:'center' }); _yy += 6;
       doc.setFont('helvetica','italic'); doc.setFontSize(6); doc.setTextColor(120,120,120);
       doc.text('Note: Only officers who have a score during the period FY 2025-26 are listed; officers with no data are not shown.', W/2, H-11.5, { align:'center' });
       doc.setDrawColor(224,176,120); doc.setLineWidth(0.2); doc.line(8, H-10, W-8, H-10);
@@ -7582,6 +7625,7 @@ document.getElementById('eoPostPopup').addEventListener('click', function(e) {
     var out={};
     Object.keys(groupedData).forEach(function(k){
       var v=groupedData[k], m=v.meta||{};
+      if (window.officerPassesRange && !window.officerPassesRange(m['IdentityNo.'])) return;
       if (cadre && (m.Cadre||'')!==cadre) return;
       if (src && (m.SourceOfRecruitment||'')!==src) return;
       if (dom && (m.Domicile||'')!==dom) return;
@@ -8138,6 +8182,7 @@ var _DEFAULT_COL_WIDTHS = {  // kept as no-op stub to avoid reference errors if 
     var out={};
     Object.keys(groupedData).forEach(function(k){
       var v=groupedData[k], m=v.meta||{};
+      if (window.officerPassesRange && !window.officerPassesRange(m['IdentityNo.'])) return;
       if (cadre && (m.Cadre||'')!==cadre) return;
       if (src && (m.SourceOfRecruitment||'')!==src) return;
       if (dom && (m.Domicile||'')!==dom) return;

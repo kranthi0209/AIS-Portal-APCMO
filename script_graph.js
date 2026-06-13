@@ -110,6 +110,7 @@
     var out={};
     Object.keys(groupedData).forEach(function(k){
       var v=groupedData[k], m=v.meta||{};
+      if (window.officerPassesRange && !window.officerPassesRange(m['IdentityNo.'])) return;
       if (cadre && (m.Cadre||'')!==cadre) return;
       if (src && (m.SourceOfRecruitment||'')!==src) return;
       if (dom && (m.Domicile||'')!==dom) return;
