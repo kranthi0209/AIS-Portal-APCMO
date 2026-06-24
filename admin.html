@@ -381,6 +381,7 @@
   <button class="tab-btn" onclick="showTab('weights',this)">&#9878; Score Weights</button>
   <button class="tab-btn" onclick="showTab('members',this)">&#127963; Members (Ministers/MLA/MP/MLC)</button>
   <button class="tab-btn" onclick="showTab('gsdpmap',this)">&#127806; GSDP Mapping</button>
+  <button class="tab-btn" onclick="showTab('campmap',this)">&#128226; Campaign Mapping</button>
 </div>
 
 <div class="content">
@@ -821,6 +822,29 @@
       </div>
     </div>
   </div><!-- #tab-gsdpmap -->
+
+  <!-- ============================================================
+       Campaign Mapping  (campaign_dept_hod)
+       ============================================================ -->
+  <div class="tab-panel" id="tab-campmap">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128226; Campaign Mapping &mdash; Campaign &rarr; Department / HoD</h3>
+        <div class="toolbar">
+          <button class="btn btn-primary btn-sm" onclick="saveCampMapping()">&#128190; Save Mapping</button>
+          <button class="btn btn-nav btn-sm" onclick="loadCampMapping()">&#8634; Reload</button>
+        </div>
+      </div>
+      <div style="padding:14px 16px 18px;">
+        <p style="color:#6b4423;font-size:12.5px;margin:0 0 12px;line-height:1.55;">Departments &amp; HoDs (rows) come from <code>department_hod</code>; Campaigns (columns) from <code>campaign_dept_hod</code> + the live perception surveys. Click a department &#9662; to expand its HoDs, then tick a cell to map that <b>HoD</b> (and its Department) to a Campaign &mdash; a campaign can map to several HoDs, and a HoD to several campaigns. On <b>Save</b>, the ticks are written to the <code>campaign_dept_hod</code> table as one row per (Campaign, Department, HoD). Collapsed-department cells show a count badge of how many of its HoDs are mapped to that campaign.</p>
+        <div id="camp-map-msg" style="font-size:12.5px;font-weight:700;margin-bottom:10px;color:#9a6b3a;"></div>
+        <div id="camp-map-summary" class="gsdp-sumbar"></div>
+        <div class="data-table-wrap" style="max-height:66vh;overflow:auto;">
+          <table class="data-table gsdp-grid" id="campMapTable"></table>
+        </div>
+      </div>
+    </div>
+  </div><!-- #tab-campmap -->
 
   <!-- ============================================================
        TAB 5: Officer Posts — Dept & HoD Mapping
@@ -1269,6 +1293,7 @@ function showTab(name, btn) {
   if (name === 'weights') loadScoreWeights();
   if (name === 'members') loadMembers();
   if (name === 'gsdpmap') loadGsdpMapping();
+  if (name === 'campmap') loadCampMapping();
 }
 
 // ================================================================
@@ -1462,6 +1487,166 @@ async function saveGsdpMapping(){
     const hodRows = rows.filter(r=>r.hod).length, deptRows = rows.length - hodRows;
     if (msg){ msg.style.color='#15803d'; msg.textContent = '✓ Saved '+rows.length+' rows to gsdp_mapping ('+hodRows+' HoD · '+deptRows+' Department).'; }
     showToast('GSDP mapping saved · '+rows.length+' rows.');
+  } catch(e){
+    if (msg){ msg.style.color='#b91c1c'; msg.textContent = '✗ '+e.message; }
+    showToast('Save failed: '+e.message, true);
+  }
+}
+
+// ================================================================
+// Campaign Mapping  (department_hod -> campaign_dept_hod table:
+//   rows = Department -> HoD ; columns = Campaigns ; a ticked cell =
+//   one (campaign, dept, hod) row.)
+// ================================================================
+let _cmDepts = [];        // distinct departments
+let _cmDeptHods = {};     // department -> [hods]
+let _cmHods = [];         // distinct hods
+let _cmCampaigns = [];    // distinct campaign names (the columns)
+let _cmMap = {};          // (dept + '||' + hod) -> { campaign: 1 }
+let _cmOpen = {};         // departments that are expanded (multi-open)
+
+async function loadCampMapping(){
+  const tbl = document.getElementById('campMapTable');
+  const msg = document.getElementById('camp-map-msg'); if (msg) msg.textContent = '';
+  if (tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#9a6b3a;">Loading…</td></tr></tbody>';
+  try {
+    const [dhRes, cdhRes, pplRes] = await Promise.all([
+      _supabase.from('department_hod').select('department,hod'),
+      _supabase.from('campaign_dept_hod').select('campaign,dept,hod'),
+      _supabase.from('public_perception_live').select('campaign')
+    ]);
+    if (dhRes.error){ tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">Could not read <b>department_hod</b>: '+esc(dhRes.error.message)+'</td></tr></tbody>'; return; }
+    if (cdhRes.error){ tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">Could not read <b>campaign_dept_hod</b>: '+esc(cdhRes.error.message)+'<br>Run <b>supabase_v19.sql</b> in Supabase first.</td></tr></tbody>'; return; }
+    // distinct depts / hods
+    const ds={}, hs={}, dh={};
+    (dhRes.data||[]).forEach(r=>{ const d=(r.department||'').trim(), h=(r.hod||'').trim(); if(d) ds[d]=1; if(h) hs[h]=1; if(d&&h){ (dh[d]=dh[d]||{})[h]=1; } });
+    _cmDepts = Object.keys(ds).sort(); _cmHods = Object.keys(hs).sort();
+    _cmDeptHods = {}; Object.keys(dh).forEach(d=>{ _cmDeptHods[d] = Object.keys(dh[d]).sort(); });
+    // campaigns = union of the mapping table and the live survey campaigns
+    const camps = {};
+    (cdhRes.data||[]).forEach(r=>{ const c=(r.campaign||'').trim(); if(c) camps[c]=1; });
+    if (!pplRes.error) (pplRes.data||[]).forEach(r=>{ const c=(r.campaign||'').trim(); if(c) camps[c]=1; });
+    _cmCampaigns = Object.keys(camps).sort();
+    // existing mapping (one row per campaign x dept x hod)
+    _cmMap = {};
+    (cdhRes.data||[]).forEach(r=>{ const d=(r.dept||'').trim(), h=(r.hod||'').trim(), c=(r.campaign||'').trim();
+      if (d && h && c){ const k=d+'||'+h; (_cmMap[k]=_cmMap[k]||{})[c]=1; } });
+    _cmOpen = {};
+    renderCampMapping();
+    if (msg){ msg.style.color='#9a6b3a'; msg.textContent = _cmCampaigns.length+' campaigns · '+_cmDepts.length+' departments · '+_cmHods.length+' HoDs'; }
+  } catch(e){ if(tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">'+esc(e.message)+'</td></tr></tbody>'; }
+}
+
+function cmHodCells(dept, hod){
+  const m = _cmMap[dept+'||'+hod] || {};
+  let out = '';
+  _cmCampaigns.forEach(function(c){
+    out += '<td class="gsdp-cell"><input type="checkbox" class="cm-cb" data-dept="'+esc(dept)+'" data-hod="'+esc(hod)+'" data-camp="'+esc(c)+'" '+(m[c]?'checked':'')+'></td>';
+  });
+  return out;
+}
+function cmDeptBadgeCells(dept){
+  const hods = _cmDeptHods[dept] || [];
+  let out = '';
+  _cmCampaigns.forEach(function(c){
+    let n = 0;
+    hods.forEach(function(h){ const m=_cmMap[dept+'||'+h]; if (m && m[c]) n++; });
+    out += '<td class="gsdp-cell gsdp-closed">'+(n>0?'<span class="gsdp-badge">'+n+'</span>':'')+'</td>';
+  });
+  return out;
+}
+
+function renderCampMapping(){
+  const tbl = document.getElementById('campMapTable');
+  if (!tbl) return;
+  let h = '<thead><tr>';
+  h += '<th class="gsdp-corner">Department \\ Campaign<div style="font-weight:600;font-size:10px;color:#9a6b3a;margin-top:2px;">click a department &#9662; to expand its HoDs</div></th>';
+  _cmCampaigns.forEach(function(c){ h += '<th class="gsdp-sub-th"><span class="gsdp-thwrap">'+esc(c)+'</span></th>'; });
+  h += '</tr></thead>';
+
+  let b = '<tbody>';
+  if (!_cmDepts.length) b += '<tr><td style="padding:16px;color:#9a6b3a;">No departments found in <b>department_hod</b>.</td></tr>';
+  else if (!_cmCampaigns.length) b += '<tr><td style="padding:16px;color:#9a6b3a;">No campaigns found in <b>campaign_dept_hod</b> or the perception surveys.</td></tr>';
+  _cmDepts.forEach(function(dept, di){
+    const hods = _cmDeptHods[dept] || [];
+    const open = !!_cmOpen[dept];
+    b += '<tr class="gsdp-dept-row" data-opendept="'+esc(dept)+'" style="cursor:pointer;">'
+      + '<td class="gsdp-rowhead"><span style="color:#7c3a12;">'+(open?'&#9662;':'&#9656;')+'</span> <b>'+esc(dept)+'</b> <span id="cm-dtot-'+di+'" class="gsdp-dept-tot"></span></td>'
+      + cmDeptBadgeCells(dept)
+      + '</tr>';
+    if (open){
+      if (!hods.length){
+        b += '<tr class="gsdp-hod-row"><td class="gsdp-rowhead gsdp-hod-head" style="color:#94a3b8;">&nbsp;&nbsp;&#9492; (no HoDs in this department)</td>'
+           + (_cmCampaigns.length?'<td colspan="'+_cmCampaigns.length+'" style="color:#cbd5e1;">&mdash;</td>':'')+'</tr>';
+      }
+      hods.forEach(function(hod){
+        b += '<tr class="gsdp-hod-row"><td class="gsdp-rowhead gsdp-hod-head">&nbsp;&nbsp;&#9492; '+esc(hod)+'</td>'+cmHodCells(dept,hod)+'</tr>';
+      });
+    }
+  });
+  b += '</tbody>';
+
+  tbl.className = 'data-table gsdp-grid';
+  tbl.innerHTML = h + b;
+  cmUpdateCounts();
+}
+
+function cmUpdateCounts(){
+  let totalMappings = 0;
+  (_cmDepts||[]).forEach(function(dept, di){
+    const hods = _cmDeptHods[dept] || [];
+    let mapped = 0;
+    hods.forEach(function(h){ const m=_cmMap[dept+'||'+h]; const n=m?Object.keys(m).length:0; if(n>0) mapped++; totalMappings += n; });
+    const el = document.getElementById('cm-dtot-'+di); if (!el) return;
+    const rem = hods.length - mapped;
+    el.innerHTML = '<span style="color:#b08968;">HoDs '+hods.length+'</span> · <span style="color:#15803d;">Mapped '+mapped+'</span> · <span style="color:'+(rem>0?'#c2410c':'#94a3b8')+';">Rem '+rem+'</span>';
+  });
+  const sum = document.getElementById('camp-map-summary');
+  if (sum){
+    function chip(lbl, val, col){ return '<span class="gsdp-sumchip" style="border-color:'+col+'33;"><b style="color:'+col+';">'+val+'</b> '+lbl+'</span>'; }
+    sum.innerHTML = chip('Campaigns', _cmCampaigns.length, '#0369a1') + chip('Departments', _cmDepts.length, '#7c2d12')
+                  + chip('HoDs', _cmHods.length, '#9a3412') + chip('Mappings', totalMappings, '#15803d');
+  }
+}
+
+// One delegated handler for the campaign grid (attached once)
+(function cmGridInit(){
+  const tbl = document.getElementById('campMapTable');
+  if (!tbl) return;
+  tbl.addEventListener('change', function(e){
+    const cb = e.target;
+    if (!cb.classList || !cb.classList.contains('cm-cb')) return;
+    const dept = cb.getAttribute('data-dept'), hod = cb.getAttribute('data-hod'), camp = cb.getAttribute('data-camp');
+    const k = dept + '||' + hod;
+    if (!_cmMap[k]) _cmMap[k] = {};
+    if (cb.checked) _cmMap[k][camp] = 1; else delete _cmMap[k][camp];
+    cmUpdateCounts();
+  });
+  tbl.addEventListener('click', function(e){
+    const depEl = e.target.closest('[data-opendept]');
+    if (depEl){ const d = depEl.getAttribute('data-opendept'); if (_cmOpen[d]) delete _cmOpen[d]; else _cmOpen[d] = 1; renderCampMapping(); }
+  });
+})();
+
+async function saveCampMapping(){
+  const msg = document.getElementById('camp-map-msg');
+  if (msg){ msg.style.color='#9a6b3a'; msg.textContent = 'Saving…'; }
+  try {
+    const rows = [];
+    _cmDepts.forEach(function(dept){
+      (_cmDeptHods[dept]||[]).forEach(function(hod){
+        const m = _cmMap[dept+'||'+hod]; if (!m) return;
+        Object.keys(m).sort().forEach(function(c){ rows.push({ campaign:c, dept:dept, hod:hod }); });
+      });
+    });
+    const del = await _supabase.from('campaign_dept_hod').delete().gte('id', 0);
+    if (del.error) throw new Error('clear: ' + del.error.message);
+    for (let i=0;i<rows.length;i+=500){
+      const ins = await _supabase.from('campaign_dept_hod').insert(rows.slice(i,i+500));
+      if (ins.error) throw new Error('insert: ' + ins.error.message);
+    }
+    if (msg){ msg.style.color='#15803d'; msg.textContent = '✓ Saved '+rows.length+' rows to campaign_dept_hod.'; }
+    showToast('Campaign mapping saved · '+rows.length+' rows.');
   } catch(e){
     if (msg){ msg.style.color='#b91c1c'; msg.textContent = '✗ '+e.message; }
     showToast('Save failed: '+e.message, true);

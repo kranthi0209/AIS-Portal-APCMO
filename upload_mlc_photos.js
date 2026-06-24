@@ -7,7 +7,7 @@
  *  PREREQ:  Node 18+  (uses global fetch)
  *  RUN:
  *     # PowerShell:
- *     $env:SUPABASE_SERVICE_KEY="<your service_role key>"; node upload_mlc_photos.js
+ *     $env:SUPABASE_SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Zm15ZWxlbGFjb3Nkd3F5eG9zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjAxMDM1OCwiZXhwIjoyMDkxNTg2MzU4fQ._BCrqFCKeKAUpJncyyPXfr46JJVr71o4Tvb74B86pRU"; node upload_mlc_photos.js
  *     # bash:
  *     SUPABASE_SERVICE_KEY="<your service_role key>" node upload_mlc_photos.js
  *
