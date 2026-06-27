@@ -494,7 +494,7 @@
     /* ── Post-wise popup ── */
     #eoPostPopup { position:fixed; inset:0; background:rgba(15,12,41,0.75); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:850; display:none; align-items:center; justify-content:center; }
     #eoPostPopup.open { display:flex; }
-    #eoSpellsPopup { position:fixed; inset:0; background:rgba(15,12,41,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:870; display:none; align-items:center; justify-content:center; }
+    #eoSpellsPopup { position:fixed; inset:0; background:rgba(15,12,41,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:980; display:none; align-items:center; justify-content:center; }
     #eoSpellsPopup.open { display:flex; }
     .eo-post-box { background:white; border-radius:18px; width:min(96vw,1120px); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 32px 80px rgba(15,12,41,0.55); animation:eoPopIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
     @keyframes eoPopIn { from{transform:scale(0.82);opacity:0} to{transform:scale(1);opacity:1} }
@@ -2055,41 +2055,36 @@
       <div class="kx-intro">
         The Central Government gives money 💵 to run helpful schemes (roads, schools, toilets…).
         This score is a <b>report card</b> 🏆 of how <b>fully and wisely</b> each officer used that money.
-        For <b>Secretariat / HoD</b> posts we measure <b>4 efficiencies</b>, blend them by importance, then make the
-        comparison <b>fair</b> by tenure and fund size — a final score out of <b>100</b>. 🎯
+        For <b>Secretariat / HoD</b> posts we measure <b>3 efficiencies</b>, blend them by importance, then make the
+        comparison <b>fair</b> by days-in-post and fund size — a final score out of <b>100</b>. 🎯
         <a href="GoI_Funds_Scoring_Methodology.html" target="_blank" style="color:#0d9488;font-weight:800;">📄 Read the full methodology →</a>
       </div>
       <div class="kx-steps">
         <div class="kx-step" style="animation-delay:0.05s;">
           <div class="kx-step-ico">🛒</div>
-          <span class="kx-tag" style="background:#16a34a;">40% — BIGGEST · AUE</span>
+          <span class="kx-tag" style="background:#16a34a;">50% — BIGGEST · AUE</span>
           <div class="kx-step-h">Spending the Allocation</div>
-          <div class="kx-step-p"><b>Expenditure ÷ GoI Allocation.</b> Of all the money sanctioned by the Centre, how much actually reached the ground as spending? The single most important test.</div>
+          <div class="kx-step-p"><b>Expenditure ÷ GoI Allocation.</b> Of all the money the Centre earmarked for the state, how much actually reached the ground as spending? The single most important test.</div>
         </div>
         <div class="kx-step" style="animation-delay:0.13s;">
           <div class="kx-step-ico">🏗️</div>
           <span class="kx-tag" style="background:#2563eb;">30% — FUE</span>
-          <div class="kx-step-h">Using Money at the Field</div>
-          <div class="kx-step-p"><b>Expenditure ÷ Funds with Agencies.</b> Of the money already sitting with implementing agencies, how much did they actually put to work?</div>
+          <div class="kx-step-h">Using Money in Hand</div>
+          <div class="kx-step-p"><b>Expenditure ÷ Funds with Agencies.</b> Of the money already in the implementing agencies' hands (what was transferred plus any earlier balance), how much did they actually put to work?</div>
         </div>
         <div class="kx-step" style="animation-delay:0.21s;">
           <div class="kx-step-ico">📥</div>
-          <span class="kx-tag" style="background:#7c3aed;">20% — FTE</span>
+          <span class="kx-tag" style="background:#7c3aed;">20% — FTE · NOTHING UNTAPPED</span>
           <div class="kx-step-h">Pulling the Money In</div>
-          <div class="kx-step-p"><b>Funds Transferred ÷ Allocation.</b> Of the money promised, how much did they draw down for implementation? Don't leave it at the Centre.</div>
-        </div>
-        <div class="kx-step" style="animation-delay:0.29s;">
-          <div class="kx-step-ico">🏦</div>
-          <span class="kx-tag" style="background:#ea580c;">10% — UFS · LESS IDLE = MORE</span>
-          <div class="kx-step-h">Nothing Left Untapped</div>
-          <div class="kx-step-p"><b>100 − (Untapped ÷ Transferred).</b> Money drawn but left lying idle scores low. The smaller the untapped pile, the higher the marks.</div>
+          <div class="kx-step-p"><b>Funds Transferred ÷ Allocation.</b> Of the money the Centre earmarked, how much was actually drawn down? This also captures <b>Untapped (= Allocation − Transferred)</b> — the more you draw, the less lies untapped.</div>
         </div>
       </div>
       <div class="kx-formula">
-        🎯 <b>Efficiency&nbsp;=&nbsp;0.40·AUE + 0.30·FUE + 0.20·FTE + 0.10·UFS</b> (already 0–100).
+        🎯 <b>Efficiency&nbsp;=&nbsp;0.50·AUE + 0.30·FUE + 0.20·FTE</b> (already 0–100).
         Then two fairness adjustments: ⏱️ each post counts in proportion to <b>how long the officer held it</b>
-        (tenure-weighted), and ⚖️ the score is scaled by a <b>fund-size (difficulty) factor</b> so that spending a
-        ₹5&nbsp;Cr fund well never beats spending a ₹5,000&nbsp;Cr fund well — because doing it with bigger money is harder.
+        (tenure-weighted), and ⚖️ the score is scaled by a <b>fund-size (difficulty) factor built on a day-prorated
+        volume</b> — so the score grows with both the <b>size of the fund</b> and the <b>days the officer actually held the post</b>;
+        spending a ₹5&nbsp;Cr fund well never beats spending a ₹5,000&nbsp;Cr fund well, because doing it with bigger money is harder.
         <b>Final&nbsp;=&nbsp;Efficiency × Difficulty&nbsp;factor.</b> Click <b>Schemes</b> to see the money behind each score!
       </div>
       <div style="margin-top:12px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:14px;padding:13px 18px;font-size:12.5px;color:#134e4a;line-height:1.6;">
@@ -2156,6 +2151,7 @@
         <thead>
           <tr>
             <th style="min-width:200px;">Post / Scheme</th>
+            <th style="text-align:center;width:120px;">No. of Days</th>
             <th style="min-width:120px;">Status / Scheme</th>
             <th style="text-align:center;">Schemes</th>
             <th style="text-align:right;">GoI Allocation</th>
@@ -2321,14 +2317,11 @@
       <table class="eo-table" id="swPostsTable" style="font-size:12px;">
         <thead>
           <tr>
-            <th style="min-width:160px;">Post Name</th>
-            <th style="text-align:center;width:100px;">Status</th>
-            <th style="text-align:center;width:90px;">From Date</th>
-            <th style="text-align:center;width:90px;">To Date</th>
-            <th style="text-align:center;width:78px;">Tenure</th>
-            <th style="min-width:160px;">Score Basis</th>
-            <th style="text-align:center;width:84px;">Data Points</th>
-            <th style="text-align:center;width:96px;background:#14532d;">KPI Score</th>
+            <th style="min-width:200px;">Post Name</th>
+            <th style="text-align:center;width:120px;">No. of Days</th>
+            <th style="text-align:center;width:130px;">Status</th>
+            <th style="text-align:center;min-width:140px;">Data Points</th>
+            <th style="text-align:center;width:96px;">KPI Score</th>
           </tr>
         </thead>
         <tbody id="swPostsTbody"></tbody>
@@ -3201,8 +3194,7 @@ function applyScoreConfig(rows){
   if (typeof GOI_W !== 'undefined') {
     if (go.w_aue != null) GOI_W.AUE = go.w_aue;
     if (go.w_fue != null) GOI_W.FUE = go.w_fue;
-    if (go.w_fte != null) GOI_W.FTE = go.w_fte;
-    if (go.w_ufs != null) GOI_W.UFS = go.w_ufs;
+    if (go.w_fte != null) GOI_W.FTE = go.w_fte;   // UFS retired: Untapped = Allocation − Transferred (captured by FTE)
   }
   if (typeof GOI_DIFF_FLOOR !== 'undefined' && go.diff_floor != null) GOI_DIFF_FLOOR = go.diff_floor;
   var gd = m.gsdp || {};
@@ -3757,17 +3749,9 @@ async function loadPerceptionTable() {
       var key   = String(o.identity_no);
       var posts = postsByOfficer[key] || [];
 
-      var breakdown = posts.map(function(pd) { return ppComputePostScore(pd, ctx); });
-
-      // Officer score = days-weighted average across posts that have a score
-      var wsum = 0, vsum = 0, covered = 0;
-      breakdown.forEach(function(b) {
-        if (b.score != null) {
-          covered++;
-          wsum += b.tenureDays;
-          vsum += b.score * b.tenureDays;
-        }
-      });
+      // Merge spells per post -> unique days, overlap-weight by campaign month.
+      var res     = ppComputeOfficer(posts, ctx);
+      var covered = res.breakdown.filter(function(b){ return b.score != null; }).length;
 
       return {
         identity_no:   key,
@@ -3775,11 +3759,11 @@ async function loadPerceptionTable() {
         name:          o.name_of_officer  || key,
         present_post:  o.current_posting  || '',
         photo_url:     o.photo_url        || '',
-        posts_held:    posts.length,
+        posts_held:    res.breakdown.length,   // distinct posts (spells merged)
         posts_covered: covered,
-        breakdown:     breakdown,
-        ppScore:       wsum > 0 ? parseFloat((vsum / wsum).toFixed(2)) : null,
-        ppScoreRaw:    wsum > 0 ? parseFloat((vsum / wsum).toFixed(2)) : null   // stable absolute (renderPerceptionTable mutates ppScore)
+        breakdown:     res.breakdown,
+        ppScore:       res.ppScore,
+        ppScoreRaw:    res.ppScore             // stable absolute (renderPerceptionTable mutates ppScore)
       };
     });
 
@@ -3793,6 +3777,96 @@ async function loadPerceptionTable() {
   } catch(err) {
     if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="eo-empty" style="color:#dc2626;">&#10060; ' + _eoEsc(err.message) + '</td></tr>';
   }
+}
+
+// ── Merge an officer's spells of the SAME post into unique date intervals ──
+function ppMergeSpells(spells){
+  var ivs = [];
+  (spells||[]).forEach(function(s){
+    if (!s.from_date) return;
+    var a = Date.parse(s.from_date); if (isNaN(a)) return;
+    var b = s.to_date ? Date.parse(s.to_date) : Date.now(); if (isNaN(b)) b = Date.now();
+    ivs.push([a, b]);
+  });
+  ivs.sort(function(x,y){ return x[0]-y[0]; });
+  var m = [];
+  ivs.forEach(function(iv){
+    var last = m[m.length-1];
+    if (last && iv[0] <= last[1] + 86400000){ if (iv[1] > last[1]) last[1] = iv[1]; }  // overlap / <=1-day gap
+    else m.push([iv[0], iv[1]]);
+  });
+  return m;
+}
+function ppIntervalDays(m){ var d=0; m.forEach(function(iv){ d += Math.round((iv[1]-iv[0])/86400000)+1; }); return d; }
+function ppOverlapIntervals(m, cs, ce){
+  var t=0, s0=cs.getTime(), e0=ce.getTime();
+  m.forEach(function(iv){ var s=Math.max(iv[0],s0), e=Math.min(iv[1],e0); if (e>=s) t += Math.round((e-s)/86400000)+1; });
+  return t;
+}
+
+// ── Which perception survey rows are attributed to a post (business rules) ──
+function ppApplicableRows(post, ctx){
+  var statusN = ppNorm(post.office_status);
+  var dept = ppNorm(post.department), hod = ppNorm(post.hod), loc = ppNorm(post.office_location);
+  var rows = [], basis = '', category = '';
+  if (/^district/.test(statusN)){
+    if (/revenue|ccla/.test(hod)){                                   // Revenue / CCLA Collector
+      category='District (Revenue)'; basis='All campaigns in district: '+(post.office_location||'—');
+      rows = ctx.byDistrict[loc] || [];                              // ALL campaigns in the district
+    } else {                                                         // other District post -> by Department, this district only
+      category='District'; basis='Dept: '+(post.department||'—')+' in district: '+(post.office_location||'—');
+      var set = ctx.campaignsByDept[dept];
+      if (set) set.forEach(function(c){ var a=ctx.byCampDist[c+'||'+loc]; if (a) rows = rows.concat(a); });
+    }
+  } else if (statusN==='hod'){
+    if (/chief\s*secretary/.test(hod)){ category='HoD (Chief Secretary)'; basis='All departments, all districts'; rows = ctx.allRows; }
+    else { category='HoD'; basis='HoD: '+(post.hod||'—')+' (all districts)'; rows = ppUnionByCampaign(ctx, ctx.campaignsByHod[hod]); }
+  } else if (statusN==='secretariat'){
+    category='Secretariat'; basis='Dept: '+(post.department||'—')+' (all districts)'; rows = ppUnionByCampaign(ctx, ctx.campaignsByDept[dept]);
+  } else { category='Unmapped'; basis='No office status assigned'; }
+  return { rows:rows, basis:basis, category:category };
+}
+
+// ── Officer Perception: merge spells per post, then overlap-weight each campaign
+//    survey by the days the campaign month falls within the unique days worked. ──
+function ppComputeOfficer(spellRows, ctx){
+  var groups = {}, order = [];
+  (spellRows||[]).forEach(function(pd){
+    var k = [pd.post_name, pd.office_status, pd.department, pd.hod, pd.office_location].map(ppNorm).join('|');
+    if (!groups[k]){ groups[k] = { post:pd, spells:[] }; order.push(k); }
+    groups[k].spells.push(pd);
+  });
+  var breakdown = [], num = 0, den = 0;
+  order.forEach(function(k){
+    var g = groups[k];
+    var merged = ppMergeSpells(g.spells);                            // unique days worked (spells merged)
+    var att = ppApplicableRows(g.post, ctx);
+    var seen = {}, points = [], expo = 0, campSet = {}, pnum = 0, pden = 0;
+    att.rows.forEach(function(r){
+      var id = r._campN + '||' + r._distN + '||' + ppNorm(r.period);
+      if (seen[id] || !r._range) return; seen[id] = 1;              // one survey row counted once
+      var w = ppOverlapIntervals(merged, r._range.start, r._range.end);  // days the survey month falls in the work calendar
+      if (w > 0){
+        points.push({ campaign:r.campaign, district:r.district, period:r.period, score:r.score, w:w });
+        pnum += r.score * w; pden += w; expo += w; campSet[r._campN] = 1;
+      }
+    });
+    var score = pden > 0 ? parseFloat((pnum/pden).toFixed(2)) : null;
+    if (score != null){ num += pnum; den += pden; }                 // flat overlap-weighted across posts
+    var stints = g.spells.map(function(s){ return { from_date:s.from_date||null, to_date:s.to_date||null, score:score }; })
+      .sort(function(a,b){ return String(a.from_date||'').localeCompare(String(b.from_date||'')); });
+    var froms = stints.map(function(s){return s.from_date;}).filter(Boolean).sort();
+    var tos   = stints.map(function(s){return s.to_date;}).filter(Boolean).sort();
+    breakdown.push({
+      post_name: g.post.post_name || '', category: att.category, basis: att.basis,
+      points: points, stints: stints, score: score,
+      nScores: points.length, nUniqueCampaigns: Object.keys(campSet).length,
+      fromMin: froms.length ? froms[0] : null,
+      toMax: stints.some(function(s){return !s.to_date;}) ? null : (tos.length ? tos[tos.length-1] : null),
+      uniqueDays: ppIntervalDays(merged), exposureDays: expo
+    });
+  });
+  return { breakdown:breakdown, ppScore: den > 0 ? parseFloat((num/den).toFixed(2)) : null };
 }
 
 // ── Per-post score per the business rules (keyed on office_status) ─
@@ -4026,6 +4100,54 @@ document.getElementById('ppPostsPopup').addEventListener('click', function(e) {
 
 // ── Posts-in-Campaigns drill-down:  Post → Campaign → District → Period ──
 var _ppDrill = null;
+var _ppSpellsPosts = [];               // posts currently shown in the breakdown popup (for the Days -> spells popup)
+var _swSpellsPosts = [];               // posts currently shown in the KPI breakdown popup
+var _goSpellsPosts = [];               // posts currently shown in the GoI Funds breakdown popup
+
+// ── Shared spells popup (reused by e-Office Days and Perception Days) ──
+var _eoPostSpells = [], _eoSpellsOfficer = '';
+function _eoUniqueDays(stints){
+  var ivs = (stints||[]).filter(function(s){ return s.from_date; }).map(function(s){
+    var a = Date.parse(s.from_date), b = s.to_date ? Date.parse(s.to_date) : Date.now();
+    return [a, isNaN(b) ? Date.now() : b];
+  }).filter(function(iv){ return !isNaN(iv[0]); }).sort(function(x,y){ return x[0]-y[0]; });
+  var m = []; ivs.forEach(function(iv){ var l=m[m.length-1]; if (l && iv[0] <= l[1]+86400000){ if (iv[1]>l[1]) l[1]=iv[1]; } else m.push([iv[0],iv[1]]); });
+  var d = 0; m.forEach(function(iv){ d += Math.round((iv[1]-iv[0])/86400000)+1; }); return d;
+}
+function _renderSpellsPopup(title, sub, stints){
+  var elT = document.getElementById('eoSpellsTitle'), elS = document.getElementById('eoSpellsSub');
+  if (elT) elT.textContent = title || '';
+  if (elS) elS.textContent = sub || '';
+  var presentEm = '<em style="color:#059669;font-style:normal;font-weight:700;">Present</em>';
+  var sorted = (stints||[]).slice().sort(function(a,b){ return String(a.from_date||'').localeCompare(String(b.from_date||'')); });
+  var rows = sorted.map(function(s, i){
+    var a = s.from_date ? fmtDate(s.from_date) : '—';
+    var b = s.to_date ? fmtDate(s.to_date) : presentEm;
+    var days = 0;
+    if (s.from_date){ var t0=Date.parse(s.from_date), t1=s.to_date?Date.parse(s.to_date):Date.now(); if (!isNaN(t0)&&!isNaN(t1)) days = Math.round((t1-t0)/86400000)+1; }
+    return '<tr><td style="font-weight:700;color:#1e1b4b;">Spell '+(i+1)+'</td><td>'+a+'</td><td>'+b+'</td><td style="text-align:center;font-weight:700;">'+days+'d</td></tr>';
+  }).join('');
+  document.getElementById('eoSpellsTbody').innerHTML = rows || '<tr><td colspan="4" class="eo-post-empty">No spells.</td></tr>';
+  document.getElementById('eoSpellsPopup').classList.add('open');
+}
+window.openEoSpells = function(pi){
+  var p = (_eoPostSpells||[])[pi]; if (!p) return;
+  _renderSpellsPopup(p.post_name, (_eoSpellsOfficer||'') + '  •  ' + _eoUniqueDays(p.stints) + ' unique days', p.stints);
+};
+window.openPpSpells = function(i){
+  var p = (_ppSpellsPosts||[])[i]; if (!p) return;
+  _renderSpellsPopup(p.post_name, (p.uniqueDays||0) + ' unique days worked', p.stints);
+};
+window.openSwSpells = function(i){
+  var p = (_swSpellsPosts||[])[i]; if (!p) return;
+  _renderSpellsPopup(p.post_name, _eoUniqueDays(p.stints) + ' unique days worked', p.stints);
+};
+window.openGoSpells = function(i){
+  var p = (_goSpellsPosts||[])[i]; if (!p) return;
+  _renderSpellsPopup(p.post_name, (p.uniqueDays||_eoUniqueDays(p.stints)) + ' unique days worked', p.stints);
+};
+window.closeEoSpells = function(){ var el = document.getElementById('eoSpellsPopup'); if (el) el.classList.remove('open'); };
+(function(){ var el = document.getElementById('eoSpellsPopup'); if (el) el.addEventListener('click', function(e){ if (e.target === this) closeEoSpells(); }); })();
 function _ppWavg(pts){ var ws=0, vs=0; pts.forEach(function(p){ ws+=p.w; vs+=p.score*p.w; }); return ws>0 ? parseFloat((vs/ws).toFixed(2)) : null; }
 // Merge breakdown entries that share the same post name into one aggregated post
 // (combines their campaign points; score = weighted avg across all stints).
@@ -4095,7 +4217,8 @@ function ppRenderDrill() {
   var d = _ppDrill; if (!d) return;
   var body = document.getElementById('ppPostsBody');
   var foot = document.getElementById('ppPostsFooter');
-  var posts = _ppAggregatePosts((d.officer.breakdown || []).filter(function(b){ return d.mode === 'covered' ? b.score != null : true; }));
+  // breakdown is already aggregated per post (spells merged in ppComputeOfficer)
+  var posts = (d.officer.breakdown || []).filter(function(b){ return d.mode === 'covered' ? b.score != null : true; });
   var post  = (d.post != null) ? posts[d.post] : null;
   var badge = function(s){ return s == null ? '<span style="color:#cbd5e1;">—</span>' : ppScoreBadge(s); };
 
@@ -4110,47 +4233,39 @@ function ppRenderDrill() {
   var rows = '', cols = 5;
 
   if (!post) {
-    // Level 0 — posts
-    cols = 7;
-    html += '<th style="min-width:160px;">Post Name</th><th style="text-align:center;width:90px;">From Date</th><th style="text-align:center;width:90px;">To Date</th><th style="text-align:center;width:110px;">Status</th><th style="min-width:150px;">Score Basis</th><th style="text-align:center;min-width:140px;">Data</th><th style="text-align:center;width:96px;background:#7c2d12;">Score</th>';
-    var presentEm = '<em style="color:#059669;font-style:normal;font-weight:700;">Present</em>';
+    // Level 0 — unique posts (e-Office style: Post · No. of Days · Status · Data · Score)
+    _ppSpellsPosts = posts;                       // for the Days -> spells popup
+    cols = 5;
+    html += '<th style="min-width:200px;">Post Name</th><th style="text-align:center;width:120px;">No. of Days</th><th style="text-align:center;width:130px;">Status</th><th style="text-align:center;min-width:150px;">Data</th><th style="text-align:center;width:96px;background:#7c2d12;">Score</th>';
     rows = posts.map(function(b, i) {
-      var clk = b.score != null && b.points && b.points.length;
-      var multi = b.stints && b.stints.length > 1;
+      var hasData = b.score != null && b.points && b.points.length;
+      var nSpells = (b.stints && b.stints.length) ? b.stints.length : 0;
+      var daysCell = (b.uniqueDays > 0)
+        ? '<div><span class="pp-clickable" onclick="event.stopPropagation();openPpSpells(' + i + ')" title="Click to see the date spells"><b>' + b.uniqueDays + '</b> day' + (b.uniqueDays!==1?'s':'') + '</span></div>'
+          + '<div style="margin-top:3px;"><span style="font-size:9px;font-weight:800;color:#6366f1;background:#eef2ff;border:1px solid #c7d2fe;border-radius:4px;padding:1px 5px;white-space:nowrap;">'+nSpells+' spell'+(nSpells!==1?'s':'')+'</span></div>'
+        : '<span style="color:#cbd5e1;">—</span>';
+      var nameTd = '<td style="font-weight:700;color:#1e1b4b;white-space:normal;word-break:break-word;max-width:280px;line-height:1.45;">' + (hasData?'▸ ':'') + _eoEsc(b.post_name) + '</td>';
+      var daysTd = '<td style="text-align:center;font-size:11.5px;color:#475569;white-space:nowrap;">' + daysCell + '</td>';
+
+      // Rows with no perception data/score → one message across Status · Data · Score
+      if (!hasData) {
+        var why = (b.category === 'Unmapped')
+          ? 'No office status mapped — cannot attribute campaigns'
+          : 'No perception survey for the period worked' + (b.category ? ' · ' + _eoEsc(b.category) : '');
+        return '<tr>' + nameTd + daysTd
+          + '<td colspan="3" style="text-align:center;color:#94a3b8;font-style:italic;font-size:11.5px;background:repeating-linear-gradient(45deg,#fcfcfd,#fcfcfd 8px,#f5f6f8 8px,#f5f6f8 16px);">&#8505;&#65039; ' + why + '</td></tr>';
+      }
+
       var cc  = b.category.indexOf('Secretariat') === 0 ? '#1d4ed8' : b.category.indexOf('District') === 0 ? '#0d9488' : '#c2410c';
-      var dc  = b.score == null ? '<span style="color:#cbd5e1;">—</span>'
-        : '<span style="font-weight:700;color:#0d9488;">' + b.nUniqueCampaigns + '</span> campaign' + (b.nUniqueCampaigns!==1?'s':'')
+      var dc  = '<span style="font-weight:700;color:#0d9488;">' + b.nUniqueCampaigns + '</span> campaign' + (b.nUniqueCampaigns!==1?'s':'')
           + ' · <span style="font-weight:700;color:#c2410c;">' + b.nScores + '</span> point' + (b.nScores!==1?'s':'');
-      var fromCell = b.fromMin ? fmtDate(b.fromMin) : (b.stints && b.stints[0] && b.stints[0].from_date ? fmtDate(b.stints[0].from_date) : '—');
-      var toCell   = b.toMax ? fmtDate(b.toMax) : presentEm;
-      var periodsBadge = multi
-        ? ' <span id="pp-pcaret-'+i+'" onclick="event.stopPropagation();ppTogglePeriods('+i+')" style="cursor:pointer;color:#6366f1;">&#9654;</span>'
-          + '<span onclick="event.stopPropagation();ppTogglePeriods('+i+')" title="Show each period this post was held" style="cursor:pointer;font-size:9px;font-weight:800;color:#6366f1;background:#eef2ff;border:1px solid #c7d2fe;border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap;">'+b.stints.length+' periods</span>'
-        : '';
-      var main = '<tr ' + (clk ? 'style="cursor:pointer;" title="Open campaigns for this post" onclick="ppDrillSet(\'post\',\'' + i + '\')"' : '') + '>'
-        + '<td style="font-weight:700;color:#1e1b4b;white-space:normal;word-break:break-word;max-width:240px;line-height:1.45;">' + (clk?'▸ ':'') + _eoEsc(b.post_name) + periodsBadge + '</td>'
-        + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">' + fromCell + '</td>'
-        + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">' + toCell + '</td>'
-        + '<td style="text-align:center;white-space:normal;word-break:break-word;max-width:130px;line-height:1.4;"><span style="font-size:10.5px;font-weight:800;color:' + cc + ';white-space:normal;">' + _eoEsc(b.category) + '</span></td>'
-        + '<td style="font-size:11px;color:#475569;word-break:break-word;white-space:normal;line-height:1.45;">' + _eoEsc(b.basis) + '</td>'
+      return '<tr style="cursor:pointer;" title="Open campaigns for this post" onclick="ppDrillSet(\'post\',\'' + i + '\')">'
+        + nameTd + daysTd
+        + '<td style="text-align:center;white-space:normal;word-break:break-word;max-width:150px;line-height:1.4;"><span style="font-size:10.5px;font-weight:800;color:' + cc + ';white-space:normal;">' + _eoEsc(b.category) + '</span></td>'
         + '<td style="text-align:center;font-size:11px;">' + dc + '</td>'
         + '<td style="text-align:center;">' + badge(b.score) + '</td></tr>';
-      var drill = '';
-      if (multi) {
-        drill = b.stints.map(function(st, j) {
-          var dStart = st.from_date ? fmtDate(st.from_date) : '—';
-          var dEnd   = st.to_date   ? fmtDate(st.to_date)   : presentEm;
-          return '<tr class="pp-pd-'+i+'" style="display:none;background:#ffffff;">'
-            + '<td style="padding-left:26px;color:#475569;font-weight:600;font-size:11px;">&#8627; Period '+(j+1)+'</td>'
-            + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">'+dStart+'</td>'
-            + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">'+dEnd+'</td>'
-            + '<td></td><td></td><td></td>'
-            + '<td style="text-align:center;">' + badge(st.score) + '</td></tr>';
-        }).join('');
-      }
-      return main + drill;
     }).join('');
-    foot.innerHTML = posts.length + ' post' + (posts.length!==1?'s':'') + ' · click a post to drill into campaigns · &#9654; expands periods (from–to dates)';
+    foot.innerHTML = posts.length + ' unique post' + (posts.length!==1?'s':'') + ' · click a post to drill into campaigns · click <b>No. of Days</b> to see the date spells';
   } else if (d.campaign == null) {
     // Level 1 — unique campaigns for the post
     var byC = {}; (post.points || []).forEach(function(p){ (byC[p.campaign] = byC[p.campaign] || []).push(p); });
@@ -4286,10 +4401,13 @@ async function loadSwarnaTable() {
       var posts = postsByOfficer[key] || [];
       var breakdown = posts.map(function(pd){ return swComputePostScore(pd, ctx); });
 
-      var wsum = 0, vsum = 0, covered = 0;
+      var wsum = 0, vsum = 0;
       breakdown.forEach(function(b){
-        if (b.score != null) { covered++; wsum += b.tenureDays; vsum += b.score * b.tenureDays; }
+        if (b.score != null) { wsum += b.tenureDays; vsum += b.score * b.tenureDays; }
       });
+      // Unique post counts (spells of the same post merged into one)
+      var uniqPosts = _swAggregatePosts(breakdown);
+      var covered   = uniqPosts.filter(function(b){ return b.score != null; }).length;
 
       return {
         identity_no:   key,
@@ -4297,7 +4415,7 @@ async function loadSwarnaTable() {
         name:          o.name_of_officer || key,
         present_post:  o.current_posting || '',
         photo_url:     o.photo_url       || '',
-        posts_held:    posts.length,
+        posts_held:    uniqPosts.length,
         posts_covered: covered,
         breakdown:     breakdown,
         swScore:       wsum > 0 ? parseFloat((vsum / wsum).toFixed(2)) : null,
@@ -4532,58 +4650,44 @@ window.openSwPostsPopup = function (identityNo, mode) {
     (officer.swScore != null ? '   •   KPI Score: ' + officer.swScore : '   •   Not yet scored');
 
   var posts = _swAggregatePosts((officer.breakdown || []).filter(function(b){ return coveredOnly ? b.score != null : true; }));
+  posts.forEach(function(b){ b.uniqueDays = _eoUniqueDays(b.stints); });
+  _swSpellsPosts = posts;                       // for the Days -> spells popup
 
   if (!posts.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="eo-empty">' +
+    tbody.innerHTML = '<tr><td colspan="5" class="eo-empty">' +
       (coveredOnly ? 'None of this officer\'s posts are linked to a KPI score.' : 'No posts recorded for this officer.') + '</td></tr>';
   } else {
     var wsum = 0, vsum = 0;
     posts.forEach(function(b){ if (b.score != null) { wsum += b.tenureDays; vsum += b.score * b.tenureDays; } });
-    var presentEm = '<em style="color:#15803d;font-style:normal;font-weight:700;">Present</em>';
     tbody.innerHTML = posts.map(function(b, i) {
-      var scoreCell = b.score == null ? '<span style="color:#cbd5e1;">—</span>' : swScoreBadge(b.score);
-      var catColor = b.category.indexOf('Secretariat')===0 ? '#1d4ed8' : b.category.indexOf('District')===0 ? '#0d9488' : b.category.indexOf('HoD')===0 ? '#15803d' : '#94a3b8';
-      var dataCell = b.score == null ? '<span style="color:#cbd5e1;">—</span>'
-        : '<span style="font-weight:700;color:#15803d;">' + b.nScores + '</span> Data Point' + (b.nScores !== 1 ? 's' : '');
-      var multi = b.stints && b.stints.length > 1;
-      var fromCell = b.fromMin ? fmtDate(b.fromMin) : (b.stints && b.stints[0] && b.stints[0].from_date ? fmtDate(b.stints[0].from_date) : '—');
-      var toCell   = b.toMax ? fmtDate(b.toMax) : presentEm;
-      var share = (b.score != null && wsum > 0) ? Math.round(b.tenureDays / wsum * 100) : null;
-      var periodsBadge = multi
-        ? ' <span id="sw-pcaret-'+i+'" onclick="event.stopPropagation();swTogglePeriods('+i+')" style="cursor:pointer;color:#15803d;">&#9654;</span>'
-          + '<span onclick="event.stopPropagation();swTogglePeriods('+i+')" title="Show each period this post was held" style="cursor:pointer;font-size:9px;font-weight:800;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap;">'+b.stints.length+' periods</span>'
-        : '';
-      var main = '<tr>' +
-        '<td style="font-weight:700;color:#1e1b4b;white-space:normal;word-break:break-word;max-width:240px;line-height:1.45;">' + _eoEsc(b.post_name) + periodsBadge + '</td>' +
-        '<td style="text-align:center;white-space:normal;word-break:break-word;max-width:130px;line-height:1.4;"><span style="font-size:10.5px;font-weight:800;color:' + catColor + ';white-space:normal;">' + _eoEsc(b.category) + '</span></td>' +
-        '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">' + fromCell + '</td>' +
-        '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">' + toCell + '</td>' +
-        '<td style="text-align:center;font-weight:700;">' + b.tenureDays + 'd' +
-          (share != null ? '<br><span style="font-size:9.5px;font-weight:600;color:#15803d;">' + share + '% wt</span>' : '') + '</td>' +
-        '<td style="font-size:11px;color:#475569;word-break:break-word;white-space:normal;line-height:1.45;">' + _eoEsc(b.basis) + '</td>' +
-        '<td style="text-align:center;font-size:11px;">' + dataCell + '</td>' +
-        '<td class="js-score-cell" style="text-align:center;">' + scoreCell + '</td>' +
-        '</tr>';
-      var drill = '';
-      if (multi) {
-        drill = b.stints.map(function(st, j) {
-          var dStart = st.from_date ? fmtDate(st.from_date) : '—';
-          var dEnd   = st.to_date   ? fmtDate(st.to_date)   : presentEm;
-          return '<tr class="sw-pd-'+i+'" style="display:none;background:#ffffff;">'
-            + '<td style="padding-left:26px;color:#475569;font-weight:600;font-size:11px;">&#8627; Period '+(j+1)+'</td>'
-            + '<td></td>'
-            + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">'+dStart+'</td>'
-            + '<td style="text-align:center;font-size:11px;color:#475569;white-space:nowrap;">'+dEnd+'</td>'
-            + '<td style="text-align:center;font-weight:700;font-size:11px;">'+(st.tenureDays||0)+'d</td>'
-            + '<td></td><td></td>'
-            + '<td style="text-align:center;">' + (st.score==null?'<span style="color:#cbd5e1;">—</span>':swScoreBadge(st.score)) + '</td></tr>';
-        }).join('');
+      var hasData = b.score != null;
+      var nSpells = (b.stints && b.stints.length) ? b.stints.length : 0;
+      var daysCell = (b.uniqueDays > 0)
+        ? '<div><span class="pp-clickable" onclick="event.stopPropagation();openSwSpells(' + i + ')" title="Click to see the date spells"><b>' + b.uniqueDays + '</b> day' + (b.uniqueDays!==1?'s':'') + '</span></div>'
+          + '<div style="margin-top:3px;"><span style="font-size:9px;font-weight:800;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;border-radius:4px;padding:1px 5px;white-space:nowrap;">'+nSpells+' spell'+(nSpells!==1?'s':'')+'</span></div>'
+        : '<span style="color:#cbd5e1;">—</span>';
+      var nameTd = '<td style="font-weight:700;color:#1e1b4b;white-space:normal;word-break:break-word;max-width:280px;line-height:1.45;">' + _eoEsc(b.post_name) + '</td>';
+      var daysTd = '<td style="text-align:center;font-size:11.5px;color:#475569;white-space:nowrap;">' + daysCell + '</td>';
+
+      if (!hasData) {
+        var why = (b.category === 'Unmapped' || !b.category)
+          ? 'No office status mapped — cannot attribute KPI data'
+          : 'No KPI data for the period worked' + (b.category ? ' · ' + _eoEsc(b.category) : '');
+        return '<tr>' + nameTd + daysTd
+          + '<td colspan="3" style="text-align:center;color:#94a3b8;font-style:italic;font-size:11.5px;background:repeating-linear-gradient(45deg,#fcfcfd,#fcfcfd 8px,#f5f6f8 8px,#f5f6f8 16px);">&#8505;&#65039; ' + why + '</td></tr>';
       }
-      return main + drill;
+
+      var catColor = b.category.indexOf('Secretariat')===0 ? '#1d4ed8' : b.category.indexOf('District')===0 ? '#0d9488' : b.category.indexOf('HoD')===0 ? '#15803d' : '#94a3b8';
+      var dataCell = '<span style="font-weight:700;color:#15803d;">' + b.nScores + '</span> Data Point' + (b.nScores !== 1 ? 's' : '');
+      return '<tr>' + nameTd + daysTd +
+        '<td style="text-align:center;white-space:normal;word-break:break-word;max-width:150px;line-height:1.4;"><span style="font-size:10.5px;font-weight:800;color:' + catColor + ';white-space:normal;">' + _eoEsc(b.category) + '</span></td>' +
+        '<td style="text-align:center;font-size:11px;">' + dataCell + '</td>' +
+        '<td class="js-score-cell" style="text-align:center;">' + swScoreBadge(b.score) + '</td>' +
+        '</tr>';
     }).join('');
     var scored = posts.filter(function(b){ return b.score != null; }).length;
-    document.getElementById('swPostsFooter').innerHTML = posts.length + ' post' + (posts.length !== 1 ? 's' : '') +
-      '  •  ' + scored + ' scored  •  &#9654; expands periods' +
+    document.getElementById('swPostsFooter').innerHTML = posts.length + ' unique post' + (posts.length !== 1 ? 's' : '') +
+      '  •  ' + scored + ' scored  •  click <b>No. of Days</b> for the date spells' +
       (wsum > 0 ? '  •  <strong style="color:#15803d;">Days-weighted KPI score = ' + (vsum / wsum).toFixed(2) + '</strong>' : '');
   }
   document.getElementById('swPostsPopup').style.display = 'flex';
@@ -4638,19 +4742,26 @@ var _goSortCol = 'goRank';
 var _goStateRankDone = false;
 var _goSortDir = 'asc';
 
-// ── Refined GoI Funds scoring (weighted efficiency indicators) ──────────────
-// Secretariat / HoD posts → 4 indicators:
-//   AUE = Expenditure ÷ GoI Allocation   (Allocation Utilization Efficiency) 40%
-//   FUE = Expenditure ÷ Funds w/ Agencies(Fund Utilization Efficiency)        30%
-//   FTE = Funds Transferred ÷ Allocation (Fund Transfer Efficiency)           20%
-//   UFS = 100 − (Untapped ÷ Transferred) (Untapped Fund Score)                10%
-// District posts → only Funds Available & Expenditure are known, so a single
-//   DUE = Expenditure ÷ Funds Available  (District Utilization Efficiency).
-// Per-post efficiency is TENURE-WEIGHTED (days in the post); a log-scaled
-// VOLUME (difficulty) factor then ensures an officer who spent a tiny fund well
-// does not outrank one who spent a far larger fund equally well.
-var GOI_W = { AUE:0.40, FUE:0.30, FTE:0.20, UFS:0.10 };
-var GOI_DIFF_FLOOR = 0.70;   // smallest-fund officer retains 70% of efficiency
+// ── GoI Funds scoring (per the corrected fund definitions) ──────────────────
+// Buckets:
+//   A  GoI Allocation = amount GoI earmarked for the STATE for the scheme
+//   T  Transferred    = funds GoI actually RELEASED to the state
+//   I  With Agencies  = funds in hand with implementing agencies (transferred + carryover)
+//   E  Expenditure    = actually spent
+//   U  Untapped       = A − T  (GoI money not yet drawn down)         ← DERIVED
+// Secretariat / HoD post → 3 independent efficiency ratios (0–100):
+//   AUE = E ÷ A   Absorption  — of all GoI earmarked, how much was spent     50%
+//   FUE = E ÷ I   Utilisation — of money in agencies' hands, how much spent  30%
+//   FTE = T ÷ A   Drawdown    — how much of the allocation was released      20%
+//                 (= 1 − Untapped÷Allocation, so Untapped is already captured here)
+// District post → only Funds Available (= With Agencies, I) & Expenditure exist:
+//   DUE = E ÷ I   (district utilisation).
+// Per-post efficiency is TENURE-WEIGHTED (days in post). A DAY-PRORATED, log-
+// scaled VOLUME (difficulty) factor then makes the score proportionate BOTH to
+// the size of the fund managed AND to the days the officer held the post.
+var GOI_W = { AUE:0.50, FUE:0.30, FTE:0.20 };   // UFS retired (Untapped = A−T, captured by FTE)
+var GOI_DIFF_FLOOR = 0.70;   // smallest / shortest-served officer retains 70% of efficiency
+var GOI_FY_DAYS = 365;       // period used to pro-rate fund volume by days in post
 
 function _goCap(x){ x = parseFloat(x); if (isNaN(x)) return 0; return Math.max(0, Math.min(100, x)); }
 function _goDays(from, to){
@@ -4661,19 +4772,19 @@ function _goDays(from, to){
 }
 // Efficiency composite (0–100) for one Secretariat/HoD post's aggregated funds.
 function _goEffSecHoD(p){
-  var A=p.A, I=p.I, E=p.E, T=p.T, U=p.U;
+  var A=p.A, I=p.I, E=p.E, T=p.T;
   var AUE = A>0 ? _goCap(E/A*100) : 0;
   var FUE = I>0 ? _goCap(E/I*100) : (E>0 ? 100 : 0);
   var FTE = A>0 ? _goCap(T/A*100) : 0;
-  var UFS = T>0 ? _goCap(100 - (U/T*100)) : 100;     // no transfer → nothing left untapped
-  var ES  = GOI_W.AUE*AUE + GOI_W.FUE*FUE + GOI_W.FTE*FTE + GOI_W.UFS*UFS;
-  return { ES:ES, AUE:AUE, FUE:FUE, FTE:FTE, UFS:UFS };
+  var wSum = (GOI_W.AUE + GOI_W.FUE + GOI_W.FTE) || 1;
+  var ES  = (GOI_W.AUE*AUE + GOI_W.FUE*FUE + GOI_W.FTE*FTE) / wSum;   // normalised → robust to admin weights
+  return { ES:ES, AUE:AUE, FUE:FUE, FTE:FTE };
 }
-// District post: only Funds Available (stored as A) and Expenditure (E) exist.
+// District post: only Funds Available (= With Agencies, I) & Expenditure (E) exist.
 function _goEffDistrict(p){
-  var FA=p.A, E=p.E;
-  var DUE = FA>0 ? _goCap(E/FA*100) : 0;
-  return { ES:DUE, AUE:DUE, FUE:null, FTE:null, UFS:null };
+  var I=p.I, E=p.E;
+  var DUE = I>0 ? _goCap(E/I*100) : 0;
+  return { ES:DUE, AUE:null, FUE:DUE, FTE:null };
 }
 
 var _goNum = function(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; };
@@ -4698,17 +4809,19 @@ async function loadGoiTable() {
         .select('id,identity_no,name_of_officer,cadre,source_of_recruitment,domicile,post_type,photo_url,current_posting')
         .eq('service_type', svc).eq('is_retired', false).eq('is_transferred_from_ap', false),
       ppFetchAll('officer_post_dates', 'identity_no,post_name,from_date,to_date,department,hod,office_location,office_status'),
-      ppFetchAll('goi_funds_live', 'id,hod,department,css_name,state_scheme,goi_allocation,funds_transferred,funds_with_agencies,expenditure,untapped_funds'),
-      ppFetchAll('goi_funds_district_live', 'id,hod,department,css_name,state_scheme,district,funds_available,expenditure')
+      ppFetchAll('goi_funds_live', 'id,css_name,state_scheme,goi_allocation,funds_transferred,funds_with_agencies,expenditure,untapped_funds'),
+      ppFetchAll('goi_funds_district_live', 'id,css_name,state_scheme,district,funds_available,expenditure'),
+      ppFetchAll('scheme_hod_mapping', 'css_name,state_scheme,department,hod')
     ]);
-    var ofrRes = results[0], pdRes = results[1], goRes = results[2], godRes = results[3];
+    var ofrRes = results[0], pdRes = results[1], goRes = results[2], godRes = results[3], mapRes = results[4];
     if (ofrRes.error) throw new Error('officers: ' + ofrRes.error.message);
     if (pdRes.error)  throw new Error('officer_post_dates: ' + pdRes.error.message);
     if (goRes.error)  throw new Error('goi_funds_live: ' + goRes.error.message);
     if (godRes.error) throw new Error('goi_funds_district_live: ' + godRes.error.message);
+    if (mapRes.error) throw new Error('scheme_hod_mapping: ' + mapRes.error.message + '  (run scheme_hod_mapping.sql in Supabase)');
 
-    _goRawData = goRes.data || [];     // HoD / Department source
-    _goRawDist = godRes.data || [];    // District source
+    _goRawData = goRes.data || [];     // HoD / Department fund source (no dept/hod columns)
+    _goRawDist = godRes.data || [];    // District fund source (no dept/hod columns)
 
     _eoOfficerMap = _eoOfficerMap || {};
     (ofrRes.data || []).forEach(function(o) {
@@ -4720,21 +4833,57 @@ async function loadGoiTable() {
       };
     });
 
-    // index HoD/Dept fund rows by dept and hod
-    var byDept = {}, byHod = {};
-    _goRawData.forEach(function(r, i) {
-      var d = ppNorm(r.department), h = ppNorm(r.hod);
-      if (d) (byDept[d] = byDept[d] || []).push(i);
-      if (h) (byHod[h]  = byHod[h]  || []).push(i);
+    // ── Scheme → Department/HoD mapping (scheme_hod_mapping table) ──
+    // A scheme is identified by css_name (+ state_scheme). One scheme may map to
+    // several HoDs (several rows). A mapping row with a blank state_scheme is a
+    // wildcard for every state-scheme under that css_name.
+    var schemeExact = {}, schemeWild = {};   // cssN||stateN / cssN  ->  [{dept,hod,deptRaw,hodRaw}]
+    (mapRes.data || []).forEach(function(m){
+      var cssN = ppNorm(m.css_name); if (!cssN) return;
+      var stateN = ppNorm(m.state_scheme);
+      var dh = { dept:ppNorm(m.department), hod:ppNorm(m.hod), deptRaw:(m.department||'').trim(), hodRaw:(m.hod||'').trim() };
+      if (stateN) (schemeExact[cssN+'||'+stateN] = schemeExact[cssN+'||'+stateN] || []).push(dh);
+      else        (schemeWild[cssN]              = schemeWild[cssN]              || []).push(dh);
     });
+    function lookupScheme(cssName, stateScheme){
+      var cssN = ppNorm(cssName); if (!cssN) return [];
+      return (schemeExact[cssN+'||'+ppNorm(stateScheme)] || []).concat(schemeWild[cssN] || []);
+    }
+    // Annotate every fund row with its mapped Dept/HoD (for the raw-data view & search)
+    function annotateFund(rows){
+      rows.forEach(function(r){
+        var ds={}, hs={};
+        lookupScheme(r.css_name, r.state_scheme).forEach(function(dh){ if(dh.deptRaw) ds[dh.deptRaw]=1; if(dh.hodRaw) hs[dh.hodRaw]=1; });
+        r._deptList = Object.keys(ds).join(', ');
+        r._hodList  = Object.keys(hs).join(', ');
+      });
+    }
+    annotateFund(_goRawData); annotateFund(_goRawDist);
+
+    // index HoD/Dept fund rows by mapped dept and hod (de-duplicated row indices)
+    var byDeptO = {}, byHodO = {};
+    _goRawData.forEach(function(r, i) {
+      lookupScheme(r.css_name, r.state_scheme).forEach(function(dh){
+        if (dh.dept) (byDeptO[dh.dept] = byDeptO[dh.dept] || {})[i] = 1;
+        if (dh.hod)  (byHodO[dh.hod]   = byHodO[dh.hod]   || {})[i] = 1;
+      });
+    });
+    var byDept = {}, byHod = {};
+    Object.keys(byDeptO).forEach(function(k){ byDept[k] = Object.keys(byDeptO[k]).map(Number); });
+    Object.keys(byHodO).forEach(function(k){ byHod[k]  = Object.keys(byHodO[k]).map(Number); });
     var allIdx = _goRawData.map(function(_, i){ return i; });
 
-    // index DISTRICT fund rows by district (irrespective of department)
-    var byDistrict = {};
+    // index DISTRICT fund rows by district (all schemes) and by district + mapped HoD
+    var byDistrict = {}, byDistrictHodO = {};
     _goRawDist.forEach(function(r, i) {
-      var dk = ppNorm(r.district);
-      if (dk) (byDistrict[dk] = byDistrict[dk] || []).push(i);
+      var dk = ppNorm(r.district); if (!dk) return;
+      (byDistrict[dk] = byDistrict[dk] || []).push(i);
+      lookupScheme(r.css_name, r.state_scheme).forEach(function(dh){
+        if (dh.hod) (byDistrictHodO[dk + '||' + dh.hod] = byDistrictHodO[dk + '||' + dh.hod] || {})[i] = 1;
+      });
     });
+    var byDistrictHod = {};
+    Object.keys(byDistrictHodO).forEach(function(k){ byDistrictHod[k] = Object.keys(byDistrictHodO[k]).map(Number); });
 
     // posts by officer
     var postsByOfficer = {};
@@ -4755,8 +4904,13 @@ async function loadGoiTable() {
         var statusN = ppNorm(pd.office_status);
         var pMain = [], pDist = [], cat = 'Unmapped', basis = '';
         if (/^district/.test(statusN)) {
-          cat = 'District'; basis = 'District: ' + (pd.office_location || '—');
-          pDist = (byDistrict[ppNorm(pd.office_location)] || []).slice();
+          if (/revenue|ccla/i.test(pd.hod || '')) {           // Revenue / CCLA Collector → ALL schemes in the district
+            cat = 'District (Revenue)'; basis = 'All schemes in district: ' + (pd.office_location || '—');
+            pDist = (byDistrict[ppNorm(pd.office_location)] || []).slice();
+          } else {                                            // other District post → only that HoD's schemes in the district
+            cat = 'District'; basis = 'HoD: ' + (pd.hod || '—') + ' in district: ' + (pd.office_location || '—');
+            pDist = (byDistrictHod[ppNorm(pd.office_location) + '||' + ppNorm(pd.hod)] || []).slice();
+          }
         } else if (statusN === 'hod') {
           if (/chief\s*secretary/i.test(pd.hod || '')) { cat='HoD (Chief Secretary)'; basis='All departments'; pMain = allIdx.slice(); }
           else { cat='HoD'; basis='HoD: ' + (pd.hod || '—'); pMain = (byHod[ppNorm(pd.hod)] || []).slice(); }
@@ -4771,11 +4925,12 @@ async function loadGoiTable() {
         if (hit) matchedPosts++;
 
         // per-post aggregates
-        var pa=0,pt=0,pi=0,pe=0,pu=0;
+        var pa=0,pt=0,pi=0,pe=0;
         pMain.forEach(function(i){ var r=_goRawData[i];
-          pa+=_goNum(r.goi_allocation); pt+=_goNum(r.funds_transferred); pi+=_goNum(r.funds_with_agencies); pe+=_goNum(r.expenditure); pu+=_goNum(r.untapped_funds); });
-        pDist.forEach(function(i){ var r=_goRawDist[i]; var fa=_goNum(r.funds_available), ex=_goNum(r.expenditure);
-          pa+=fa; pt+=fa; pe+=ex; pi+=Math.max(0,fa-ex); });
+          pa+=_goNum(r.goi_allocation); pt+=_goNum(r.funds_transferred); pi+=_goNum(r.funds_with_agencies); pe+=_goNum(r.expenditure); });
+        pDist.forEach(function(i){ var r=_goRawDist[i];
+          pi+=_goNum(r.funds_available); pe+=_goNum(r.expenditure); });   // district: funds available = with agencies
+        var pu = Math.max(0, pa - pt);   // Untapped = Allocation − Transferred
 
         postsDetail.push({
           post_name: pd.post_name || '', category: cat, basis: basis,
@@ -4788,6 +4943,11 @@ async function loadGoiTable() {
       var mainIdx = Object.keys(rowSet).map(Number);
       var distIdx = Object.keys(distSet).map(Number);
 
+      // Unique post counts (spells of the same post merged into one)
+      var _uniqAll    = _goAggregatePosts(postsDetail);
+      var _uniqHeld   = _uniqAll.length;
+      var _uniqFunded = _uniqAll.filter(function(p){ return (p.mainIdx.length + p.distIdx.length) > 0; }).length;
+
       // unique scheme count (distinct css_name across all of the officer's fund rows)
       var schemeNames = {};
       mainIdx.forEach(function(i){ var nm=((_goRawData[i]||{}).css_name||'').trim().toLowerCase(); if(nm) schemeNames[nm]=1; });
@@ -4797,25 +4957,25 @@ async function loadGoiTable() {
       // Aggregate the 5 fund buckets across BOTH sources.
       // District "Funds Available" is treated as allocation = transferred (money already at field);
       // its unspent portion counts as idle. It has no untapped (nothing left undrawn).
-      var A=0,T=0,I=0,E=0,U=0;
+      var A=0,T=0,I=0,E=0;
       mainIdx.forEach(function(i){
         var r = _goRawData[i];
-        A += _goNum(r.goi_allocation);     T += _goNum(r.funds_transferred);
-        I += _goNum(r.funds_with_agencies); E += _goNum(r.expenditure); U += _goNum(r.untapped_funds);
+        A += _goNum(r.goi_allocation);      T += _goNum(r.funds_transferred);
+        I += _goNum(r.funds_with_agencies); E += _goNum(r.expenditure);
       });
       distIdx.forEach(function(i){
         var r = _goRawDist[i];
-        var fa = _goNum(r.funds_available), ex = _goNum(r.expenditure);
-        A += fa; T += fa; E += ex; I += Math.max(0, fa - ex);
+        I += _goNum(r.funds_available);     E += _goNum(r.expenditure);   // district available = with agencies
       });
+      var U = Math.max(0, A - T);   // Untapped = Allocation − Transferred
 
       return {
         identity_no:key, officer_id:o.id||0, name:o.name_of_officer||key,
         present_post:o.current_posting||'', photo_url:o.photo_url||'',
-        posts_held:posts.length, matchedPosts:matchedPosts, postsDetail:postsDetail,
+        posts_held:_uniqHeld, matchedPosts:_uniqFunded, postsDetail:postsDetail,
         schemeIdx:mainIdx, distIdx:distIdx, schemes:mainIdx.length + distIdx.length, uniqueSchemes:uniqueSchemes,
         fAlloc:A, fTransferred:T, fAgencies:I, fExpenditure:E, fUntapped:U,
-        utilization: T>0 ? E/T : null,
+        utilization: I>0 ? E/I : null,
         allocation:A
       };
     });
@@ -4836,28 +4996,31 @@ function computeGoiScores(data) {
   if (!active.length) return;
 
   // Step 1–3: per-post indicators → tenure-weighted officer efficiency (ES)
+  //           + day-prorated volume of funds managed (for the difficulty factor)
   active.forEach(function(r){
-    var sES = 0, wES = 0;
-    var acc = { AUE:[0,0], FUE:[0,0], FTE:[0,0], UFS:[0,0] };  // [Σ value·days, Σ days]
+    var sES = 0, wES = 0, vol = 0;
+    var acc = { AUE:[0,0], FUE:[0,0], FTE:[0,0] };  // [Σ value·days, Σ days]
     (r.postsDetail || []).forEach(function(p){
       if ((p.schemes || 0) <= 0) return;                       // post carries no GoI funds
       var days = _goDays(p.from_date, p.to_date);
-      var e = (p.category === 'District') ? _goEffDistrict(p) : _goEffSecHoD(p);
+      var isDist = (p.category || '').indexOf('District') === 0;
+      var e = isDist ? _goEffDistrict(p) : _goEffSecHoD(p);
       sES += e.ES * days; wES += days;
-      ['AUE','FUE','FTE','UFS'].forEach(function(k){
+      ['AUE','FUE','FTE'].forEach(function(k){
         if (e[k] != null) { acc[k][0] += e[k]*days; acc[k][1] += days; }
       });
+      var handled = isDist ? p.I : p.A;   // money managed in this post
+      vol += handled * Math.min(1, days / GOI_FY_DAYS);        // pro-rated to days in post
     });
     r.goEff = wES > 0 ? sES / wES : 0;
     r.goAUE = acc.AUE[1] > 0 ? acc.AUE[0]/acc.AUE[1] : null;
     r.goFUE = acc.FUE[1] > 0 ? acc.FUE[0]/acc.FUE[1] : null;
     r.goFTE = acc.FTE[1] > 0 ? acc.FTE[0]/acc.FTE[1] : null;
-    r.goUFS = acc.UFS[1] > 0 ? acc.UFS[0]/acc.UFS[1] : null;
-    r._volBasis = r.fAlloc;   // total GoI allocation / funds-available handled
+    r._volBasis = vol;        // day-prorated volume of funds managed
   });
 
   // Difficulty (volume) factor: log min–max across the on-screen cohort so that
-  // managing a larger fund is harder and therefore worth proportionally more.
+  // managing a larger (and longer-held) fund is worth proportionally more.
   var logs = active.map(function(r){ return Math.log((r._volBasis || 0) + 1); });
   var lmin = Math.min.apply(null, logs), lmax = Math.max.apply(null, logs), lr = lmax - lmin;
   active.forEach(function(r){
@@ -4993,28 +5156,31 @@ function _goAggregatePosts(list){
   var map = {}, order = [];
   list.forEach(function(p){
     var key = (p.post_name||'').trim().toLowerCase();
-    if (!map[key]){ map[key] = { post_name:p.post_name, category:p.category, _main:{}, _dist:{}, _cats:{} }; order.push(key); }
+    if (!map[key]){ map[key] = { post_name:p.post_name, category:p.category, _main:{}, _dist:{}, _cats:{}, stints:[] }; order.push(key); }
     var m = map[key];
     (p.mainIdx||[]).forEach(function(x){ m._main[x] = 1; });
     (p.distIdx||[]).forEach(function(x){ m._dist[x] = 1; });
     if (p.category) m._cats[p.category] = 1;
+    m.stints.push({ from_date:p.from_date||null, to_date:p.to_date||null });
   });
   return order.map(function(k){
     var m = map[k];
     m.mainIdx = Object.keys(m._main).map(Number);
     m.distIdx = Object.keys(m._dist).map(Number);
+    m.stints.sort(function(a,b){ return String(a.from_date||'').localeCompare(String(b.from_date||'')); });
+    m.uniqueDays = _eoUniqueDays(m.stints);
     var cats = Object.keys(m._cats);
     m.category = cats.length ? cats.join(' / ') : (m.category||'');
-    var A=0,T=0,I=0,E=0,U=0, names={};
+    var A=0,T=0,I=0,E=0, names={};
     m.mainIdx.forEach(function(i){ var r=_goRawData[i]||{};
-      A+=_goNum(r.goi_allocation); T+=_goNum(r.funds_transferred); I+=_goNum(r.funds_with_agencies); E+=_goNum(r.expenditure); U+=_goNum(r.untapped_funds);
+      A+=_goNum(r.goi_allocation); T+=_goNum(r.funds_transferred); I+=_goNum(r.funds_with_agencies); E+=_goNum(r.expenditure);
       var nm=(r.css_name||'').trim().toLowerCase(); if(nm) names[nm]=1;
     });
-    m.distIdx.forEach(function(i){ var r=_goRawDist[i]||{}; var fa=_goNum(r.funds_available), ex=_goNum(r.expenditure);
-      A+=fa; T+=fa; E+=ex; I+=Math.max(0,fa-ex);
+    m.distIdx.forEach(function(i){ var r=_goRawDist[i]||{};
+      I+=_goNum(r.funds_available); E+=_goNum(r.expenditure);   // district available = with agencies
       var nm=(r.css_name||'').trim().toLowerCase(); if(nm) names[nm]=1;
     });
-    m.A=A; m.T=T; m.I=I; m.E=E; m.U=U;
+    m.A=A; m.T=T; m.I=I; m.E=E; m.U=Math.max(0,A-T);   // Untapped = Allocation − Transferred
     m.schemes = Object.keys(names).length;   // UNIQUE scheme count (distinct css_name)
     delete m._main; delete m._dist; delete m._cats;
     return m;
@@ -5036,42 +5202,51 @@ window.openGoPostsPopup = function (identityNo, mode){
     chip('Transferred', _goCr(officer.fTransferred), '#0891b2') +
     chip('Expenditure', _goCr(officer.fExpenditure), '#16a34a') +
     chip('Untapped', _goCr(officer.fUntapped), '#dc2626') +
-    chip('With Agencies (idle)', _goCr(officer.fAgencies), '#ea580c');
+    chip('With Agencies', _goCr(officer.fAgencies), '#ea580c');
 
   // posts list (Posts Held = all; Posts with GoI Funds = only those with schemes)
   // — club & aggregate entries that share the same post name (sum fund totals, merge schemes)
   var posts = _goAggregatePosts((officer.postsDetail || []).filter(function(p){ return fundsOnly ? p.schemes>0 : true; }));
   var tbody = document.getElementById('goPostsTbody');
 
+  _goSpellsPosts = posts;                        // for the Days -> spells popup
+
   if (!posts.length){
-    tbody.innerHTML = '<tr><td colspan="8" class="eo-empty">'+(fundsOnly ? 'None of this officer\'s posts are linked to GoI fund schemes.' : 'No posts recorded for this officer.')+'</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="eo-empty">'+(fundsOnly ? 'None of this officer\'s posts are linked to GoI fund schemes.' : 'No posts recorded for this officer.')+'</td></tr>';
     document.getElementById('goPostsFooter').textContent = '';
     document.getElementById('goPostsPopup').style.display = 'flex';
     return;
   }
 
+  var cr0 = function(v){ return _goNum(v) > 0 ? _goCr(v) : '<span style="color:#cbd5e1;">—</span>'; };
   var html = posts.map(function(p, pi){
     var catColor = p.category.indexOf('Secretariat')===0 ? '#1d4ed8' : p.category.indexOf('District')===0 ? '#9a3412' : '#0f766e';
     var clickable = ((p.mainIdx && p.mainIdx.length) || (p.distIdx && p.distIdx.length)) > 0;
+    var nSpells = (p.stints && p.stints.length) ? p.stints.length : 0;
+    var daysCell = (p.uniqueDays > 0)
+      ? '<td style="text-align:center;font-size:11.5px;color:#475569;white-space:nowrap;"><div><span class="pp-clickable" onclick="event.stopPropagation();openGoSpells('+pi+')" title="Click to see the date spells"><b>'+p.uniqueDays+'</b> day'+(p.uniqueDays!==1?'s':'')+'</span></div><div style="margin-top:3px;"><span style="font-size:9px;font-weight:800;color:#0f766e;background:#ccfbf1;border:1px solid #99f6e4;border-radius:4px;padding:1px 5px;white-space:nowrap;">'+nSpells+' spell'+(nSpells!==1?'s':'')+'</span></div></td>'
+      : '<td style="text-align:center;color:#cbd5e1;">—</td>';
     // parent post row
     var row;
     if (!clickable) {
       // Post is not linked to any GoI fund scheme → one clear message instead of a row of ₹0.00 Cr zeros
       row = '<tr style="background:#f8fafc;cursor:default;">'+
         '<td style="font-weight:800;color:#64748b;white-space:normal;word-break:break-word;max-width:240px;line-height:1.4;"><span style="display:inline-block;width:13px;"></span> '+_eoEsc(p.post_name||'—')+'</td>'+
+        daysCell+
         '<td style="white-space:normal;word-break:break-word;"><span style="font-size:10px;font-weight:800;color:'+catColor+';">'+_eoEsc(p.category)+'</span></td>'+
         '<td colspan="6" style="text-align:center;color:#94a3b8;font-style:italic;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">&#8212; No GoI Funds linked to this post &#8212;</td>'+
         '</tr>';
     } else {
       row = '<tr style="background:#f0fdfa;cursor:pointer;" onclick="toggleGoPost('+pi+')">'+
         '<td style="font-weight:800;color:#134e4a;white-space:normal;word-break:break-word;max-width:240px;line-height:1.4;"><span id="go-caret-'+pi+'" style="display:inline-block;width:13px;color:#0f766e;">▶</span> '+_eoEsc(p.post_name||'—')+'</td>'+
+        daysCell+
         '<td style="white-space:normal;word-break:break-word;"><span style="font-size:10px;font-weight:800;color:'+catColor+';">'+_eoEsc(p.category)+'</span></td>'+
         '<td style="text-align:center;font-weight:800;color:#0f766e;">'+p.schemes+'</td>'+
-        '<td style="text-align:right;">'+_goCr(p.A)+'</td>'+
-        '<td style="text-align:right;">'+_goCr(p.T)+'</td>'+
+        '<td style="text-align:right;">'+cr0(p.A)+'</td>'+
+        '<td style="text-align:right;">'+cr0(p.T)+'</td>'+
         '<td style="text-align:right;">'+_goCr(p.I)+'</td>'+
         '<td style="text-align:right;font-weight:700;color:#16a34a;">'+_goCr(p.E)+'</td>'+
-        '<td style="text-align:right;color:#dc2626;">'+_goCr(p.U)+'</td>'+
+        '<td style="text-align:right;color:#dc2626;">'+cr0(p.U)+'</td>'+
         '</tr>';
     }
     // child scheme rows (hidden)
@@ -5079,23 +5254,25 @@ window.openGoPostsPopup = function (identityNo, mode){
       var r=_goRawData[i];
       return '<tr class="go-post-'+pi+'" style="display:none;">'+
         '<td style="padding-left:26px;color:#0f766e;white-space:normal;word-break:break-word;">'+_eoEsc(r.css_name||'—')+'</td>'+
+        '<td></td>'+
         '<td style="color:#475569;white-space:normal;word-break:break-word;">'+_eoEsc(r.state_scheme||'—')+' <span style="font-size:8.5px;font-weight:800;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:4px;padding:0 4px;">DEPT/HoD</span></td>'+
         '<td></td>'+
         '<td style="text-align:right;">'+_goCr(r.goi_allocation)+'</td>'+
         '<td style="text-align:right;">'+_goCr(r.funds_transferred)+'</td>'+
         '<td style="text-align:right;">'+_goCr(r.funds_with_agencies)+'</td>'+
         '<td style="text-align:right;color:#16a34a;">'+_goCr(r.expenditure)+'</td>'+
-        '<td style="text-align:right;color:#dc2626;">'+_goCr(r.untapped_funds)+'</td>'+
+        '<td style="text-align:right;color:#dc2626;">'+_goCr(Math.max(0,_goNum(r.goi_allocation)-_goNum(r.funds_transferred)))+'</td>'+
         '</tr>';
     }).join('') + p.distIdx.map(function(i){
-      var r=_goRawDist[i]; var fa=_goNum(r.funds_available), e=_goNum(r.expenditure);
+      var r=_goRawDist[i];
       return '<tr class="go-post-'+pi+'" style="display:none;background:#fffaf0;">'+
         '<td style="padding-left:26px;color:#9a3412;white-space:normal;word-break:break-word;">'+_eoEsc(r.css_name||'—')+'</td>'+
+        '<td></td>'+
         '<td style="color:#475569;white-space:normal;word-break:break-word;">'+_eoEsc(r.state_scheme||'—')+' <span style="font-size:8.5px;font-weight:800;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:4px;padding:0 4px;">DIST'+(r.district?': '+_eoEsc(r.district):'')+'</span></td>'+
         '<td></td>'+
         '<td style="text-align:right;color:#cbd5e1;">—</td>'+
+        '<td style="text-align:right;color:#cbd5e1;">—</td>'+
         '<td style="text-align:right;">'+_goCr(r.funds_available)+'</td>'+
-        '<td style="text-align:right;">'+_goCr(Math.max(0,fa-e))+'</td>'+
         '<td style="text-align:right;color:#16a34a;">'+_goCr(r.expenditure)+'</td>'+
         '<td style="text-align:right;color:#cbd5e1;">—</td>'+
         '</tr>';
@@ -5114,12 +5291,12 @@ window.openGoRawModal = function (){ document.getElementById('goRawModal').style
 function renderGoRaw(){
   var q=(document.getElementById('goRawSearch')?.value||'').trim().toLowerCase();
   function match(r, extra){
-    return !q || (r.department||'').toLowerCase().indexOf(q)!==-1 || (r.hod||'').toLowerCase().indexOf(q)!==-1 ||
+    return !q || (r._deptList||'').toLowerCase().indexOf(q)!==-1 || (r._hodList||'').toLowerCase().indexOf(q)!==-1 ||
                  (r.css_name||'').toLowerCase().indexOf(q)!==-1 || (r.state_scheme||'').toLowerCase().indexOf(q)!==-1 ||
                  (extra||'').toLowerCase().indexOf(q)!==-1;
   }
   var main=_goRawData.slice().filter(function(r){ return match(r); })
-    .sort(function(a,b){ return (a.department||'').localeCompare(b.department||'') || (a.css_name||'').localeCompare(b.css_name||''); });
+    .sort(function(a,b){ return (a._deptList||'').localeCompare(b._deptList||'') || (a.css_name||'').localeCompare(b.css_name||''); });
   var dist=_goRawDist.slice().filter(function(r){ return match(r, r.district); })
     .sort(function(a,b){ return (a.district||'').localeCompare(b.district||'') || (a.css_name||'').localeCompare(b.css_name||''); });
 
@@ -5130,8 +5307,8 @@ function renderGoRaw(){
     var t=_goNum(r.funds_transferred), e=_goNum(r.expenditure);
     var u = t>0 ? Math.round(e/t*100) : 0;
     return '<tr>'+
-      '<td>'+_eoEsc(r.department||'—')+'</td>'+
-      '<td style="color:#475569;">'+_eoEsc(r.hod||'—')+'</td>'+
+      '<td>'+_eoEsc(r._deptList||'—')+'</td>'+
+      '<td style="color:#475569;">'+_eoEsc(r._hodList||'—')+'</td>'+
       '<td style="font-weight:600;color:#134e4a;">'+_eoEsc(r.css_name||'—')+'</td>'+
       '<td style="color:#475569;">'+_eoEsc(r.state_scheme||'—')+'</td>'+
       '<td style="text-align:right;">'+_goCr(r.goi_allocation)+'</td>'+
@@ -5146,8 +5323,8 @@ function renderGoRaw(){
     var fa=_goNum(r.funds_available), e=_goNum(r.expenditure);
     var u = fa>0 ? Math.round(e/fa*100) : 0;
     return '<tr style="background:#fffaf0;">'+
-      '<td>'+_eoEsc(r.department||'—')+' <span style="font-size:9px;font-weight:800;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:5px;padding:1px 5px;">DISTRICT: '+_eoEsc(r.district||'—')+'</span></td>'+
-      '<td style="color:#475569;">'+_eoEsc(r.hod||'—')+'</td>'+
+      '<td>'+_eoEsc(r._deptList||'—')+' <span style="font-size:9px;font-weight:800;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:5px;padding:1px 5px;">DISTRICT: '+_eoEsc(r.district||'—')+'</span></td>'+
+      '<td style="color:#475569;">'+_eoEsc(r._hodList||'—')+'</td>'+
       '<td style="font-weight:600;color:#9a3412;">'+_eoEsc(r.css_name||'—')+'</td>'+
       '<td style="color:#475569;">'+_eoEsc(r.state_scheme||'—')+'</td>'+
       '<td style="text-align:right;color:#cbd5e1;">—</td>'+
@@ -6552,58 +6729,6 @@ function renderPpRawPivot() {
 // ================================================================
 // e-Office Post-wise POPUP (opens on row click)
 // ================================================================
-var _eoPostSpells = [];      // [{post_name, stints:[{from_date,to_date}], days, ...}]
-var _eoSpellsOfficer = '';
-
-// Unique calendar days across an officer's date spells for one post
-// (overlapping / back-to-back ranges merged so no day is counted twice).
-function _eoUniqueDays(stints){
-  var ivs = [];
-  (stints || []).forEach(function(s){
-    if (!s.from_date) return;
-    var f = Date.parse(s.from_date);
-    if (isNaN(f)) return;
-    var e = s.to_date ? Date.parse(s.to_date) : Date.now();
-    if (isNaN(e)) e = Date.now();
-    ivs.push([f, e]);
-  });
-  if (!ivs.length) return 0;
-  ivs.sort(function(a,b){ return a[0] - b[0]; });
-  var merged = [], total = 0;
-  ivs.forEach(function(iv){
-    var last = merged[merged.length-1];
-    if (last && iv[0] <= last[1] + 86400000){ if (iv[1] > last[1]) last[1] = iv[1]; }  // overlap / <=1-day gap
-    else merged.push([iv[0], iv[1]]);
-  });
-  merged.forEach(function(iv){ total += Math.round((iv[1] - iv[0]) / 86400000) + 1; });
-  return total;
-}
-
-window.openEoSpells = function (pi) {
-  var p = (_eoPostSpells || [])[pi]; if (!p) return;
-  document.getElementById('eoSpellsTitle').textContent = p.post_name || '';
-  document.getElementById('eoSpellsSub').textContent =
-    (_eoSpellsOfficer || '') + '  ·  ' + p.days + ' unique day' + (p.days!==1?'s':'') +
-    '  ·  ' + p.stints.length + ' spell' + (p.stints.length!==1?'s':'');
-  var presentEm = '<em style="color:#059669;font-style:normal;font-weight:700;">Present</em>';
-  var rows = (p.stints || []).map(function (s, i) {
-    var f = s.from_date ? fmtDate(s.from_date) : '—';
-    var to = s.to_date ? fmtDate(s.to_date) : presentEm;
-    var d = _eoUniqueDays([s]);
-    return '<tr>' +
-      '<td style="font-weight:700;color:#4338ca;">Spell ' + (i+1) + '</td>' +
-      '<td style="font-size:12px;">' + f + '</td>' +
-      '<td style="font-size:12px;">' + to + '</td>' +
-      '<td style="text-align:center;font-weight:700;">' + d + '</td>' +
-    '</tr>';
-  }).join('');
-  document.getElementById('eoSpellsTbody').innerHTML = rows ||
-    '<tr><td colspan="4" class="eo-post-empty">No date spells recorded for this post.</td></tr>';
-  document.getElementById('eoSpellsPopup').classList.add('open');
-};
-window.closeEoSpells = function () { document.getElementById('eoSpellsPopup').classList.remove('open'); };
-document.getElementById('eoSpellsPopup').addEventListener('click', function (e) { if (e.target === this) closeEoSpells(); });
-
 window.openEoPostPopup = async function (identityNo, officerName) {
   var popup = document.getElementById('eoPostPopup');
   var tbody = document.getElementById('eoPostPopupTbody');

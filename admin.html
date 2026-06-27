@@ -382,6 +382,7 @@
   <button class="tab-btn" onclick="showTab('members',this)">&#127963; Members (Ministers/MLA/MP/MLC)</button>
   <button class="tab-btn" onclick="showTab('gsdpmap',this)">&#127806; GSDP Mapping</button>
   <button class="tab-btn" onclick="showTab('campmap',this)">&#128226; Campaign Mapping</button>
+  <button class="tab-btn" onclick="showTab('schememap',this)">&#128176; Scheme &rarr; HoD Mapping</button>
 </div>
 
 <div class="content">
@@ -847,6 +848,29 @@
   </div><!-- #tab-campmap -->
 
   <!-- ============================================================
+       Scheme -> HoD Mapping  (scheme_hod_mapping)
+       ============================================================ -->
+  <div class="tab-panel" id="tab-schememap">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>&#128176; Scheme &rarr; HoD Mapping &mdash; CSS Scheme &rarr; Department / HoD</h3>
+        <div class="toolbar">
+          <button class="btn btn-primary btn-sm" onclick="saveShMapping()">&#128190; Save Mapping</button>
+          <button class="btn btn-nav btn-sm" onclick="loadShMapping()">&#8634; Reload</button>
+        </div>
+      </div>
+      <div style="padding:14px 16px 18px;">
+        <p style="color:#6b4423;font-size:12.5px;margin:0 0 12px;line-height:1.55;">Schemes (rows) are the distinct <b>CSS&nbsp;Name &rarr; State&nbsp;Scheme</b> from <code>goi_funds_live</code> + <code>goi_funds_district_live</code> + existing mappings; Departments &amp; HoDs (columns) come from <code>department_hod</code>. Click a <b>CSS&nbsp;scheme</b> &#9656; to expand its state-schemes and a <b>department</b> &#9662; to expand its HoDs, then tick a cell to map that <b>State&nbsp;Scheme</b> to a <b>HoD</b> (and its Department) &mdash; <b>one scheme can map to several HoDs</b> (tick it across the row), and a HoD to several schemes. On <b>Save</b>, the ticks are written to <code>scheme_hod_mapping</code> as one row per (CSS&nbsp;Name, State&nbsp;Scheme, Department, HoD). Collapsed cells show a count badge of the mappings inside.</p>
+        <div id="sh-map-msg" style="font-size:12.5px;font-weight:700;margin-bottom:10px;color:#9a6b3a;"></div>
+        <div id="sh-map-summary" class="gsdp-sumbar"></div>
+        <div class="data-table-wrap" style="max-height:66vh;overflow:auto;">
+          <table class="data-table gsdp-grid" id="shMapTable"></table>
+        </div>
+      </div>
+    </div>
+  </div><!-- #tab-schememap -->
+
+  <!-- ============================================================
        TAB 5: Officer Posts — Dept & HoD Mapping
        ============================================================ -->
   <div class="tab-panel" id="tab-mapping">
@@ -1294,6 +1318,7 @@ function showTab(name, btn) {
   if (name === 'members') loadMembers();
   if (name === 'gsdpmap') loadGsdpMapping();
   if (name === 'campmap') loadCampMapping();
+  if (name === 'schememap') loadShMapping();
 }
 
 // ================================================================
@@ -1647,6 +1672,224 @@ async function saveCampMapping(){
     }
     if (msg){ msg.style.color='#15803d'; msg.textContent = '✓ Saved '+rows.length+' rows to campaign_dept_hod.'; }
     showToast('Campaign mapping saved · '+rows.length+' rows.');
+  } catch(e){
+    if (msg){ msg.style.color='#b91c1c'; msg.textContent = '✗ '+e.message; }
+    showToast('Save failed: '+e.message, true);
+  }
+}
+
+// ================================================================
+// Scheme -> HoD Mapping  (department_hod rows -> scheme_hod_mapping table:
+//   rows = Department -> HoD ; columns = Schemes (css_name + state_scheme) ;
+//   a ticked cell = one (css_name, state_scheme, department, hod) row.
+//   One scheme can map to many HoDs -> tick it down a scheme column.)
+// ================================================================
+let _shDepts = [];        // distinct departments
+let _shDeptHods = {};     // department -> [hods]
+let _shHods = [];         // distinct hods
+let _shCss = [];          // [{css, states:[{state,key,idx}]}] -> collapsible ROW groups
+let _shCols = [];         // flat list of every state-scheme (idx-aligned)
+let _shColByKey = {};     // key -> {css,state,key,idx}
+let _shMap = {};          // (dept + '||' + hod) -> { schemeKey: 1 }
+let _shOpenCssRows = {};  // CSS-name rows that are expanded into state-schemes (multi-open)
+let _shOpenDept = null;   // the one Department COLUMN expanded into its HoDs (single-open)
+
+function _shKey(css, state){ return (css||'').trim() + ' ||| ' + (state||'').trim(); }
+
+async function loadShMapping(){
+  const tbl = document.getElementById('shMapTable');
+  const msg = document.getElementById('sh-map-msg'); if (msg) msg.textContent = '';
+  if (tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#9a6b3a;">Loading…</td></tr></tbody>';
+  const safeAll = async (t) => { try { return { data: await _fetchAllRows(t), error:null }; } catch(e){ return { data:[], error:e }; } };
+  try {
+    const dhRes = await _supabase.from('department_hod').select('department,hod');
+    if (dhRes.error){ tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">Could not read <b>department_hod</b>: '+esc(dhRes.error.message)+'</td></tr></tbody>'; return; }
+    const mapRes = await safeAll('scheme_hod_mapping');
+    if (mapRes.error){ tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">Could not read <b>scheme_hod_mapping</b>: '+esc(mapRes.error.message)+'<br>Run <b>scheme_hod_mapping.sql</b> in Supabase first.</td></tr></tbody>'; return; }
+    const goRes  = await safeAll('goi_funds_live');
+    const godRes = await safeAll('goi_funds_district_live');
+
+    // distinct depts / hods
+    const ds={}, hs={}, dh={};
+    (dhRes.data||[]).forEach(r=>{ const d=(r.department||'').trim(), h=(r.hod||'').trim(); if(d) ds[d]=1; if(h) hs[h]=1; if(d&&h){ (dh[d]=dh[d]||{})[h]=1; } });
+    _shDepts = Object.keys(ds).sort(); _shHods = Object.keys(hs).sort();
+    _shDeptHods = {}; Object.keys(dh).forEach(d=>{ _shDeptHods[d] = Object.keys(dh[d]).sort(); });
+
+    // scheme columns grouped by CSS Name (collapsible) -> State Schemes (children)
+    const cssMap = {};
+    const addScheme = (css, state) => { const c=(css||'').trim(); if(!c) return; const s=(state||'').trim();
+      if(!cssMap[c]) cssMap[c]={ css:c, states:{} };
+      if(!cssMap[c].states[s]) cssMap[c].states[s]={ state:s, key:_shKey(c,s) }; };
+    (goRes.data||[]).forEach(r=>addScheme(r.css_name, r.state_scheme));
+    (godRes.data||[]).forEach(r=>addScheme(r.css_name, r.state_scheme));
+    (mapRes.data||[]).forEach(r=>addScheme(r.css_name, r.state_scheme));
+    _shCss = Object.keys(cssMap).sort().map(function(c){ const g=cssMap[c];
+      g.states = Object.keys(g.states).sort().map(function(s){ return g.states[s]; }); return g; });
+    _shCols = []; _shColByKey = {};
+    _shCss.forEach(function(g){ g.states.forEach(function(st){ st.idx=_shCols.length; const col={css:g.css, state:st.state, key:st.key, idx:st.idx}; _shCols.push(col); _shColByKey[st.key]=col; }); });
+
+    // existing mapping (one row per scheme x dept x hod)
+    _shMap = {};
+    (mapRes.data||[]).forEach(r=>{ const d=(r.department||'').trim(), h=(r.hod||'').trim(), k=_shKey(r.css_name, r.state_scheme);
+      if (d && h && _shColByKey[k]){ const mk=d+'||'+h; (_shMap[mk]=_shMap[mk]||{})[k]=1; } });
+    _shOpenCssRows = {}; _shOpenDept = null;   // start fully collapsed
+    renderShMapping();
+    if (msg){ msg.style.color='#9a6b3a'; msg.textContent = _shCss.length+' CSS schemes · '+_shCols.length+' state-schemes · '+_shDepts.length+' departments · '+_shHods.length+' HoDs'; }
+  } catch(e){ if(tbl) tbl.innerHTML = '<tbody><tr><td style="padding:16px;color:#b91c1c;">'+esc(e.message)+'</td></tr></tbody>'; }
+}
+
+// Cells for a STATE-SCHEME row, across the Department columns.
+function shStateRowCells(st){
+  let out = '';
+  _shDepts.forEach(function(dept){
+    const hods = _shDeptHods[dept] || [];
+    if (dept === _shOpenDept){
+      if (!hods.length) out += '<td class="gsdp-cell" style="color:#cbd5e1;">&mdash;</td>';
+      hods.forEach(function(hod){
+        const on = !!(_shMap[dept+'||'+hod] && _shMap[dept+'||'+hod][st.key]);
+        out += '<td class="gsdp-cell"><input type="checkbox" class="sh-cb" data-dept="'+esc(dept)+'" data-hod="'+esc(hod)+'" data-si="'+st.idx+'" '+(on?'checked':'')+'></td>';
+      });
+    } else {
+      let n = 0; hods.forEach(function(h){ if (_shMap[dept+'||'+h] && _shMap[dept+'||'+h][st.key]) n++; });
+      out += '<td class="gsdp-cell gsdp-closed" data-opendeptcol="'+esc(dept)+'" title="Click to open '+esc(dept)+'">'+(n>0?'<span class="gsdp-badge">'+n+'</span>':'')+'</td>';
+    }
+  });
+  return out;
+}
+// Cells for a collapsed CSS-name row (aggregate over its state-schemes), across Department columns.
+function shCssRowCells(g){
+  let out = '';
+  _shDepts.forEach(function(dept){
+    const hods = _shDeptHods[dept] || [];
+    if (dept === _shOpenDept){
+      if (!hods.length) out += '<td class="gsdp-cell" style="color:#cbd5e1;">&mdash;</td>';
+      hods.forEach(function(hod){
+        let n = 0; const m=_shMap[dept+'||'+hod]; if (m) g.states.forEach(function(st){ if (m[st.key]) n++; });
+        out += '<td class="gsdp-cell gsdp-closed">'+(n>0?'<span class="gsdp-badge">'+n+'</span>':'')+'</td>';
+      });
+    } else {
+      let n = 0; hods.forEach(function(h){ const m=_shMap[dept+'||'+h]; if (m) g.states.forEach(function(st){ if (m[st.key]) n++; }); });
+      out += '<td class="gsdp-cell gsdp-closed" data-opendeptcol="'+esc(dept)+'" title="Click to open '+esc(dept)+'">'+(n>0?'<span class="gsdp-badge">'+n+'</span>':'')+'</td>';
+    }
+  });
+  return out;
+}
+
+function renderShMapping(){
+  const tbl = document.getElementById('shMapTable');
+  if (!tbl) return;
+  if (_shOpenDept && _shDepts.indexOf(_shOpenDept) === -1) _shOpenDept = null;
+
+  // THEAD — row 1: corner + Department headers; row 2: HoDs of the open department
+  let h = '<thead><tr>';
+  h += '<th class="gsdp-corner" rowspan="2">CSS Scheme \\ Department<div style="font-weight:600;font-size:10px;color:#9a6b3a;margin-top:2px;">click a department &#9656; (HoDs) and a CSS scheme &#9662; (state-schemes) to expand</div></th>';
+  _shDepts.forEach(function(dept){
+    const hods = _shDeptHods[dept] || [];
+    if (dept === _shOpenDept)
+      h += '<th class="gsdp-sec-th open" colspan="'+(hods.length||1)+'" data-opendeptcol="'+esc(dept)+'" title="Click to collapse">&#9662; '+esc(dept)+'</th>';
+    else
+      h += '<th class="gsdp-sec-th" rowspan="2" data-opendeptcol="'+esc(dept)+'" title="Click to expand">&#9656; <span class="gsdp-thwrap">'+esc(dept)+'</span></th>';
+  });
+  h += '</tr><tr>';
+  if (_shOpenDept){
+    const hods = _shDeptHods[_shOpenDept] || [];
+    if (!hods.length) h += '<th class="gsdp-sub-th" style="color:#94a3b8;">(no HoDs)</th>';
+    hods.forEach(function(hod){ h += '<th class="gsdp-sub-th"><span class="gsdp-thwrap">'+esc(hod)+'</span></th>'; });
+  }
+  h += '</tr></thead>';
+
+  // TBODY — CSS-scheme rows (expand → state-scheme rows)
+  let b = '<tbody>';
+  if (!_shCss.length) b += '<tr><td style="padding:16px;color:#9a6b3a;">No schemes found in <b>goi_funds_live</b> / <b>goi_funds_district_live</b>.</td></tr>';
+  else if (!_shDepts.length) b += '<tr><td style="padding:16px;color:#9a6b3a;">No departments found in <b>department_hod</b>.</td></tr>';
+  _shCss.forEach(function(g, gi){
+    const open = !!_shOpenCssRows[g.css];
+    b += '<tr class="gsdp-dept-row">'
+      + '<td class="gsdp-rowhead" data-opencssrow="'+esc(g.css)+'" style="cursor:pointer;"><span style="color:#7c3a12;">'+(open?'&#9662;':'&#9656;')+'</span> <b>'+esc(g.css)+'</b> <span id="sh-ctot-'+gi+'" class="gsdp-dept-tot"></span></td>'
+      + shCssRowCells(g)
+      + '</tr>';
+    if (open){
+      g.states.forEach(function(st){
+        b += '<tr class="gsdp-hod-row"><td class="gsdp-rowhead gsdp-hod-head">&nbsp;&nbsp;&#9492; '+(st.state ? esc(st.state) : '<span style="color:#94a3b8;">(any state-scheme)</span>')+'</td>'+shStateRowCells(st)+'</tr>';
+      });
+    }
+  });
+  b += '</tbody>';
+
+  tbl.className = 'data-table gsdp-grid';
+  tbl.innerHTML = h + b;
+  shStickyHeader(tbl);
+  shUpdateCounts();
+}
+
+// Stick BOTH header rows: row 2 (HoDs) sits just below row 1 (departments).
+function shStickyHeader(tbl){
+  const thead = tbl.querySelector('thead'); if (!thead || thead.rows.length < 2) return;
+  const h1 = thead.rows[0].offsetHeight;
+  Array.prototype.forEach.call(thead.rows[1].cells, function(th){ th.style.top = h1 + 'px'; });
+}
+
+function shUpdateCounts(){
+  // distinct state-scheme keys that are mapped to at least one HoD
+  const mappedKeys = {}; let totalMappings = 0;
+  for (const k in _shMap){ const m=_shMap[k]; for (const sk in m){ mappedKeys[sk]=1; totalMappings++; } }
+  // per-CSS-row total (States / Mapped / Rem)
+  (_shCss||[]).forEach(function(g, gi){
+    const el = document.getElementById('sh-ctot-'+gi); if (!el) return;
+    const mapped = g.states.filter(function(st){ return mappedKeys[st.key]; }).length;
+    const rem = g.states.length - mapped;
+    el.innerHTML = '<span style="color:#b08968;">States '+g.states.length+'</span> · <span style="color:#15803d;">Mapped '+mapped+'</span> · <span style="color:'+(rem>0?'#c2410c':'#94a3b8')+';">Rem '+rem+'</span>';
+  });
+  const sum = document.getElementById('sh-map-summary');
+  if (sum){
+    function chip(lbl, val, col){ return '<span class="gsdp-sumchip" style="border-color:'+col+'33;"><b style="color:'+col+';">'+val+'</b> '+lbl+'</span>'; }
+    sum.innerHTML = chip('CSS Schemes', _shCss.length, '#0369a1') + chip('State Schemes', _shCols.length, '#0891b2')
+                  + chip('Departments', _shDepts.length, '#7c2d12') + chip('HoDs', _shHods.length, '#9a3412') + chip('Mappings', totalMappings, '#15803d');
+  }
+}
+
+// One delegated handler for the scheme grid (attached once)
+(function shGridInit(){
+  const tbl = document.getElementById('shMapTable');
+  if (!tbl) return;
+  tbl.addEventListener('change', function(e){
+    const cb = e.target;
+    if (!cb.classList || !cb.classList.contains('sh-cb')) return;
+    const dept = cb.getAttribute('data-dept'), hod = cb.getAttribute('data-hod'), c = _shCols[+cb.getAttribute('data-si')];
+    if (!c) return;
+    const k = dept + '||' + hod;
+    if (!_shMap[k]) _shMap[k] = {};
+    if (cb.checked) _shMap[k][c.key] = 1; else delete _shMap[k][c.key];
+    shUpdateCounts();
+  });
+  tbl.addEventListener('click', function(e){
+    const depEl = e.target.closest('[data-opendeptcol]');
+    if (depEl){ const d = depEl.getAttribute('data-opendeptcol'); _shOpenDept = (_shOpenDept===d)?null:d; renderShMapping(); return; }
+    const cssEl = e.target.closest('[data-opencssrow]');
+    if (cssEl){ const c = cssEl.getAttribute('data-opencssrow'); if (_shOpenCssRows[c]) delete _shOpenCssRows[c]; else _shOpenCssRows[c] = 1; renderShMapping(); return; }
+  });
+})();
+
+async function saveShMapping(){
+  const msg = document.getElementById('sh-map-msg');
+  if (msg){ msg.style.color='#9a6b3a'; msg.textContent = 'Saving…'; }
+  try {
+    const rows = [];
+    _shDepts.forEach(function(dept){
+      (_shDeptHods[dept]||[]).forEach(function(hod){
+        const m = _shMap[dept+'||'+hod]; if (!m) return;
+        Object.keys(m).forEach(function(key){ const c = _shColByKey[key]; if (!c) return;
+          rows.push({ css_name:c.css, state_scheme:(c.state||null), department:dept, hod:hod }); });
+      });
+    });
+    const del = await _supabase.from('scheme_hod_mapping').delete().gte('id', 0);
+    if (del.error) throw new Error('clear: ' + del.error.message);
+    for (let i=0;i<rows.length;i+=500){
+      const ins = await _supabase.from('scheme_hod_mapping').insert(rows.slice(i,i+500));
+      if (ins.error) throw new Error('insert: ' + ins.error.message);
+    }
+    if (msg){ msg.style.color='#15803d'; msg.textContent = '✓ Saved '+rows.length+' rows to scheme_hod_mapping.'; }
+    showToast('Scheme mapping saved · '+rows.length+' rows.');
   } catch(e){
     if (msg){ msg.style.color='#b91c1c'; msg.textContent = '✗ '+e.message; }
     showToast('Save failed: '+e.message, true);

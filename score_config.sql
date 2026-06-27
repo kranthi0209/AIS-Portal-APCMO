@@ -29,12 +29,13 @@ insert into score_config (score_key, param_key, param_label, param_value, unit, 
   ('eoffice','wl_files',     'Full-workload files (Opening+Recd)',5000,'files',   'Key values',        8),
   ('eoffice','wl_pace',      'Full-intensity pace',            60,   'files/day', 'Key values',        9),
 
-  -- GoI Funds (4 indicator weights — should sum to 1.00)
-  ('goi','w_aue','Allocation Utilisation (AUE) weight', 0.40, 'weight', 'Indicator weights', 1),
-  ('goi','w_fue','Funds Utilisation (FUE) weight',      0.30, 'weight', 'Indicator weights', 2),
-  ('goi','w_fte','Fund Transfer (FTE) weight',          0.20, 'weight', 'Indicator weights', 3),
-  ('goi','w_ufs','Untapped-Funds (UFS) weight',         0.10, 'weight', 'Indicator weights', 4),
-  ('goi','diff_floor','Volume floor (smallest fund keeps)',0.70,'factor','Key values',       5),
+  -- GoI Funds (3 indicator weights — normalised at runtime, need not sum to exactly 1.00.
+  --  Untapped is NOT a separate indicator: Untapped = Allocation − Transferred, already
+  --  captured by FTE = Transferred ÷ Allocation.)
+  ('goi','w_aue','Allocation Utilisation (AUE) weight — 50%', 0.50, 'weight', 'Indicator weights', 1),
+  ('goi','w_fue','Funds Utilisation (FUE) weight — 30%',      0.30, 'weight', 'Indicator weights', 2),
+  ('goi','w_fte','Fund Transfer / Drawdown (FTE) weight — 20%',0.20, 'weight', 'Indicator weights', 3),
+  ('goi','diff_floor','Volume floor (smallest / shortest-served keeps)',0.70,'factor','Key values', 5),
 
   -- Composite (relative weight of each component in the average; equal = simple mean)
   ('composite','w_eoffice',   'e-Office weight',         1, 'weight', 'Component weights', 1),
@@ -42,6 +43,18 @@ insert into score_config (score_key, param_key, param_label, param_value, unit, 
   ('composite','w_goi',       'GoI Funds weight',        1, 'weight', 'Component weights', 3),
   ('composite','w_perception','Public Perception weight',1, 'weight', 'Component weights', 4)
 on conflict (score_key, param_key) do nothing;
+
+-- ============================================================
+--  2026 revision — GoI Funds moves from 4 indicators to 3.
+--  UFS (Untapped-Funds) is retired because Untapped = Allocation − Transferred,
+--  which is already captured by FTE. AUE is re-weighted 0.40 → 0.50.
+--  (Idempotent: safe to re-run.)
+-- ============================================================
+delete from score_config where score_key='goi' and param_key='w_ufs';
+update score_config set param_value=0.50, param_label='Allocation Utilisation (AUE) weight — 50%'  where score_key='goi' and param_key='w_aue';
+update score_config set                  param_label='Funds Utilisation (FUE) weight — 30%'       where score_key='goi' and param_key='w_fue';
+update score_config set                  param_label='Fund Transfer / Drawdown (FTE) weight — 20%' where score_key='goi' and param_key='w_fte';
+update score_config set                  param_label='Volume floor (smallest / shortest-served keeps)' where score_key='goi' and param_key='diff_floor';
 
 -- ============================================================
 --  ACCESS  —  REQUIRED so the dashboard/admin (anon key) can read & save.

@@ -69,7 +69,7 @@
       <li><a href="#purpose">Purpose &amp; design principles</a></li>
       <li><a href="#data">The raw data &amp; what each field means</a></li>
       <li><a href="#mapping">Mapping funds to an officer (Office Status)</a></li>
-      <li><a href="#indicators">Step 1 — The four performance indicators</a></li>
+      <li><a href="#indicators">Step 1 — The three performance indicators</a></li>
       <li><a href="#weights">Step 2 &amp; 3 — Weights &amp; the efficiency composite</a></li>
       <li><a href="#tenure">Step 4 — Tenure-proportional weighting</a></li>
       <li><a href="#difficulty">Step 5 — Fund-size (difficulty) normalization</a></li>
@@ -105,11 +105,11 @@
   <table>
     <thead><tr><th>Field</th><th>Symbol</th><th>Meaning</th></tr></thead>
     <tbody>
-      <tr><td>GoI Allocation</td><td class="var">A</td><td>Total money the Centre <b>sanctioned</b> for the scheme.</td></tr>
-      <tr><td>Funds Transferred by GoI</td><td class="var">T</td><td>Money the Centre actually <b>released</b> for implementation.</td></tr>
-      <tr><td>Funds with Implementing Agencies</td><td class="var">I</td><td>Money currently <b>parked with agencies</b>, ready to be used.</td></tr>
+      <tr><td>GoI Allocation</td><td class="var">A</td><td>Amount the Centre <b>earmarked for the state</b> for the scheme.</td></tr>
+      <tr><td>Funds Transferred by GoI</td><td class="var">T</td><td>Money the Centre actually <b>released</b> to the state.</td></tr>
+      <tr><td>Funds with Implementing Agencies</td><td class="var">I</td><td>Money <b>in hand with the agencies</b> = what was transferred <b>plus any earlier balance</b> they already held.</td></tr>
       <tr><td>Expenditure</td><td class="var">E</td><td>Money actually <b>spent</b> on the ground.</td></tr>
-      <tr><td>Untapped funds from GoI</td><td class="var">U</td><td>Sanctioned money <b>never drawn down</b> (left at the Centre).</td></tr>
+      <tr><td>Untapped funds from GoI</td><td class="var">U</td><td><b>Derived: U = A − T</b> — allocation the Centre has <b>not yet released</b> (still at the Centre).</td></tr>
     </tbody>
   </table>
 
@@ -118,7 +118,7 @@
   <table>
     <thead><tr><th>Field</th><th>Symbol</th><th>Meaning</th></tr></thead>
     <tbody>
-      <tr><td>Funds Available</td><td class="var">FA</td><td>Money in hand at the district for all schemes.</td></tr>
+      <tr><td>Funds Available</td><td class="var">FA</td><td>Money <b>in hand with the field agencies</b> for all schemes (the district's "With Agencies").</td></tr>
       <tr><td>Expenditure</td><td class="var">E</td><td>Money actually spent in the district.</td></tr>
     </tbody>
   </table>
@@ -133,16 +133,19 @@
       <tr><td><b>Secretariat</b></td><td>All schemes of that <b>Department</b>.</td><td>Sec/HoD table</td></tr>
       <tr><td><b>HoD</b></td><td>All schemes whose <b>HoD</b> matches the post.</td><td>Sec/HoD table</td></tr>
       <tr><td><b>HoD — Chief Secretary</b></td><td>Special case: <b>every</b> scheme (whole-of-government).</td><td>Sec/HoD table</td></tr>
-      <tr><td><b>District</b></td><td>All schemes in that <b>district</b>, any department.</td><td>District table</td></tr>
+      <tr><td><b>District — Revenue / CCLA</b></td><td><b>All</b> schemes in that <b>district</b>, any department (the Collector owns the whole district).</td><td>District table</td></tr>
+      <tr><td><b>District — other</b></td><td>Only the schemes of <b>that post's HoD</b> within the district.</td><td>District table</td></tr>
     </tbody>
   </table>
   <div class="note">Only officers present in the <b>Officers master table</b> are scored. If fund data exists for someone
   not yet in the master, it stays hidden until that officer is added.</div>
 
   <!-- 4 -->
-  <h2 id="indicators">4 · Step 1 — The four performance indicators</h2>
-  <p>For a <b>Secretariat/HoD</b> post we compute four efficiency ratios from its aggregated funds
-  (<span class="var">A, T, I, E, U</span>). Each is a percentage and capped to the range 0–100.</p>
+  <h2 id="indicators">4 · Step 1 — The three performance indicators</h2>
+  <p>For a <b>Secretariat/HoD</b> post we compute three efficiency ratios from its aggregated funds
+  (<span class="var">A, T, I, E</span>). Each is a percentage and capped to the range 0–100.
+  We do <b>not</b> add a separate "untapped" indicator, because <b>Untapped = Allocation − Transferred</b>, which is
+  already measured by FTE below (a higher transfer ratio <i>is</i> a smaller untapped pile).</p>
 
   <h3>A · Allocation Utilization Efficiency (AUE) — the headline test</h3>
   <div class="formula"><b>AUE</b> = ( <span class="hi">Expenditure</span> ÷ <span class="hi">GoI Allocation</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( E ÷ A ) × 100</div>
@@ -153,35 +156,32 @@
   <div class="formula"><b>FUE</b> = ( <span class="hi">Expenditure</span> ÷ <span class="hi">Funds with Agencies</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( E ÷ I ) × 100</div>
   <p>Of the money already <i>in agencies' hands</i>, how much was actually put to work rather than parked?</p>
 
-  <h3>C · Fund Transfer Efficiency (FTE)</h3>
+  <h3>C · Fund Transfer / Drawdown Efficiency (FTE) — also the "untapped" measure</h3>
   <div class="formula"><b>FTE</b> = ( <span class="hi">Funds Transferred</span> ÷ <span class="hi">GoI Allocation</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( T ÷ A ) × 100</div>
-  <p>Of the money <i>promised</i>, how much did the officer succeed in drawing down? Leaving money at the Centre is a missed opportunity.</p>
-
-  <h3>D · Untapped Fund Score (UFS)</h3>
-  <p>First the <b>Untapped Funds Ratio</b> (lower is better):</p>
-  <div class="formula"><b>UFR</b> = ( <span class="hi">Untapped Funds</span> ÷ <span class="hi">Funds Transferred</span> ) × 100&nbsp;&nbsp;=&nbsp;&nbsp;( U ÷ T ) × 100</div>
-  <p>Because a <i>lower</i> UFR is good, we flip it into a positive "higher-is-better" score:</p>
-  <div class="formula"><b>UFS</b> = 100 − UFR</div>
-  <div class="note"><b>Direction matters.</b> AUE, FUE, FTE and UFS are all "<b>higher is better</b>" after this flip,
-  so they can be safely blended in one weighted sum.</div>
+  <p>Of the money the Centre <i>earmarked</i>, how much did the officer succeed in <b>drawing down</b>? Because
+  <span class="var">Untapped = A − T</span>, this single ratio already captures untapped money:
+  <b>FTE = 100 − (Untapped ÷ Allocation) × 100</b>. The more you draw down, the less lies untapped — so a separate
+  untapped penalty would only double-count the same fact.</p>
+  <div class="note"><b>Direction matters.</b> AUE, FUE and FTE are all "<b>higher is better</b>", so they blend
+  cleanly in one weighted sum — no flips needed.</div>
 
   <!-- 5 -->
   <h2 id="weights">5 · Steps 2 &amp; 3 — Weights &amp; the efficiency composite</h2>
-  <p>The four indicators are combined by importance. Expenditure-against-allocation is the most consequential,
-  idle/untapped money the least:</p>
+  <p>The three indicators are combined by importance. Expenditure-against-allocation (the end-to-end outcome) is the
+  most consequential, drawdown the least:</p>
   <table>
     <thead><tr><th>Indicator</th><th>Symbol</th><th>Weight</th><th>Rationale</th></tr></thead>
     <tbody>
-      <tr><td>Allocation Utilization Efficiency</td><td>AUE</td><td><b>40%</b></td><td>End-to-end outcome — sanction to spending.</td></tr>
+      <tr><td>Allocation Utilization Efficiency</td><td>AUE</td><td><b>50%</b></td><td>End-to-end outcome — sanction to spending.</td></tr>
       <tr><td>Fund Utilization Efficiency</td><td>FUE</td><td><b>30%</b></td><td>Did money in hand get used?</td></tr>
-      <tr><td>Fund Transfer Efficiency</td><td>FTE</td><td><b>20%</b></td><td>Did the officer draw the money down?</td></tr>
-      <tr><td>Untapped Fund Score</td><td>UFS</td><td><b>10%</b></td><td>Penalty for leaving sanctioned money behind.</td></tr>
+      <tr><td>Fund Transfer / Drawdown Efficiency</td><td>FTE</td><td><b>20%</b></td><td>Did the officer draw the money down? (also captures untapped)</td></tr>
       <tr><td colspan="2"><b>Total</b></td><td><b>100%</b></td><td></td></tr>
     </tbody>
   </table>
-  <div class="formula"><b>Efficiency (ES)</b> = <span class="hi">0.40</span>·AUE + <span class="hi">0.30</span>·FUE + <span class="hi">0.20</span>·FTE + <span class="hi">0.10</span>·UFS</div>
+  <div class="formula"><b>Efficiency (ES)</b> = <span class="hi">0.50</span>·AUE + <span class="hi">0.30</span>·FUE + <span class="hi">0.20</span>·FTE</div>
   <p>Because every term is already on a 0–100 scale and the weights sum to 1, the composite <span class="var">ES</span>
-  is automatically a number between <b>0 and 100</b> — no extra rescaling needed.</p>
+  is automatically a number between <b>0 and 100</b>. The weights are editable in <b>Admin Console → Score Weights</b>;
+  the score normalises by their sum, so they need not total exactly 1.</p>
 
   <!-- 6 -->
   <h2 id="tenure">6 · Step 4 — Tenure-proportional weighting</h2>
@@ -196,13 +196,19 @@
   help nor hurt the score.</div>
 
   <!-- 7 -->
-  <h2 id="difficulty">7 · Step 5 — Fund-size (difficulty) normalization</h2>
-  <p class="warn" style="font-size:14.3px;">⚖️ <b>The core fairness rule you asked for:</b> spending a small fund fully is
+  <h2 id="difficulty">7 · Step 5 — Day-prorated fund-size (difficulty) normalization</h2>
+  <p class="warn" style="font-size:14.3px;">⚖️ <b>The core fairness rule:</b> spending a small fund fully is
   <i>easy</i>; spending a very large fund fully is <i>hard</i>. Two officers who both achieve 100% efficiency are
-  <b>not</b> equal if one managed ₹5 Crore and the other ₹5,000 Crore.</p>
-  <p>The efficiency ratios above are deliberately scale-free, so on their own they would treat those two officers
+  <b>not</b> equal if one managed ₹5 Crore and the other ₹5,000 Crore — and an officer who held the post for only a
+  few days should not get full credit for a whole year's fund.</p>
+  <p>The efficiency ratios above are deliberately scale-free, so on their own they would treat those officers
   identically. To correct this we multiply each officer's efficiency by a <b>difficulty (volume) factor</b> derived
-  from the <b>total funds they were responsible for</b> (<span class="var">V</span> = total Allocation / Funds Available).</p>
+  from a <b>day-prorated volume of funds they were responsible for</b>:</p>
+  <div class="formula"><b>V</b> = Σ<sub>posts</sub> ( <span class="hi">fund managed in the post</span> × min(1, <span class="hi">days in post ÷ 365</span>) )</div>
+  <p>"Fund managed" is the post's <b>GoI Allocation</b> (Sec/HoD) or <b>Funds Available</b> (District). The
+  <span class="var">min(1, days ÷ 365)</span> term is the <b>day-proration you asked for</b>: a post held for the full
+  year contributes its whole fund; a post held for, say, 73 days contributes only <span class="var">73 ÷ 365 = 0.20</span>
+  of it. So the volume — and therefore the score — grows with <b>both the fund size and the days actually served</b>.</p>
 
   <h3>Why a logarithm?</h3>
   <p>Fund sizes are extremely skewed — a few officers handle thousands of crores, most handle far less. A raw
@@ -237,13 +243,14 @@
   (<span class="var">E</span>). We therefore cannot compute FTE (no allocation-vs-transfer split), nor FUE, nor
   untapped funds. The honest, defensible approach is a <b>single indicator</b> that mirrors the headline AUE:</p>
   <div class="formula"><b>DUE</b> (District Utilization Efficiency) = ( <span class="hi">Expenditure</span> ÷ <span class="hi">Funds Available</span> ) × 100</div>
-  <p>This is treated as that post's efficiency <span class="var">ES<sub>p</sub></span>. It is then:</p>
+  <p>Funds Available is the district's "money in hand with agencies", so DUE is the district counterpart of FUE.
+  This is treated as that post's efficiency <span class="var">ES<sub>p</sub></span>. It is then:</p>
   <ul>
     <li><b>Tenure-weighted</b> exactly like head-office posts (Step 4), and</li>
-    <li><b>Difficulty-scaled</b> using Funds Available as the volume <span class="var">V</span> (Step 5), so a district managing ₹2,000 Cr is not equated with one managing ₹20 Cr.</li>
+    <li><b>Difficulty-scaled</b> using its day-prorated Funds Available in the volume <span class="var">V</span> (Step 5), so a district managing ₹2,000 Cr is not equated with one managing ₹20 Cr.</li>
   </ul>
   <div class="note"><b>Mixed careers blend cleanly.</b> If an officer held both head-office <i>and</i> district posts, each
-  post contributes its own efficiency (4-indicator for Sec/HoD, single DUE for District), and the tenure-weighted
+  post contributes its own efficiency (3-indicator for Sec/HoD, single DUE for District), and the tenure-weighted
   average naturally combines them into one number before the difficulty factor is applied.</div>
   <div class="warn"><b>Why not invent the missing district fields?</b> Fabricating "transferred" or "untapped" values we
   don't have would manufacture false precision. Scoring districts on what is genuinely measured —
@@ -253,21 +260,21 @@
   <h2 id="examples">10 · Worked numerical examples</h2>
 
   <div class="ex">
-    <h4>Example 1 — A Secretariat officer (single post, 2 years)</h4>
-    <p>Aggregated scheme funds: A = ₹800 Cr, T = ₹720 Cr, I = ₹300 Cr, E = ₹650 Cr, U = ₹80 Cr.</p>
+    <h4>Example 1 — A Secretariat officer (single post, full year)</h4>
+    <p>Aggregated scheme funds: A = ₹800 Cr, T = ₹720 Cr, I = ₹600 Cr, E = ₹540 Cr.
+    (Untapped = A − T = ₹80 Cr, already captured by FTE below.)</p>
     <table>
       <thead><tr><th>Indicator</th><th>Calculation</th><th>Value</th><th>Weight</th><th>Contribution</th></tr></thead>
       <tbody>
-        <tr><td>AUE</td><td>650 ÷ 800 × 100</td><td>81.25</td><td>0.40</td><td>32.50</td></tr>
-        <tr><td>FUE</td><td>650 ÷ 300 × 100 → capped</td><td>100.00</td><td>0.30</td><td>30.00</td></tr>
+        <tr><td>AUE</td><td>540 ÷ 800 × 100</td><td>67.50</td><td>0.50</td><td>33.75</td></tr>
+        <tr><td>FUE</td><td>540 ÷ 600 × 100</td><td>90.00</td><td>0.30</td><td>27.00</td></tr>
         <tr><td>FTE</td><td>720 ÷ 800 × 100</td><td>90.00</td><td>0.20</td><td>18.00</td></tr>
-        <tr><td>UFS</td><td>100 − (80 ÷ 720 × 100)</td><td>88.89</td><td>0.10</td><td>8.89</td></tr>
-        <tr><td colspan="4"><b>Efficiency ES</b></td><td><b>89.39</b></td></tr>
+        <tr><td colspan="4"><b>Efficiency ES</b></td><td><b>78.75</b></td></tr>
       </tbody>
     </table>
-    <p>Suppose this officer's ₹800 Cr is mid-large in the cohort, giving <span class="var">VW = 0.80</span>, so
-    Difficulty factor = 0.70 + 0.30×0.80 = <b>0.94</b>.<br>
-    <span class="good">Final score = 89.39 × 0.94 = 84.03 / 100.</span></p>
+    <p>The post was held for the full year, so its day-prorated volume is the whole ₹800 Cr. Suppose that is mid-large
+    in the cohort, giving <span class="var">VW = 0.80</span>, so Difficulty factor = 0.70 + 0.30×0.80 = <b>0.94</b>.<br>
+    <span class="good">Final score = 78.75 × 0.94 = 74.03 / 100.</span></p>
   </div>
 
   <div class="ex">
@@ -326,8 +333,9 @@
     days</b>, so long postings influence the score more than brief ones.</dd>
 
     <dt>Difficulty (volume) factor</dt>
-    <dd>A multiplier between 0.70 and 1.00 that scales an officer's efficiency by how large a fund they managed —
-    the mechanism that stops small-fund and large-fund performance being treated as equal.</dd>
+    <dd>A multiplier between 0.70 and 1.00 that scales an officer's efficiency by a <b>day-prorated volume</b> of funds
+    managed — each post's fund counted only in proportion to <span class="var">min(1, days ÷ 365)</span>. It stops
+    small-fund / short-tenure performance and large-fund / full-year performance being treated as equal.</dd>
 
     <dt>Capping (clamping)</dt>
     <dd>Forcing a value to stay within a fixed range. Every indicator is clamped to [0, 100] so an unusual data
@@ -338,14 +346,16 @@
     re-bases the comparison so everyone is always judged against their visible peers.</dd>
 
     <dt>Direction of an indicator</dt>
-    <dd>"Higher-is-better" (benefit) vs "lower-is-better" (cost). The Untapped Funds Ratio is a cost, so we convert
-    it to the Untapped Fund Score (100 − UFR) before blending, keeping all four indicators in the same direction.</dd>
+    <dd>"Higher-is-better" (benefit) vs "lower-is-better" (cost). All three indicators (AUE, FUE, FTE) are
+    benefits, so they blend directly. Untapped money is a cost, but instead of a separate term we capture it through
+    FTE — since <span class="var">Untapped = Allocation − Transferred</span>, a higher transfer ratio is automatically
+    a smaller untapped pile.</dd>
   </dl>
 
   <div class="foot">
     AIS Officers 360° Dashboard — Andhra Pradesh CMO · GoI (CSS) Funds module.<br>
-    Final score = [ 0.40·AUE + 0.30·FUE + 0.20·FTE + 0.10·UFS ], tenure-weighted across posts,
-    multiplied by a 0.70–1.00 log-scaled fund-size difficulty factor, capped to 0–100.
+    Final score = [ 0.50·AUE + 0.30·FUE + 0.20·FTE ], tenure-weighted across posts,
+    multiplied by a 0.70–1.00 log-scaled, <b>day-prorated</b> fund-size difficulty factor, capped to 0–100.
   </div>
 
 </div>
